@@ -1,0 +1,89 @@
+.snapheader {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Search pill */
+.search_pill {
+  border-radius: 50px;
+  overflow: hidden;
+}
+
+.nav_link_offers{
+  color: #F67535;
+}
+/* Cart badge */
+.cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: #F67535;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 50%;
+}
+
+/* Menu links */
+.nav_link {
+  font-size: 1rem;
+  font-weight: bold;
+  text-wrap: nowrap;
+}
+
+.nav_link:hover {
+  color: #F67535!important;
+}
+
+.icon_btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: transparent;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  transition: all 0.25s ease;
+}
+
+.icon_btn i {
+  font-size: 18px;
+}
+
+.icon_btn:hover {
+  color: #ff7a00;
+  border-color: #ff7a00;
+}
+
+.cart_count {
+  position: absolute;
+  top: 0px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  border-radius: 50%;
+  background: #ff7a00;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* XXL screens */
+@media (min-width: 1400px) {
+  .icon_btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .icon_btn i {
+    font-size: 20px;
+  }
+
+  .cart_count {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+}
