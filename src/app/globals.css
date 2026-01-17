@@ -132,3 +132,20 @@ body {
   }
 }
 
+/* HomeSlider right banners min-height for mobile */
+@media (max-width: 575.98px) {
+  .home-slider-banner {
+    min-height: 100px;
+  }
+}
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .home-slider-banner {
+    min-height: 140px;
+  }
+}
+@media (min-width: 992px) {
+  .home-slider-banner {
+    min-height: 220px;
+  }
+}
+

@@ -9,7 +9,13 @@ export default function HomeSlider() {
 
       {/* LEFT: Carousel */}
       <div className="col-12 col-md-8 col-lg-8">
-        <div id="homeCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="4000" style={{ minHeight: '220px' }} >
+        <div
+          id="homeCarousel"
+          className="carousel slide"
+          data-bs-ride="carousel"
+          data-bs-interval="4000"
+          style={{ minHeight: '220px' }}
+        >
           <div className="carousel-inner rounded-3 h-100">
             {/* Slide 1 */}
             <div className="carousel-item active h-100">
@@ -66,10 +72,9 @@ export default function HomeSlider() {
 
       {/* RIGHT: Two Banners */}
       <div className="col-12 col-md-4 col-lg-4 d-flex flex-column gap-3">
-        <div className="d-flex flex-column gap-3 h-100">
-
+        <div className="d-flex flex-column gap-3">
           <Link href="/product/galaxy-watch" className="flex-fill">
-            <div className="position-relative w-100 h-100">
+            <div className="position-relative w-100 home-slider-banner">
               <Image
                 src="/side1.webp"
                 alt="Galaxy Watch"
@@ -79,9 +84,8 @@ export default function HomeSlider() {
               />
             </div>
           </Link>
-
           <Link href="/product/induction-cooker" className="flex-fill">
-            <div className="position-relative w-100 h-100">
+            <div className="position-relative w-100 home-slider-banner">
               <Image
                 src="/side2.webp"
                 alt="Induction Cooker"
@@ -91,7 +95,6 @@ export default function HomeSlider() {
               />
             </div>
           </Link>
-
         </div>
       </div>
 
