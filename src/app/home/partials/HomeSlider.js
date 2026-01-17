@@ -9,8 +9,15 @@ export default function HomeSlider() {
 
       {/* LEFT: Carousel */}
       <div className="col-lg-8">
-        <div id="homeCarousel" className="carousel slide" data-bs-ride="carousel">
+        <div
+          id="homeCarousel"
+          className="carousel slide"
+          data-bs-ride="carousel"
+          data-bs-interval="4000"
+          style={{ minHeight: '220px' }}
+        >
           <div className="carousel-inner rounded-3 h-100">
+
             {/* Slide 1 */}
             <div className="carousel-item active h-100">
               <Link href="/category/printer" className="d-block h-100">
@@ -21,6 +28,7 @@ export default function HomeSlider() {
                     fill
                     priority
                     className="rounded-3 object-fit-cover"
+                    sizes="(max-width: 991px) 100vw, 66vw"
                   />
                 </div>
               </Link>
@@ -35,6 +43,7 @@ export default function HomeSlider() {
                     alt="Laptop Offer"
                     fill
                     className="rounded-3 object-fit-cover"
+                    sizes="(max-width: 991px) 100vw, 66vw"
                   />
                 </div>
               </Link>
@@ -63,7 +72,7 @@ export default function HomeSlider() {
       </div>
 
       {/* RIGHT: Two Banners */}
-      <div className="col-lg-4">
+      <div className="col-lg-4 d-lg-flex">
         <div className="d-flex flex-column gap-3 h-100">
 
           <Link href="/product/galaxy-watch" className="flex-fill">
@@ -73,6 +82,7 @@ export default function HomeSlider() {
                 alt="Galaxy Watch"
                 fill
                 className="rounded-3 object-fit-cover"
+                sizes="(max-width: 991px) 0vw, 34vw"
               />
             </div>
           </Link>
@@ -84,6 +94,7 @@ export default function HomeSlider() {
                 alt="Induction Cooker"
                 fill
                 className="rounded-3 object-fit-cover"
+                sizes="(max-width: 991px) 0vw, 34vw"
               />
             </div>
           </Link>
