@@ -100,3 +100,15 @@ body {
   opacity: 1;
   visibility: visible;
 }
+
+/* home slider css */
+.object-fit-cover {
+  object-fit: cover;
+}
+
+.carousel,
+.carousel-inner,
+.carousel-item {
+  height: 460px;
+}
+
