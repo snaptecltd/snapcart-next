@@ -8,16 +8,9 @@ export default function HomeSlider() {
     <div className="row g-3">
 
       {/* LEFT: Carousel */}
-      <div className="col-lg-8">
-        <div
-          id="homeCarousel"
-          className="carousel slide"
-          data-bs-ride="carousel"
-          data-bs-interval="4000"
-          style={{ minHeight: '220px' }}
-        >
+      <div className="col-12 col-md-8 col-lg-8">
+        <div id="homeCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="4000" style={{ minHeight: '220px' }} >
           <div className="carousel-inner rounded-3 h-100">
-
             {/* Slide 1 */}
             <div className="carousel-item active h-100">
               <Link href="/category/printer" className="d-block h-100">
@@ -72,7 +65,7 @@ export default function HomeSlider() {
       </div>
 
       {/* RIGHT: Two Banners */}
-      <div className="col-lg-4 d-lg-flex">
+      <div className="col-12 col-md-4 col-lg-4 d-flex flex-column gap-3">
         <div className="d-flex flex-column gap-3 h-100">
 
           <Link href="/product/galaxy-watch" className="flex-fill">
@@ -82,7 +75,7 @@ export default function HomeSlider() {
                 alt="Galaxy Watch"
                 fill
                 className="rounded-3 object-fit-cover"
-                sizes="(max-width: 991px) 0vw, 34vw"
+                sizes="(max-width: 991px) 100vw, 34vw"
               />
             </div>
           </Link>
@@ -94,7 +87,7 @@ export default function HomeSlider() {
                 alt="Induction Cooker"
                 fill
                 className="rounded-3 object-fit-cover"
-                sizes="(max-width: 991px) 0vw, 34vw"
+                sizes="(max-width: 991px) 100vw, 34vw"
               />
             </div>
           </Link>
