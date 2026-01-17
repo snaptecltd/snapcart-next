@@ -27,7 +27,7 @@ export default function Header() {
 
             {/* Search */}
             <div className="col-12 col-lg-5 order-3 order-lg-2 mt-2 mt-lg-0">
-              <button type="button" className={`btn btn-dark w-100 d-flex align-items-center justify-content-left h-100 py-3 px-3 flex-grow-1 rounded-pill border border-secondary ${styles.header_search_btn}`}>
+              <button type="button" className={`btn btn-dark w-100 d-flex align-items-center justify-content-left h-100 py-2 px-3 flex-grow-1 rounded-pill border border-secondary ${styles.header_search_btn}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search me-2 text-secondary">
                   <circle cx="11" cy="11" r="8"></circle>
                   <path d="m21 21-4.3-4.3"></path>
@@ -81,7 +81,7 @@ export default function Header() {
       </div>
 
       {/* ================= MENU BAR ================= */}
-      <nav className={`navbar navbar-expand-lg navbar-light border-top`}>
+      <nav className={`navbar navbar-expand-lg navbar-light shadow-sm border-top`}>
         <div className={`container justify-content-start`}>
           <ul className={`navbar-nav gap-lg-2 flex-wrap`}>
             {/* Apple Products Dropdown */}
@@ -109,8 +109,14 @@ export default function Header() {
                 <li><Link className="dropdown-item" href="#">Samsung</Link></li>
                 <li><Link className="dropdown-item" href="#">Google</Link></li>
                 <li><Link className="dropdown-item" href="#">Xiaomi</Link></li>
-                <li>
-                  <Link className="dropdown-item" href="#">OnePlus</Link>
+                <li className="dropdown-submenu position-relative">
+                  <Link className="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                    OnePlus <i className="fas fa-chevron-right ms-2"></i>
+                  </Link>
+                  <ul className="dropdown-menu shadow position-absolute start-100 top-0 mt-0">
+                    <li><Link className="dropdown-item" href="#">2024 Edition</Link></li>
+                    <li><Link className="dropdown-item" href="#">2025 Edition</Link></li>
+                  </ul>
                 </li>
               </ul>
             </li>

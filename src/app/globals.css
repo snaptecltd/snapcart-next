@@ -81,3 +81,22 @@ body {
     color: #fff;
     background-color: var(--primary-color);
 }
+
+/* Submenu for sub-submenu (dropdown-submenu) */
+.dropdown-submenu {
+  position: relative;
+}
+
+.dropdown-submenu > .dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -1px;
+  display: none;
+  min-width: 180px;
+}
+
+.dropdown-submenu:hover > .dropdown-menu {
+  display: block;
+  opacity: 1;
+  visibility: visible;
+}
