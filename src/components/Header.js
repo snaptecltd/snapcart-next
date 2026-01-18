@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import styles from "../styles/Header.module.css";
 import { getNavCategories } from "@/lib/api/global.service";
+import { useGlobalConfig } from "@/context/GlobalConfigContext";
 
 export default function Header() {
   const { data, error, isLoading } = useSWR(
@@ -20,6 +21,9 @@ export default function Header() {
   // API response: array বা {data: array} - দুটোই handle
   const categories = Array.isArray(data) ? data : (data?.data ?? []);
 
+  const { data: config } = useGlobalConfig();
+  const logo = config?.company_logo?.path || "/logo.webp";
+
   return (
     <header className={styles.snapheader}>
       {/* ================= TOP BAR ================= */}
@@ -29,7 +33,13 @@ export default function Header() {
             {/* Logo */}
             <div className="col-6 col-lg-2">
               <Link href="/" className="navbar-brand text-white fw-bold">
-                <Image src="/logo.webp" alt="Logo" width={140} height={40} priority />
+                <Image
+                  src={logo}
+                  alt={config?.company_name || "Logo"}
+                  width={140}
+                  height={40}
+                  unoptimized
+                />
               </Link>
             </div>
 
