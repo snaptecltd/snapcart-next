@@ -59,7 +59,7 @@ export default function DealOfTheDay() {
               <div className="d-flex flex-column gap-4">
                 {/* Loop through products and display ProductCard for each */}
                 {products.map((product) => (
-                    <ProductCardType2 product={product.product} />
+                    <ProductCardType2 key={product.product.id} product={product.product} />
                 ))}
               </div>
             </div>
@@ -72,7 +72,7 @@ export default function DealOfTheDay() {
             <SectionTitle first="Featured" highlight="Products" />
             <div className="d-flex flex-column gap-3">
               {products.map((product) => (
-                    <ProductCardType2 product={product.product} />
+                    <ProductCardType2 key={product.product.id} product={product.product} />
               ))}.product
             </div>
           </div>
