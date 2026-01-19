@@ -51,3 +51,8 @@ export async function getNewArrivalProducts() {
   const res = await api.get(ENDPOINTS.PRODUCTS_NEW_ARRIVALS);
   return res.data;
 }
+
+export async function getHomeBlockBanner() {
+  const res = await api.get(ENDPOINTS.HOME_BLOCK_BANNERS);
+  return res.data;
+}
