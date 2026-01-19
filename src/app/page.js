@@ -2,6 +2,7 @@ import Slider from './home/partials/HomeSlider';
 import CompanyLiability from "@/app/home/partials/CompanyLiability";
 import HomeCategories from "@/app/home/partials/HomeCategories";
 import FeaturedProducts from "@/app/home/partials/FeaturedProducts";
+import DealOfTheDay from './home/partials/DealOfTheDay';
 
 export default function HomePage() {
   return (
@@ -10,7 +11,8 @@ export default function HomePage() {
       <CompanyLiability />
       <HomeCategories />
       <FeaturedProducts />
-      
+      <DealOfTheDay />
+
     </div>
   );
 }

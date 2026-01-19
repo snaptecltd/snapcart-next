@@ -41,3 +41,8 @@ export async function getTopRatedProducts() {
   const res = await api.get(ENDPOINTS.PRODUCTS_TOP_RATED);
   return res.data;
 }
+
+export async function getDealOfTheDay() {
+  const res = await api.get(ENDPOINTS.DEAL_OF_THE_DAY);
+  return res.data;
+}
