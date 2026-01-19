@@ -12,4 +12,5 @@ export const ENDPOINTS = {
   DEAL_OF_THE_DAY: `${PREFIX}/dealsoftheday/deal-of-the-day`,
   PRODUCTS_NEW_ARRIVALS: `${PREFIX}/products/new-arrival`,
   HOME_BLOCK_BANNERS: `${PREFIX}/get-home-block-banner`,
+  BRANDS: `${PREFIX}/brands`,
 };

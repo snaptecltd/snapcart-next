@@ -56,3 +56,8 @@ export async function getHomeBlockBanner() {
   const res = await api.get(ENDPOINTS.HOME_BLOCK_BANNERS);
   return res.data;
 }
+
+export async function getBrands() {
+  const res = await api.get(ENDPOINTS.BRANDS);
+  return res.data;
+}
