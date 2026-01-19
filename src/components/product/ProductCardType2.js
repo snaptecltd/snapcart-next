@@ -32,10 +32,10 @@ export default function ProductCard({ product }) {
   return (
     <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
       <Link href={href} className="text-decoration-none text-dark">
-        <div className="p-3 d-flex flex-row">
+        <div className="p-3 d-flex flex-row align-items-center gap-3">
           <div
             className="bg-white rounded-4 d-flex align-items-center justify-content-center"
-            style={{ height: 190 }}
+            style={{ height: 100, width: 100 }}
           >
             {thumb ? (
               <img

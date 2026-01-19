@@ -147,6 +147,10 @@ body {
   .home-slider-banner {
     min-height: 220px;
   }
+  .dealofdayProductCard-wrapper{
+    max-height: 285px;
+    overflow-y: auto;
+  }
 }
 
 @media (min-width: 992px) {

@@ -37,29 +37,38 @@ export default function DealOfTheDay() {
     <section className="py-3">
       <div className="container">
         {/* Deal of the Day Section */}
-        <div className="row align-items-center">
+        <div className="row align-items-start">
           {/* Deal Banner - Left Side */}
           {banner && banner.photo && (
             <div className="col-12 col-md-6 mb-4">
-              <div className="position-relative  overflow-y-scroll rounded-3 shadow-sm">
+              <div
+                className="position-relative overflow-hidden rounded-3 shadow-sm"
+                style={{ height: "100%" }}
+              >
                 <img
                   src={banner.photo_full_url.path}
                   alt="Deal of the Day Banner"
                   className="w-100"
-                  style={{ objectFit: "cover", height: "auto" }}
+                  style={{ objectFit: "cover", height: "100%" }}
                 />
               </div>
             </div>
           )}
 
           {/* Product Cards - Right Side */}
-          <div className="col-12 col-md-6 mb-4">
-            <div>
-              <SectionTitle first="🔥" highlight="Deals of The Day" />
-              <div className="d-flex flex-column gap-4">
-                {/* Loop through products and display ProductCard for each */}
+          <div className="col-12 col-md-6 mb-4" style={{ height: "100%" }}>
+            <SectionTitle first="🔥" highlight="Deals of The Day" />
+            <div className="dealofdayProductCard-wrapper">
+              <div
+                className="d-flex flex-column gap-4"
+                style={{
+                  maxHeight: "calc(100vh - 50px)", // Optional: restrict height for demo purposes
+                  overflowY: "auto",
+                }}
+              >
+                {/* Loop through products and display ProductCardType2 for each */}
                 {products.map((product) => (
-                    <ProductCardType2 key={product.product.id} product={product.product} />
+                  <ProductCardType2 key={product.product.id} product={product.product} />
                 ))}
               </div>
             </div>
@@ -72,8 +81,8 @@ export default function DealOfTheDay() {
             <SectionTitle first="Featured" highlight="Products" />
             <div className="d-flex flex-column gap-3">
               {products.map((product) => (
-                    <ProductCardType2 key={product.product.id} product={product.product} />
-              ))}.product
+                <ProductCardType2 key={product.product.id} product={product.product} />
+              ))}
             </div>
           </div>
         )}
