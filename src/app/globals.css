@@ -149,3 +149,9 @@ body {
   }
 }
 
+@media (min-width: 992px) {
+  .row-cols-lg-8 > * {
+    flex: 0 0 auto;
+    width: 12.5%; /* 100 / 8 */
+  }
+}

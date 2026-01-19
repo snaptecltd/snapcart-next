@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function HomeSlider() {
   return (
-    <div className="row g-3">
+    <div className="row g-3 mb-3">
 
       {/* LEFT: Carousel */}
       <div className="col-12 col-md-8 col-lg-8">
