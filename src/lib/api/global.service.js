@@ -46,3 +46,8 @@ export async function getDealOfTheDay() {
   const res = await api.get(ENDPOINTS.DEAL_OF_THE_DAY);
   return res.data;
 }
+
+export async function getNewArrivalProducts() {
+  const res = await api.get(ENDPOINTS.PRODUCTS_NEW_ARRIVALS);
+  return res.data;
+}

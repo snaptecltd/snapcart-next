@@ -10,4 +10,5 @@ export const ENDPOINTS = {
   PRODUCTS_BEST_SELLINGS: `${PREFIX}/products/best-sellings`,
   PRODUCTS_TOP_RATED: `${PREFIX}/products/top-rated`,
   DEAL_OF_THE_DAY: `${PREFIX}/dealsoftheday/deal-of-the-day`,
+  PRODUCTS_NEW_ARRIVALS: `${PREFIX}/products/new-arrival`,
 };

@@ -3,6 +3,7 @@ import CompanyLiability from "@/app/home/partials/CompanyLiability";
 import HomeCategories from "@/app/home/partials/HomeCategories";
 import FeaturedProducts from "@/app/home/partials/FeaturedProducts";
 import DealOfTheDay from './home/partials/DealOfTheDay';
+import NewArrivalProducts from './home/partials/NewArrivalProducts';
 
 export default function HomePage() {
   return (
@@ -12,7 +13,8 @@ export default function HomePage() {
       <HomeCategories />
       <FeaturedProducts />
       <DealOfTheDay />
-
+      <NewArrivalProducts />
+      
     </div>
   );
 }
