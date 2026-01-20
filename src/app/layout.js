@@ -1,5 +1,7 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
 
 import Header from "../components/Header";
@@ -21,6 +23,7 @@ export default function RootLayout({ children }) {
           <FaviconUpdater />
           <Header />
           {children}
+          <ToastContainer position="top-right" autoClose={3000} />
           <Footer />
         </GlobalConfigProvider>
       </body>
