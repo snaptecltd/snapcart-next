@@ -30,7 +30,7 @@ export default function ProductCard({ product }) {
   }
 
   return (
-    <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+    <div className="card h-100 card-shadow border rounded-3xl overflow-hidden">
       <Link href={href} className="text-decoration-none text-dark">
         <div className="p-3">
           <div

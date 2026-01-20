@@ -34,7 +34,7 @@ export default function HomeBlockBanner() {
         {/* Home Block Banner */}
         {banner?.photo_full_url?.path && (
           <div className="d-flex justify-content-center align-items-center">
-            <div className="position-relative overflow-hidden rounded-3 shadow-sm">
+            <div className="position-relative overflow-hidden rounded-3">
               <img
                 src={banner.photo_full_url.path}
                 alt={banner.title || "Home Block Banner"}

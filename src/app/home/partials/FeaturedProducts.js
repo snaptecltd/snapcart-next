@@ -96,7 +96,7 @@ export default function FeaturedProducts() {
         {!isLoading && !error && (
           <div
             ref={sliderRef}
-            className="d-flex gap-3 overflow-auto pb-2 hide-scrollbar"
+            className="d-flex gap-3 overflow-auto py-4 hide-scrollbar"
             style={{
               scrollSnapType: "x mandatory",
               WebkitOverflowScrolling: "touch",

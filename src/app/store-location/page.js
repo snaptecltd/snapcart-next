@@ -1,7 +1,10 @@
-"use client";
-
 import React from "react";
 import SectionTitle from "@/components/html/SectionTitle";
+
+export const metadata = {
+  title: 'Store Locations - Snapcart',
+  description: 'Welcome to Snapcart, your one-stop shop for all your needs. Discover our featured products, latest arrivals, and exclusive deals.',
+};
 
 export default function StoreLocation() {
   return (

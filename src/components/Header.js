@@ -71,7 +71,7 @@ export default function Header() {
             {/* Right links */}
             <div className="col-6 col-lg-5 order-2 order-lg-4 text-end">
               <div className="d-flex justify-content-end align-items-center gap-4 small">
-                <Link href="#" className={`text-white text-decoration-none ${styles.nav_link}`}>
+                <Link href="/store-location" className={`text-white text-decoration-none ${styles.nav_link}`}>
                   Store
                 </Link>
 

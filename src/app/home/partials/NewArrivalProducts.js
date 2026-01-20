@@ -68,7 +68,7 @@ export default function NewArrivalProducts() {
 
         {/* Product Cards Slider */}
         <div
-          className="d-flex gap-3 overflow-auto pb-2 hide-scrollbar"
+          className="d-flex gap-3 overflow-auto py-4 hide-scrollbar"
           style={{
             scrollSnapType: "x mandatory",
             WebkitOverflowScrolling: "touch",

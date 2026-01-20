@@ -78,7 +78,7 @@ useEffect(() => {
         </div>
 
         {/* Brands Navbar with horizontal scroll */}
-        <div className="d-flex gap-3 overflow-auto pb-2 hide-scrollbar" ref={brandSliderRef}>
+        <div className="d-flex gap-3 overflow-auto py-4 hide-scrollbar" ref={brandSliderRef}>
           {data.brands.map((brand) => (
             <div key={brand.id} style={{ minWidth: 120, maxWidth: 120 }}>
               <button
@@ -133,7 +133,7 @@ useEffect(() => {
               </div>
             </div>
             <div
-              className="d-flex gap-3 overflow-auto pb-2 hide-scrollbar"
+              className="d-flex gap-3 overflow-auto py-4 hide-scrollbar"
               ref={productSliderRef}
               style={{
                 scrollSnapType: "x mandatory",
