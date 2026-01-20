@@ -14,4 +14,5 @@ export const ENDPOINTS = {
   HOME_BLOCK_BANNERS: `${PREFIX}/get-home-block-banner`,
   BRANDS: `${PREFIX}/brands`,
   BOTTOM_TEXT_CARDS: `${PREFIX}/bottom-text-cards`,
+  STORE_LOCATIONS: `${PREFIX}/store-locations`,
 };

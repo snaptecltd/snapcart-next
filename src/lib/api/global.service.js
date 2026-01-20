@@ -66,3 +66,8 @@ export async function getBottomTextCards() {
   const res = await api.get(ENDPOINTS.BOTTOM_TEXT_CARDS);
   return res.data;
 }
+
+export async function getStoreLocations() {
+  const res = await api.get(ENDPOINTS.STORE_LOCATIONS);
+  return res.data;
+}
