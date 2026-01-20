@@ -11,6 +11,10 @@ export default function Brands() {
   const [selectedBrandId, setSelectedBrandId] = useState(null);
   const [brandImagesLoaded, setBrandImagesLoaded] = useState(false);
 
+  // Refs for horizontal scrollable sections
+  const brandSliderRef = useRef(null);
+  const productSliderRef = useRef(null);
+
   // Fetching brands data using useSWR
   const { data, error, isLoading } = useSWR("brands", getBrands, {
     revalidateOnFocus: false,
@@ -18,9 +22,12 @@ export default function Brands() {
   });
 
   // Hydration error fix: only allow brand images to load on the client side
-  useEffect(() => {
-    setBrandImagesLoaded(true);
-  }, []);
+useEffect(() => {
+  setBrandImagesLoaded(true);
+  if (data?.brands?.length && selectedBrandId === null) {
+    setSelectedBrandId(data.brands[0].id);
+  }
+}, [data, selectedBrandId]);
 
   // Handle loading, error, or no data
   if (isLoading) return <div>Loading...</div>;
@@ -35,10 +42,6 @@ export default function Brands() {
   // Fetch the products for the selected brand
   const selectedBrand = data.brands.find((brand) => brand.id === selectedBrandId);
   const products = selectedBrand ? selectedBrand.products : [];
-
-  // Refs for horizontal scrollable sections
-  const brandSliderRef = useRef(null);
-  const productSliderRef = useRef(null);
 
   // Scroll by cards function
   const scrollByCards = (sliderRef, dir = 1) => {
@@ -79,7 +82,13 @@ export default function Brands() {
           {data.brands.map((brand) => (
             <div key={brand.id} style={{ minWidth: 120, maxWidth: 120 }}>
               <button
-                className="btn btn-light border rounded-pill"
+                className={`btn brand-btn ${
+                  String(selectedBrandId) === String(brand.id) ? "brand-active" : ""
+                }`}
+                style={{ 
+                  height: "60px",
+                  background: "transparent"
+                 }}
                 onClick={() => handleBrandClick(brand.id)}
               >
                 {brandImagesLoaded && brand.image_full_url && (
@@ -88,7 +97,7 @@ export default function Brands() {
                     alt={brand.name}
                     style={{
                       width: "100%",
-                      height: "auto",
+                      height: "100%",
                       objectFit: "contain",
                       display: "block",
                     }}

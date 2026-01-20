@@ -172,3 +172,16 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.brand-btn {
+  border: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.brand-btn:hover {
+  border-color: #F9670D !important;
+}
+
+.brand-active {
+  border-color: #F9670D !important;
+}
