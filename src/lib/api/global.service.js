@@ -71,3 +71,8 @@ export async function getStoreLocations() {
   const res = await api.get(ENDPOINTS.STORE_LOCATIONS);
   return res.data;
 }
+
+export async function getStoreDetails(slug) {
+  const res = await api.get(`${ENDPOINTS.STORE_DETAILS}?slug=${slug}`);
+  return res.data;
+}

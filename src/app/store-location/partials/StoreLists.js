@@ -31,7 +31,7 @@ export default function StoreLists() {
             phone={location.contact_number}
             image={location.full_url?.path || "/placeholder/image.jpg"}
             mapUrl="#"
-            detailsUrl={`/store-location/${location.id}`}
+            slug={location.slug}
           />
         ))}
       </div>

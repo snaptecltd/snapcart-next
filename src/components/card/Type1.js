@@ -10,27 +10,27 @@ export default function CardType1({
   offDay,
   phone,
   mapUrl = "#",
-  detailsUrl = "#",
+  slug, // changed from detailsUrl
 }) {
   return (
     <div className="card shadow-sm border-0 rounded-3 overflow-hidden">
-    {/* Top Banner Image */}
-    <div style={{ height: "140px", position: "relative" }}>
+      {/* Top Banner Image */}
+      <div style={{ height: "140px", position: "relative" }}>
         <img
-            src={image}
-            alt={title}
-            style={{
-                objectFit: "cover",
-                width: "100%",
-                height: "100%",
-                position: "absolute",
-                top: 0,
-                left: 0,
-            }}
+          src={image}
+          alt={title}
+          style={{
+            objectFit: "cover",
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            top: 0,
+            left: 0,
+          }}
         />
-    </div>
+      </div>
 
-    {/* Card Body */}
+      {/* Card Body */}
       <div className="card-body">
         {/* Title */}
         <h6 className="fw-semibold mb-2 d-flex align-items-center gap-2">
@@ -65,7 +65,7 @@ export default function CardType1({
           </Link> */}
 
           <Link
-            href={detailsUrl}
+            href={`/store-location/${slug}`}
             className="btn btn-outline-secondary btn-sm px-3 flex-grow-1"
           >
             Show Details
