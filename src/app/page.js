@@ -6,6 +6,7 @@ import DealOfTheDay from './home/partials/DealOfTheDay';
 import NewArrivalProducts from './home/partials/NewArrivalProducts';
 import HomeBlockBanner from './home/partials/HomeBlockBanner';
 import Brands from './home/partials/Brands';
+import BottomTextCard from './home/partials/BottomTextCard';
 
 export const metadata = {
   title: 'Home - Snapcart',
@@ -23,6 +24,7 @@ export default function HomePage() {
       <NewArrivalProducts />
       <HomeBlockBanner />
       <Brands />
+      <BottomTextCard />
 
     </div>
   );

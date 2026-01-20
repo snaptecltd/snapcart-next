@@ -13,4 +13,5 @@ export const ENDPOINTS = {
   PRODUCTS_NEW_ARRIVALS: `${PREFIX}/products/new-arrival`,
   HOME_BLOCK_BANNERS: `${PREFIX}/get-home-block-banner`,
   BRANDS: `${PREFIX}/brands`,
+  BOTTOM_TEXT_CARDS: `${PREFIX}/bottom-text-cards`,
 };

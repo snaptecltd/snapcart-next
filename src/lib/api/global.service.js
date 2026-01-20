@@ -61,3 +61,8 @@ export async function getBrands() {
   const res = await api.get(ENDPOINTS.BRANDS);
   return res.data;
 }
+
+export async function getBottomTextCards() {
+  const res = await api.get(ENDPOINTS.BOTTOM_TEXT_CARDS);
+  return res.data;
+}
