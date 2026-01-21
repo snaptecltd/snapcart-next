@@ -1,13 +1,13 @@
 'use client';
 import React from "react";
-import { Link } from "next/link";
+import Link from "next/link";
 
 const Breadcrumb = ({ items = [] }) => {
   return (
     <nav aria-label="breadcrumb">
       <ol className="breadcrumb mb-0">
         <li className="breadcrumb-item">
-          <Link to="/"><i className="fas fa-home"></i></Link>
+          <Link href="/"><i className="fas fa-home"></i></Link>
         </li>
         {items.map((item, idx) => (
           <li
@@ -18,7 +18,7 @@ const Breadcrumb = ({ items = [] }) => {
             aria-current={idx === items.length - 1 ? "page" : undefined}
           >
             {item.href && idx !== items.length - 1 ? (
-              <a href={item.href}>{item.label}</a>
+              <Link href={item.href}>{item.label}</Link>
             ) : (
               item.label
             )}
