@@ -76,3 +76,8 @@ export async function getStoreDetails(slug) {
   const res = await api.get(`${ENDPOINTS.STORE_DETAILS}?slug=${slug}`);
   return res.data;
 }
+
+export async function getDynamicPage(slug) {
+  const res = await api.get(`${ENDPOINTS.DYNAMIC_PAGE}?slug=${slug}`);
+  return res.data;
+}

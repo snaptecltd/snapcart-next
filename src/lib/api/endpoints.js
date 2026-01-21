@@ -15,5 +15,6 @@ export const ENDPOINTS = {
   BRANDS: `${PREFIX}/brands`,
   BOTTOM_TEXT_CARDS: `${PREFIX}/bottom-text-cards`,
   STORE_LOCATIONS: `${PREFIX}/store-locations`,
-  STORE_DETAILS: `${PREFIX}/store/details`, // add this line
+  STORE_DETAILS: `${PREFIX}/store/details`,
+  DYNAMIC_PAGE: `${PREFIX}/page`,
 };

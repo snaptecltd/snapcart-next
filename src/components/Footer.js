@@ -34,12 +34,12 @@ export default function Footer() {
           <div className="col-6 col-md-6 col-lg-3">
             <h6 className="fw-semibold mb-3">OTHER</h6>
             <ul className="list-unstyled small">
-              <li><Link href="/about" className="text-secondary text-decoration-none">About Us</Link></li>
-              <li><Link href="/terms" className="text-secondary text-decoration-none">Terms & Conditions</Link></li>
-              <li><Link href="/privacy-policy" className="text-secondary text-decoration-none">Privacy Policy</Link></li>
-              <li><Link href="/refund-policy" className="text-secondary text-decoration-none">Refund Policy</Link></li>
-              <li><Link href="/return-policy" className="text-secondary text-decoration-none">Return Policy</Link></li>
-              <li><Link href="/cancel-policy" className="text-secondary text-decoration-none">Cancellation Policy</Link></li>
+              <li><Link href="/page/about-us" className="text-secondary text-decoration-none">About Us</Link></li>
+              <li><Link href="/page/terms-and-conditions" className="text-secondary text-decoration-none">Terms & Conditions</Link></li>
+              <li><Link href="/page/privacy-policy" className="text-secondary text-decoration-none">Privacy Policy</Link></li>
+              <li><Link href="/page/refund-policy" className="text-secondary text-decoration-none">Refund Policy</Link></li>
+              <li><Link href="/page/return-policy" className="text-secondary text-decoration-none">Return Policy</Link></li>
+              <li><Link href="/page/cancellation-policy" className="text-secondary text-decoration-none">Cancellation Policy</Link></li>
             </ul>
           </div>
 
