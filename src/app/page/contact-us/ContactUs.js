@@ -45,7 +45,7 @@ export default function ContactUs() {
 
   // Load and render reCAPTCHA v2
   useEffect(() => {
-    const RECAPTCHA_SITE_KEY = "YOUR_RECAPTCHA_SITE_KEY"; // <-- Replace with your site key
+    const RECAPTCHA_SITE_KEY = "6Ld0p1QsAAAAAIv_rtcGJE-RtIb5hV5LQauO6A3I"; // <-- Replace with your site key
 
     // Only load once
     if (typeof window === "undefined" || window.recaptchaLoaded) return;
@@ -207,8 +207,15 @@ export default function ContactUs() {
                 {errors.message && <div className="invalid-feedback">{errors.message}</div>}
               </div>
               <div className="mb-3">
-                <div ref={recaptchaRef} className="g-recaptcha" />
-                {errors.recaptcha && <div className="text-danger small mt-1">{errors.recaptcha}</div>}
+                {/* Add a fixed height and relative position to prevent layout shift */}
+                <div
+                  ref={recaptchaRef}
+                  className="g-recaptcha"
+                  style={{ minHeight: 78, position: "relative" }}
+                />
+                {errors.recaptcha && (
+                  <div className="text-danger small mt-1">{errors.recaptcha}</div>
+                )}
               </div>
               <button
                 type="submit"
