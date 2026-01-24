@@ -3,6 +3,7 @@
 import useSWR from "swr";
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import styles from "../styles/Header.module.css";
 import { getNavCategories } from "@/lib/api/global.service";
 import { useGlobalConfig } from "@/context/GlobalConfigContext";
@@ -23,6 +24,26 @@ export default function Header() {
 
   const { data: config } = useGlobalConfig();
   const logo = config?.company_logo?.path || "/logo.webp";
+
+  // Auth state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+      setIsLoggedIn(!!token);
+    };
+    checkAuth();
+    window.addEventListener("snapcart-auth-change", checkAuth);
+    return () => window.removeEventListener("snapcart-auth-change", checkAuth);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("snapcart_token");
+    localStorage.removeItem("snapcart_user");
+    window.dispatchEvent(new Event("snapcart-auth-change"));
+    window.location.href = "/";
+  };
 
   return (
     <header className={styles.snapheader}>
@@ -117,9 +138,25 @@ export default function Header() {
                   </Link>
 
                   {/* User – Desktop */}
-                  <Link href="/auth/register" className={`btn ${styles.icon_btn} d-none d-xl-flex`} type="button">
-                    <i className="fas fa-user"></i>
-                  </Link>
+                  {!isLoggedIn ? (
+                    <Link href="/auth/register" className={`btn ${styles.icon_btn} d-none d-xl-flex`} type="button">
+                      <i className="fas fa-user"></i>
+                    </Link>
+                  ) : (
+                    <>
+                      <Link href="/profile" className={`btn ${styles.icon_btn} d-none d-xl-flex`} type="button" title="Profile">
+                        <i className="fas fa-user-circle"></i>
+                      </Link>
+                      <button
+                        className={`btn ${styles.icon_btn} d-none d-xl-flex`}
+                        type="button"
+                        title="Logout"
+                        onClick={handleLogout}
+                      >
+                        <i className="fas fa-sign-out-alt"></i>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

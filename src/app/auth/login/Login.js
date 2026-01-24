@@ -68,6 +68,9 @@ export default function Login() {
       };
       const res = await loginUser(payload);
       // Save session (for demo, use localStorage)
+      if (res.token) {
+        localStorage.setItem("snapcart_token", res.token);
+      }
       localStorage.setItem("snapcart_user", JSON.stringify(res.user || { email_or_phone: form.email_or_phone }));
       // Notify header to update
       window.dispatchEvent(new Event("snapcart-auth-change"));
