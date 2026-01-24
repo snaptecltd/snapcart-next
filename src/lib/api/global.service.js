@@ -91,3 +91,23 @@ export async function getFAQ() {
   const res = await api.get(ENDPOINTS.FAQ);
   return res.data;
 }
+
+export async function registerUser(data) {
+  const res = await api.post(ENDPOINTS.AUTH_REGISTER, data);
+  return res.data;
+}
+
+export async function loginUser(data) {
+  const res = await api.post(ENDPOINTS.AUTH_LOGIN, data);
+  return res.data;
+}
+
+export async function logoutUser() {
+  const res = await api.post(ENDPOINTS.AUTH_LOGOUT);
+  return res.data;
+}
+
+export async function resetPassword(data) {
+  const res = await api.post(ENDPOINTS.AUTH_PASSWORD_RESET, data);
+  return res.data;
+}

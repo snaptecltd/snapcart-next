@@ -19,4 +19,9 @@ export const ENDPOINTS = {
   DYNAMIC_PAGE: `${PREFIX}/page`,
   CONTACT_US: `${PREFIX}/contact-us`,
   FAQ: `${PREFIX}/faq`,
+  // auth endpoints 
+  AUTH_REGISTER: `${PREFIX}/auth/register`,
+  AUTH_LOGIN: `${PREFIX}/auth/login`,
+  AUTH_LOGOUT: `${PREFIX}/auth/logout`,
+  AUTH_PASSWORD_RESET: `${PREFIX}/auth/password-reset`,
 };

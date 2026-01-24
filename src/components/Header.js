@@ -117,9 +117,9 @@ export default function Header() {
                   </Link>
 
                   {/* User – Desktop */}
-                  <button className={`btn ${styles.icon_btn} d-none d-xl-flex`} type="button">
+                  <Link href="/auth/register" className={`btn ${styles.icon_btn} d-none d-xl-flex`} type="button">
                     <i className="fas fa-user"></i>
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
