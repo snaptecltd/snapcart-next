@@ -102,7 +102,7 @@ export default function Header() {
                 </Link>
 
                 <Link
-                  href="#"
+                  href="/order/preorder"
                   className={`d-none d-md-flex text-white text-decoration-none ${styles.nav_link}`}
                 >
                   Pre-order

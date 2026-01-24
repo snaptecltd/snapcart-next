@@ -92,6 +92,11 @@ export async function getFAQ() {
   return res.data;
 }
 
+export async function submitPreOrder(data) {
+  const res = await api.post(ENDPOINTS.PRE_ORDER, data);
+  return res.data;
+}
+
 export async function registerUser(data) {
   const res = await api.post(ENDPOINTS.AUTH_REGISTER, data);
   return res.data;
