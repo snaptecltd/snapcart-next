@@ -214,7 +214,7 @@ export default function Register() {
           />
           <label className="form-check-label" htmlFor="terms">
             I agree to Your{" "}
-            <Link href="/page/terms-and-conditions" className="text-primary" target="_blank">
+            <Link href="/page/terms-and-conditions" className="text-primary">
               Terms and condition
             </Link>{" "}
             and{" "}
