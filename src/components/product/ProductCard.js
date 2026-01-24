@@ -11,12 +11,12 @@ export default function ProductCard({ product }) {
   if (!product) return null;
 
   const href = `/product/${product.slug}`;
-  const thumb = product?.thumbnail_full_url?.path; // may be null
+  const thumb = product?.thumbnail_full_url?.path;
   const name = product?.name || "Product";
 
   const price = product?.unit_price ?? 0;
   const discount = product?.discount ?? 0;
-  const discountType = product?.discount_type; // "flat" / "percent"
+  const discountType = product?.discount_type;
 
   let oldPrice = null;
   let saveText = null;
@@ -30,18 +30,33 @@ export default function ProductCard({ product }) {
   }
 
   return (
-    <div className="card h-100 card-shadow border rounded-3xl overflow-hidden">
+    <div
+      className="card h-100 card-shadow border rounded-3xl overflow-hidden"
+      style={{
+        minWidth: 180,
+        maxWidth: 220,
+        width: 180,
+        margin: "0 auto",
+        boxSizing: "border-box",
+      }}
+    >
       <Link href={href} className="text-decoration-none text-dark">
         <div className="p-3">
           <div
             className="bg-white rounded-4 d-flex align-items-center justify-content-center"
-            style={{ height: 190 }}
+            style={{ height: 120 }}
           >
             {thumb ? (
               <img
                 src={thumb}
                 alt={name}
-                style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  objectFit: "contain",
+                  width: 60,
+                  height: 60,
+                }}
                 loading="lazy"
               />
             ) : (
@@ -50,13 +65,23 @@ export default function ProductCard({ product }) {
           </div>
 
           <div className="mt-3">
-            <div className="fw-semibold" style={{ minHeight: 44 }}>
+            <div
+              className="fw-semibold text-center"
+              style={{
+                minHeight: 44,
+                wordBreak: "break-word",
+                fontSize: 16,
+                lineHeight: "1.2",
+              }}
+            >
               {name}
             </div>
 
-            <div className="mt-2 fw-bold">{moneyBDT(price)}</div>
+            <div className="mt-2 fw-bold text-center" style={{ fontSize: 18 }}>
+              {moneyBDT(price)}
+            </div>
 
-            <div className="d-flex align-items-center gap-2 mt-2">
+            <div className="d-flex flex-column align-items-center gap-1 mt-2">
               {oldPrice ? (
                 <div className="text-muted text-decoration-line-through small">
                   {moneyBDT(oldPrice)}

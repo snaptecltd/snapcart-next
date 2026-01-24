@@ -67,6 +67,11 @@ export default function Header() {
   const [searched, setSearched] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchInputRef = useRef();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch trending on open
   useEffect(() => {
@@ -192,7 +197,7 @@ export default function Header() {
                     </button>
                   </div>
                   {/* Floating Modal */}
-                  {searchModalOpen && (
+                  {mounted && searchModalOpen && (
                     <div
                       className="shadow-lg bg-white rounded-4 p-4"
                       style={{
@@ -201,7 +206,7 @@ export default function Header() {
                         left: 0,
                         width: "100%",
                         minWidth: 400,
-                        maxWidth: 700,
+                        maxWidth: 950,
                         zIndex: 9999,
                         minHeight: 350,
                         maxHeight: 500,
@@ -239,7 +244,7 @@ export default function Header() {
                       {/* Right: Trending Products & Searched */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div className="fw-bold mb-3">Trending Products</div>
-                        <div className="row g-3">
+                        <div className="row g-3 flex-nowrap overflow-auto" style={{ flexWrap: "nowrap" }}>
                           {/* Searched products row */}
                           {searchValue && searched.length > 0 && (
                             <>
@@ -250,10 +255,14 @@ export default function Header() {
                                 >
                                   Search Results
                                 </div>
-                                <div className="row g-3">
+                                <div className="d-flex flex-row gap-3 overflow-auto pb-2">
                                   {searched.map((product) => (
                                     <div
-                                      className="col-12 col-md-6 col-lg-4"
+                                      style={{
+                                        minWidth: 180,
+                                        maxWidth: 220,
+                                        flex: "0 0 180px",
+                                      }}
                                       key={product.id}
                                     >
                                       <ProductCard product={product} />
@@ -265,14 +274,20 @@ export default function Header() {
                             </>
                           )}
                           {/* Trending products */}
-                          {trending.products.map((product) => (
-                            <div
-                              className="col-12 col-md-6 col-lg-4"
-                              key={product.id}
-                            >
-                              <ProductCard product={product} />
-                            </div>
-                          ))}
+                          <div className="d-flex flex-row gap-3 overflow-auto pb-2">
+                            {trending.products.map((product) => (
+                              <div
+                                style={{
+                                  minWidth: 180,
+                                  maxWidth: 220,
+                                  flex: "0 0 180px",
+                                }}
+                                key={product.id}
+                              >
+                                <ProductCard product={product} />
+                              </div>
+                            ))}
+                          </div>
                         </div>
                         {searchLoading && (
                           <div className="text-center py-3">Searching...</div>
@@ -444,6 +459,12 @@ export default function Header() {
         }
         .search-modal {
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+        .card.card-shadow {
+          box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
+        }
+        .rounded-3xl {
+          border-radius: 1.5rem !important;
         }
       `}</style>
     </header>
