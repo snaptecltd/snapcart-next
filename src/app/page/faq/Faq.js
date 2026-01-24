@@ -1,6 +1,7 @@
 "use client";
 import useSWR from "swr";
 import { getFAQ } from "@/lib/api/global.service";
+import SectionTitle from "@/components/html/SectionTitle";
 
 const fetcher = () => getFAQ();
 
@@ -14,7 +15,7 @@ export default function Faq() {
 
   return (
     <div className="container py-5">
-      <h2 className="mb-4 fw-bold text-center">Frequently Asked Questions</h2>
+      <SectionTitle first="Frequently" highlight="Asked Questions" />
       {isLoading && <div className="text-center py-5">Loading...</div>}
       {error && <div className="alert alert-danger">Failed to load FAQs.</div>}
       {data && (
@@ -30,6 +31,7 @@ export default function Faq() {
                   aria-expanded={idx === 0 ? "true" : "false"}
                   aria-controls={`collapse${faq.id}`}
                 >
+                  <i className="fas fa-question-circle me-2"></i>
                   {faq.question}
                 </button>
               </h2>
