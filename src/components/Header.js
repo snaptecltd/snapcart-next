@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import styles from "../styles/Header.module.css";
-import { getNavCategories } from "@/lib/api/global.service";
+import { getNavCategories, logoutUser } from "@/lib/api/global.service";
 import { useGlobalConfig } from "@/context/GlobalConfigContext";
 
 export default function Header() {
@@ -38,7 +38,12 @@ export default function Header() {
     return () => window.removeEventListener("snapcart-auth-change", checkAuth);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (e) {
+      // ignore error, proceed with local logout
+    }
     localStorage.removeItem("snapcart_token");
     localStorage.removeItem("snapcart_user");
     window.dispatchEvent(new Event("snapcart-auth-change"));
@@ -139,7 +144,7 @@ export default function Header() {
 
                   {/* User – Desktop */}
                   {!isLoggedIn ? (
-                    <Link href="/auth/register" className={`btn ${styles.icon_btn} d-none d-xl-flex`} type="button">
+                    <Link href="/auth/login" className={`btn ${styles.icon_btn} d-none d-xl-flex`} type="button">
                       <i className="fas fa-user"></i>
                     </Link>
                   ) : (
