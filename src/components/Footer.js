@@ -22,6 +22,7 @@ export default function Footer() {
             <h6 className="fw-semibold mb-3">QUICK LINKS</h6>
             <ul className="list-unstyled small">
               <li><Link href="/page/contact-us" className="text-secondary text-decoration-none">Contact Us</Link></li>
+              <li><Link href="/page/faq" className="text-secondary text-decoration-none">FAQs</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none">Featured Products</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none">Best Selling Product</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none">Latest Products</Link></li>

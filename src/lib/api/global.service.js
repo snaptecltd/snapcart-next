@@ -86,3 +86,8 @@ export async function submitContactUsForm(data) {
   const res = await api.post(ENDPOINTS.CONTACT_US, data);
   return res.data;
 }
+
+export async function getFAQ() {
+  const res = await api.get(ENDPOINTS.FAQ);
+  return res.data;
+}

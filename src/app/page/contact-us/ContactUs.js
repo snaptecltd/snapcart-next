@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { submitContactUsForm } from "@/lib/api/global.service";
+import SectionTitle from "@/components/html/SectionTitle";
 
 export default function ContactUs() {
   const [form, setForm] = useState({
@@ -147,7 +148,10 @@ export default function ContactUs() {
         {/* Left: Form */}
         <div className="col-12 col-md-6">
           <div className="bg-white p-4 p-md-5 rounded shadow-sm">
-            <h2 className="mb-4 fw-bold">Contact Us</h2>
+            <SectionTitle
+              first="Contact"
+              highlight=" Us"
+            />
             {success && <div className="alert alert-success">{success}</div>}
             {errors.general && <div className="alert alert-danger">{errors.general}</div>}
             <form onSubmit={handleSubmit} autoComplete="off">
