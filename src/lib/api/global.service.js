@@ -93,7 +93,11 @@ export async function getFAQ() {
 }
 
 export async function submitPreOrder(data) {
-  const res = await api.post(ENDPOINTS.PRE_ORDER, data);
+  const res = await api.post(ENDPOINTS.PRE_ORDER, data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return res.data;
 }
 

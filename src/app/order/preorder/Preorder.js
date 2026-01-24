@@ -43,10 +43,23 @@ export default function Preorder() {
     }));
   };
 
+  // Allowed image types
+  const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
+
   // Handle image upload
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (!allowedTypes.includes(file.type)) {
+        setErrors((prev) => ({
+          ...prev,
+          product_image: "Only JPG, JPEG, PNG, GIF, WEBP images are allowed.",
+        }));
+        setForm((prev) => ({ ...prev, product_image: null }));
+        setImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
       setForm((prev) => ({ ...prev, product_image: file }));
       setImagePreview(URL.createObjectURL(file));
       setErrors((prev) => ({ ...prev, product_image: undefined }));
@@ -77,7 +90,10 @@ export default function Preorder() {
       formData.append("email", form.email);
       formData.append("phone_number", form.phone_number);
       formData.append("address", form.address);
-      formData.append("product_image", form.product_image);
+      // Only append if product_image is a File
+      if (form.product_image instanceof File) {
+        formData.append("product_image", form.product_image);
+      }
 
       await submitPreOrder(formData);
       toast.success("Thank you! One of our agents will contact you soon.");
@@ -198,7 +214,7 @@ export default function Preorder() {
               <>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/jpg,image/gif,image/webp"
                   className="form-control"
                   style={{ maxWidth: 300 }}
                   ref={fileInputRef}
