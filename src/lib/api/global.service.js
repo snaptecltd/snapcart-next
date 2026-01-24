@@ -101,6 +101,18 @@ export async function submitPreOrder(data) {
   return res.data;
 }
 
+export async function getTrendingSearches() {
+  const res = await api.get(ENDPOINTS.TRENDING_SEARCHES);
+  return res.data;
+}
+
+export async function getSearchedProducts(query) {
+  const res = await api.get(ENDPOINTS.SEARCHED_PRODUCTS, {
+    params: { keyword: query },
+  });
+  return res.data;
+}
+
 export async function registerUser(data) {
   const res = await api.post(ENDPOINTS.AUTH_REGISTER, data);
   return res.data;

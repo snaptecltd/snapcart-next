@@ -20,6 +20,9 @@ export const ENDPOINTS = {
   CONTACT_US: `${PREFIX}/contact-us`,
   FAQ: `${PREFIX}/faq`,
   PRE_ORDER: `${PREFIX}/preorders/create`,
+  TRENDING_SEARCHES: `${PREFIX}/products/most-searching`,
+  SEARCHED_PRODUCTS: `${PREFIX}/products/search`,
+
   // auth endpoints 
   AUTH_REGISTER: `${PREFIX}/auth/register`,
   AUTH_LOGIN: `${PREFIX}/auth/login`,

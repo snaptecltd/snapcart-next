@@ -3,10 +3,16 @@
 import useSWR from "swr";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import styles from "../styles/Header.module.css";
-import { getNavCategories, logoutUser } from "@/lib/api/global.service";
+import {
+  getNavCategories,
+  logoutUser,
+  getTrendingSearches,
+  getSearchedProducts,
+} from "@/lib/api/global.service";
 import { useGlobalConfig } from "@/context/GlobalConfigContext";
+import ProductCard from "@/components/product/ProductCard";
 
 export default function Header() {
   const { data, error, isLoading } = useSWR(
@@ -30,7 +36,10 @@ export default function Header() {
 
   useEffect(() => {
     const checkAuth = () => {
-      const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("snapcart_token")
+          : null;
       setIsLoggedIn(!!token);
     };
     checkAuth();
@@ -49,6 +58,56 @@ export default function Header() {
     window.dispatchEvent(new Event("snapcart-auth-change"));
     window.location.href = "/";
   };
+
+  // Search state
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [trending, setTrending] = useState({ products: [], names: [] });
+  const [searched, setSearched] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchInputRef = useRef();
+
+  // Fetch trending on open
+  useEffect(() => {
+    if (searchModalOpen) {
+      getTrendingSearches().then((res) => {
+        setTrending({
+          products: res.products || [],
+          names: (res.products || []).map((p) => p.name),
+        });
+      });
+    }
+  }, [searchModalOpen]);
+
+  // Fetch searched products on input
+  useEffect(() => {
+    if (searchValue.trim().length > 0) {
+      setSearchLoading(true);
+      getSearchedProducts(searchValue.trim())
+        .then((res) => setSearched(res.products || []))
+        .finally(() => setSearchLoading(false));
+    } else {
+      setSearched([]);
+    }
+  }, [searchValue]);
+
+  // Close modal on outside click
+  useEffect(() => {
+    if (!searchModalOpen) return;
+    const handler = (e) => {
+      if (
+        searchInputRef.current &&
+        !searchInputRef.current.contains(e.target) &&
+        !e.target.classList.contains("search-btn")
+      ) {
+        setSearchModalOpen(false);
+        setShowSearch(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [searchModalOpen]);
 
   return (
     <header className={styles.snapheader}>
@@ -70,34 +129,168 @@ export default function Header() {
             </div>
 
             {/* Search */}
-            <div className="col-12 col-lg-5 order-3 order-lg-2 mt-2 mt-lg-0">
-              <button
-                type="button"
-                className={`btn btn-dark w-100 d-flex align-items-center justify-content-left h-100 py-2 px-3 flex-grow-1 rounded-pill border border-secondary ${styles.header_search_btn}`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-search me-2 text-secondary"
+            <div className="col-12 col-lg-5 order-3 order-lg-2 mt-2 mt-lg-0 position-relative">
+              {!showSearch ? (
+                <button
+                  type="button"
+                  className={`btn btn-dark w-100 d-flex align-items-center justify-content-left h-100 py-2 px-3 flex-grow-1 rounded-pill border border-secondary search-btn ${styles.header_search_btn}`}
+                  onClick={() => {
+                    setShowSearch(true);
+                    setSearchModalOpen(true);
+                    setTimeout(() => {
+                      if (searchInputRef.current)
+                        searchInputRef.current.querySelector("input")?.focus();
+                    }, 100);
+                  }}
                 >
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <path d="m21 21-4.3-4.3"></path>
-                </svg>
-                <span className="w-100 text-start ps-1 small">Search...</span>
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="lucide lucide-search me-2 text-secondary"
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.3-4.3"></path>
+                  </svg>
+                  <span className="w-100 text-start ps-1 small">Search...</span>
+                </button>
+              ) : (
+                <div ref={searchInputRef} className="w-100 position-relative">
+                  <div className="d-flex align-items-center w-100">
+                    <input
+                      type="text"
+                      className="form-control rounded-pill px-4 py-2"
+                      style={{ fontSize: 16, border: "1px solid #F67535" }}
+                      placeholder="Search for products..."
+                      value={searchValue}
+                      onChange={(e) => setSearchValue(e.target.value)}
+                      onFocus={() => setSearchModalOpen(true)}
+                    />
+                    <button
+                      className="btn"
+                      style={{
+                        background: "#F67535",
+                        color: "#fff",
+                        borderRadius: "50%",
+                        marginLeft: -48,
+                        zIndex: 2,
+                        width: 40,
+                        height: 40,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                      tabIndex={-1}
+                    >
+                      <i className="fas fa-search"></i>
+                    </button>
+                  </div>
+                  {/* Floating Modal */}
+                  {searchModalOpen && (
+                    <div
+                      className="shadow-lg bg-white rounded-4 p-4"
+                      style={{
+                        position: "absolute",
+                        top: "110%",
+                        left: 0,
+                        width: "100%",
+                        minWidth: 400,
+                        maxWidth: 700,
+                        zIndex: 9999,
+                        minHeight: 350,
+                        maxHeight: 500,
+                        overflowY: "auto",
+                        border: "1px solid #eee",
+                        display: "flex",
+                        gap: 24,
+                      }}
+                    >
+                      {/* Left: Recent/Trending */}
+                      <div style={{ minWidth: 180, flex: "0 0 180px" }}>
+                        <div className="fw-bold mb-2">Recent Searches</div>
+                        {/* For demo, just show last search */}
+                        {searchValue && <div className="mb-2">{searchValue}</div>}
+                        <button
+                          className="btn btn-link btn-sm text-secondary p-0"
+                          style={{ fontSize: 13 }}
+                          onClick={() => setSearchValue("")}
+                        >
+                          <i className="fas fa-trash-alt"></i> Clear
+                        </button>
+                        <div className="fw-bold mt-4 mb-2">Trending Search</div>
+                        <div>
+                          {trending.names.map((name, idx) => (
+                            <div
+                              key={idx}
+                              className="mb-1"
+                              style={{ fontSize: 15 }}
+                            >
+                              {name}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Right: Trending Products & Searched */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="fw-bold mb-3">Trending Products</div>
+                        <div className="row g-3">
+                          {/* Searched products row */}
+                          {searchValue && searched.length > 0 && (
+                            <>
+                              <div className="col-12">
+                                <div
+                                  className="fw-semibold mb-2"
+                                  style={{ fontSize: 15 }}
+                                >
+                                  Search Results
+                                </div>
+                                <div className="row g-3">
+                                  {searched.map((product) => (
+                                    <div
+                                      className="col-12 col-md-6 col-lg-4"
+                                      key={product.id}
+                                    >
+                                      <ProductCard product={product} />
+                                    </div>
+                                  ))}
+                                </div>
+                                <hr />
+                              </div>
+                            </>
+                          )}
+                          {/* Trending products */}
+                          {trending.products.map((product) => (
+                            <div
+                              className="col-12 col-md-6 col-lg-4"
+                              key={product.id}
+                            >
+                              <ProductCard product={product} />
+                            </div>
+                          ))}
+                        </div>
+                        {searchLoading && (
+                          <div className="text-center py-3">Searching...</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Right links */}
             <div className="col-6 col-lg-5 order-2 order-lg-4 text-end">
               <div className="d-flex justify-content-end align-items-center gap-4 small">
-                <Link href="/store-location" className={`text-white text-decoration-none ${styles.nav_link}`}>
+                <Link
+                  href="/store-location"
+                  className={`text-white text-decoration-none ${styles.nav_link}`}
+                >
                   Store
                 </Link>
 
@@ -144,12 +337,21 @@ export default function Header() {
 
                   {/* User – Desktop */}
                   {!isLoggedIn ? (
-                    <Link href="/auth/login" className={`btn ${styles.icon_btn} d-none d-xl-flex`} type="button">
+                    <Link
+                      href="/auth/login"
+                      className={`btn ${styles.icon_btn} d-none d-xl-flex`}
+                      type="button"
+                    >
                       <i className="fas fa-user"></i>
                     </Link>
                   ) : (
                     <>
-                      <Link href="/profile" className={`btn ${styles.icon_btn} d-none d-xl-flex`} type="button" title="Profile">
+                      <Link
+                        href="/profile"
+                        className={`btn ${styles.icon_btn} d-none d-xl-flex`}
+                        type="button"
+                        title="Profile"
+                      >
                         <i className="fas fa-user-circle"></i>
                       </Link>
                       <button
@@ -235,6 +437,15 @@ export default function Header() {
           </ul>
         </div>
       </nav>
+      <style jsx global>{`
+        .search-btn:focus {
+          outline: none;
+          box-shadow: none;
+        }
+        .search-modal {
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+      `}</style>
     </header>
   );
 }
