@@ -21,7 +21,7 @@ export default function Footer() {
           <div className="col-6 col-md-6 col-lg-3">
             <h6 className="fw-semibold mb-3">QUICK LINKS</h6>
             <ul className="list-unstyled small">
-              <li><Link href="#" className="text-secondary text-decoration-none">Profile Info</Link></li>
+              <li><Link href="/page/contact-us" className="text-secondary text-decoration-none">Contact Us</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none">Featured Products</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none">Best Selling Product</Link></li>
               <li><Link href="#" className="text-secondary text-decoration-none">Latest Products</Link></li>

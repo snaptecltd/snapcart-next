@@ -81,3 +81,8 @@ export async function getDynamicPage(slug) {
   const res = await api.get(`${ENDPOINTS.DYNAMIC_PAGE}?slug=${slug}`);
   return res.data;
 }
+
+export async function submitContactUsForm(data) {
+  const res = await api.post(ENDPOINTS.CONTACT_US, data);
+  return res.data;
+}

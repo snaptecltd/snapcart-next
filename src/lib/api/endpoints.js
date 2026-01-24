@@ -17,4 +17,5 @@ export const ENDPOINTS = {
   STORE_LOCATIONS: `${PREFIX}/store-locations`,
   STORE_DETAILS: `${PREFIX}/store/details`,
   DYNAMIC_PAGE: `${PREFIX}/page`,
+  CONTACT_US: `${PREFIX}/contact-us`,
 };
