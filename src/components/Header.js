@@ -418,7 +418,7 @@ export default function Header() {
                   >
                     {/* Parent */}
                     <Link
-                      href={`/category/${category.slug}`}
+                      href={`/${category.slug}`}
                       className="nav-link d-flex align-items-center gap-1"
                       role={hasChildren ? "button" : undefined}
                       data-bs-toggle={hasChildren ? "dropdown" : undefined}
@@ -435,7 +435,7 @@ export default function Header() {
                           <li key={child.id}>
                             <Link
                               className="dropdown-item"
-                              href={`/category/${category.slug}/${child.slug}`}
+                              href={`/${category.slug}/${child.slug}`}
                             >
                               {child.name}
                             </Link>
