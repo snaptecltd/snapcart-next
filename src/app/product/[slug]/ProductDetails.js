@@ -17,9 +17,14 @@ export default function ProductDetails() {
   const [qty, setQty] = useState(1);
   const [zoom, setZoom] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!slug) return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!slug || !mounted) return;
     getProductDetails(slug).then((data) => {
       setProduct(data);
       // Set default main image
@@ -36,7 +41,13 @@ export default function ProductDetails() {
         setSelectedVariation(data.variation[0].type);
       }
     });
-  }, [slug]);
+    // eslint-disable-next-line
+  }, [slug, mounted]);
+
+  if (!mounted) {
+    // Prevent hydration mismatch by not rendering until client
+    return null;
+  }
 
   if (!product) {
     return (
