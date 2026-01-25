@@ -23,6 +23,7 @@ export const ENDPOINTS = {
   TRENDING_SEARCHES: `${PREFIX}/products/most-searching`,
   SEARCHED_PRODUCTS: `${PREFIX}/products/search`,
   PRODUCT_DETAILS: `${PREFIX}/products/details`,
+  RELATED_PRODUCTS: `${PREFIX}/products/related-products`,
 
   // auth endpoints 
   AUTH_REGISTER: `${PREFIX}/auth/register`,

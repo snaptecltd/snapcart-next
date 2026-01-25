@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getProductDetails } from "@/lib/api/global.service";
+import { getProductDetails, getRelatedProducts } from "@/lib/api/global.service";
 import Breadcrumb from "@/components/html/Breadcrumb";
 import ProductCardType2 from "@/components/product/ProductCardType2";
+import ProductCard from "@/components/product/ProductCard";
 
 function moneyBDT(value) {
   const n = Number(value || 0);
@@ -40,6 +41,9 @@ export default function ProductDetails() {
   const [tab, setTab] = useState("spec");
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [mounted, setMounted] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+  const carouselRef = useRef(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -128,6 +132,27 @@ export default function ProductDetails() {
       setRecentlyViewed([]);
     }
   }, [mounted]);
+
+  // ✅ Fetch related products
+  useEffect(() => {
+    if (!product?.id || !mounted) return;
+    setRelatedLoading(true);
+    getRelatedProducts(product.id)
+      .then((data) => {
+        setRelatedProducts(Array.isArray(data) ? data : data?.products || []);
+      })
+      .catch(() => setRelatedProducts([]))
+      .finally(() => setRelatedLoading(false));
+  }, [product?.id, mounted]);
+
+  // ✅ Carousel navigation
+  const handleCarouselScroll = (direction) => {
+    if (!carouselRef.current) return;
+    const scrollAmount = 300;
+    const current = carouselRef.current.scrollLeft;
+    const target = direction === "next" ? current + scrollAmount : current - scrollAmount;
+    carouselRef.current.scrollTo({ left: target, behavior: "smooth" });
+  };
 
   if (!mounted) return null;
   if (!product) {
@@ -226,6 +251,8 @@ export default function ProductDetails() {
           <Breadcrumb items={breadcrumbItems} />
         </div>
       </div>
+
+      {/* Product Main Section */}
       <div className="row g-4">
         {/* Left: Image Gallery */}
         <div className="col-12 col-lg-6">
@@ -465,6 +492,7 @@ export default function ProductDetails() {
           </div>
         </div>
       </div>
+
       {/* Tabs: Specification, Description, FAQ */}
       <div className="row mt-5">
         <div className="col-12 col-lg-8">
@@ -592,6 +620,59 @@ export default function ProductDetails() {
           )}
         </div>
       </div>
+
+      {/* ✅ Related Products Section */}
+      {relatedProducts.length > 0 && (
+        <div className="row mt-5">
+          <div className="col-12">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h3 className="fw-bold mb-0">Related Product</h3>
+              <div className="d-flex gap-2">
+                <button
+                  className="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center"
+                  style={{ width: 40, height: 40 }}
+                  onClick={() => handleCarouselScroll("prev")}
+                  title="Previous"
+                >
+                  <i className="fas fa-chevron-left"></i>
+                </button>
+                <button
+                  className="btn btn-dark rounded-circle d-flex align-items-center justify-content-center"
+                  style={{ width: 40, height: 40 }}
+                  onClick={() => handleCarouselScroll("next")}
+                  title="Next"
+                >
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+
+            {/* Carousel */}
+            <div
+              ref={carouselRef}
+              className="d-flex gap-3 overflow-auto pb-3"
+              style={{
+                scrollBehavior: "smooth",
+                scrollbarWidth: "none",
+              }}
+            >
+              {relatedProducts.map((prod, idx) => (
+                <div
+                  key={`${prod.id}-${idx}`}
+                  style={{
+                    minWidth: 250,
+                    maxWidth: 250,
+                    flex: "0 0 250px",
+                  }}
+                >
+                  <ProductCard product={prod} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
       .spec-table-wrapper {
         border-radius: .75rem;
@@ -618,6 +699,21 @@ export default function ProductDetails() {
           background-color: #F67535 !important;
           color: #fff !important;
           border-color: #F67535 !important;
+        }
+
+        /* Hide scrollbar for carousel */
+        div::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .related-product-carousel {
+          scroll-behavior: smooth;
+          overflow-x: auto;
+          overflow-y: hidden;
+        }
+        
+        .related-product-carousel::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </div>

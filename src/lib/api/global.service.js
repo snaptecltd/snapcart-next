@@ -118,6 +118,11 @@ export async function getProductDetails(slug) {
   return res.data;
 }
 
+export async function getRelatedProducts(productId) {
+  const res = await api.get(`${ENDPOINTS.RELATED_PRODUCTS}/${productId}`);
+  return res.data;
+}
+
 export async function registerUser(data) {
   const res = await api.post(ENDPOINTS.AUTH_REGISTER, data);
   return res.data;
