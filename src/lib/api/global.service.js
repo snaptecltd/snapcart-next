@@ -113,6 +113,11 @@ export async function getSearchedProducts(query) {
   return res.data;
 }
 
+export async function getProductDetails(slug) {
+  const res = await api.get(`${ENDPOINTS.PRODUCT_DETAILS}/${slug}`);
+  return res.data;
+}
+
 export async function registerUser(data) {
   const res = await api.post(ENDPOINTS.AUTH_REGISTER, data);
   return res.data;

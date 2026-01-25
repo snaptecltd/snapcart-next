@@ -22,6 +22,7 @@ export const ENDPOINTS = {
   PRE_ORDER: `${PREFIX}/preorders/create`,
   TRENDING_SEARCHES: `${PREFIX}/products/most-searching`,
   SEARCHED_PRODUCTS: `${PREFIX}/products/search`,
+  PRODUCT_DETAILS: `${PREFIX}/products/details`,
 
   // auth endpoints 
   AUTH_REGISTER: `${PREFIX}/auth/register`,
