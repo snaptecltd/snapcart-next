@@ -1,11 +1,30 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
 import { getProductDetails } from "@/lib/api/global.service";
+import Breadcrumb from "@/components/html/Breadcrumb";
 
 function moneyBDT(value) {
   const n = Number(value || 0);
   return `৳ ${n.toLocaleString("en-BD")}`;
+}
+
+function parseFaqs(faqs) {
+  if (!faqs) return [];
+  try {
+    if (typeof faqs === "string") faqs = JSON.parse(faqs);
+    if (Array.isArray(faqs)) return faqs;
+    // Laravel style: {en: "[]", bd: "[]"}
+    const lang = typeof window !== "undefined" ? (navigator.language?.slice(0,2) || "en") : "en";
+    let arr = [];
+    if (faqs[lang]) arr = JSON.parse(faqs[lang]);
+    else if (faqs.en) arr = JSON.parse(faqs.en);
+    return arr;
+  } catch {
+    return [];
+  }
 }
 
 export default function ProductDetails() {
@@ -18,37 +37,47 @@ export default function ProductDetails() {
   const [zoom, setZoom] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
   const [mounted, setMounted] = useState(false);
+  const [tab, setTab] = useState("spec");
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
     if (!slug || !mounted) return;
     getProductDetails(slug).then((data) => {
-      setProduct(data);
-      // Set default main image
-      if (data?.images_full_url?.length) {
-        setMainImg(data.images_full_url[0].path);
-      } else if (data?.thumbnail_full_url?.path) {
-        setMainImg(data.thumbnail_full_url.path);
-      }
-      // Set default color/variation
-      if (data?.color_images_full_url?.length) {
-        setSelectedColor(data.color_images_full_url[0].color);
-      }
-      if (data?.variation?.length) {
-        setSelectedVariation(data.variation[0].type);
-      }
+    setProduct(data);
+
+    if (data?.images_full_url?.length) setMainImg(data.images_full_url[0].path);
+    else if (data?.thumbnail_full_url?.path) setMainImg(data.thumbnail_full_url.path);
+
+    // set default color
+    if (data?.color_images_full_url?.length) setSelectedColor(data.color_images_full_url[0].color);
+
+    // ✅ hide spec tab if no specification
+    const specCount = (data?.specifications || []).filter(s => s?.pivot?.value).length;
+    setTab(specCount > 0 ? "spec" : "desc");
+
+    // ✅ default selected variation
+    // If variations are actually colors (WhiteSmoke/Black), match first color name
+    if (data?.variation?.length) {
+        const colorNames = new Set((data?.colors_formatted || []).map(c => String(c.name || "").toLowerCase()));
+        const firstColorName = (data?.colors_formatted?.[0]?.name || "").toLowerCase();
+
+        const firstMatchingColorVar = data.variation.find(v => colorNames.has(String(v.type || "").toLowerCase()));
+        const firstNonColorVar = data.variation.find(v => !colorNames.has(String(v.type || "").toLowerCase()));
+
+        // prefer non-color variation if exists, otherwise color variation
+        setSelectedVariation(firstNonColorVar?.type || firstMatchingColorVar?.type || data.variation[0].type);
+
+        // if variations are color-based, sync variation with first color
+        if (!firstNonColorVar && firstColorName) {
+        const match = data.variation.find(v => String(v.type || "").toLowerCase() === firstColorName);
+        if (match) setSelectedVariation(match.type);
+        }
+    }
     });
     // eslint-disable-next-line
   }, [slug, mounted]);
 
-  if (!mounted) {
-    // Prevent hydration mismatch by not rendering until client
-    return null;
-  }
-
+  if (!mounted) return null;
   if (!product) {
     return (
       <div className="container py-5 text-center">
@@ -57,32 +86,55 @@ export default function ProductDetails() {
     );
   }
 
-  // Get images for gallery (color images or all images)
+  // Breadcrumbs
+  const breadcrumbItems = [
+    ...(product.category ? [{
+      label: product.category.name,
+      href: `/category/${product.category.slug}`
+    }] : []),
+    ...(product.sub_category ? [{
+      label: product.sub_category.name,
+      href: `/category/${product.category?.slug || ""}/${product.sub_category.slug}`
+    }] : []),
+    { label: product.name }
+  ];
+
+  // Gallery
   let galleryImages = product.images_full_url || [];
   if (selectedColor && product.color_images_full_url?.length) {
-    const colorImg = product.color_images_full_url.find(
-      (c) => c.color === selectedColor
-    );
+    const colorImg = product.color_images_full_url.find(c => c.color === selectedColor);
     if (colorImg) {
       galleryImages = [
         colorImg.image_name,
-        ...product.images_full_url.filter(
-          (img) => img.key !== colorImg.image_name.key
-        ),
+        ...product.images_full_url.filter(img => img.key !== colorImg.image_name.key),
       ];
     }
   }
+
+  // Color swatches
+  const colorSwatches = product.color_images_full_url?.map((c) => ({
+    color: c.color,
+    image: c.image_name?.path,
+    code: product.colors_formatted?.find((f) => f.code === "#" + c.color)?.code || "#" + c.color,
+    name: product.colors_formatted?.find((f) => f.code === "#" + c.color)?.name || c.color,
+  }));
+
+    // Variations excluding colors
+    const norm = (s) => String(s || "").trim().toLowerCase();
+
+    // colors list from API
+    const colorNameSet = new Set((product.colors_formatted || []).map((c) => norm(c.name)));
+
+    // exclude variations that are actually colors (WhiteSmoke/Black etc.)
+    const variations = (product.variation || []).filter((v) => !colorNameSet.has(norm(v.type)));
 
   // Price/discount logic
   let price = product.unit_price;
   let discount = product.discount;
   let discountType = product.discount_type;
   let oldPrice = null;
-  if (discountType === "flat" && discount > 0) {
-    oldPrice = price + discount;
-  } else if (discountType === "percent" && discount > 0) {
-    oldPrice = Math.round(price / (1 - discount / 100));
-  }
+  if (discountType === "flat" && discount > 0) oldPrice = price + discount;
+  else if (discountType === "percent" && discount > 0) oldPrice = Math.round(price / (1 - discount / 100));
   // If variation selected, override price
   if (selectedVariation && product.variation?.length) {
     const v = product.variation.find((v) => v.type === selectedVariation);
@@ -95,17 +147,6 @@ export default function ProductDetails() {
       ? product.variation.find((v) => v.type === selectedVariation)?.qty ?? product.current_stock
       : product.current_stock;
 
-  // Color swatches
-  const colorSwatches = product.color_images_full_url?.map((c) => ({
-    color: c.color,
-    image: c.image_name?.path,
-    code: product.colors_formatted?.find((f) => f.code === "#" + c.color)?.code || "#" + c.color,
-    name: product.colors_formatted?.find((f) => f.code === "#" + c.color)?.name || c.color,
-  }));
-
-  // Variations (e.g. RAM, Storage)
-  const variations = product.variation || [];
-
   // Handle zoom
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -115,8 +156,29 @@ export default function ProductDetails() {
     });
   };
 
+  // Specification table
+    const specificationRows = (product.specifications || [])
+    .filter((s) => s?.pivot?.value)
+    .map((s, idx) => (
+        <tr key={idx}>
+        <td className="fw-semibold">{s.name || "-"}</td>
+        <td>{s.pivot.value}</td>
+        </tr>
+    ));
+
+    const hasSpec = specificationRows.length > 0;
+
+  // FAQ
+  const faqs = parseFaqs(product.faqs);
+
   return (
     <div className="container py-4">
+      {/* Breadcrumb */}
+      <div className="row mb-3">
+        <div className="col-12">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
+      </div>
       <div className="row g-4">
         {/* Left: Image Gallery */}
         <div className="col-12 col-lg-6">
@@ -188,9 +250,28 @@ export default function ProductDetails() {
         {/* Right: Product Info */}
         <div className="col-12 col-lg-6">
           <div className="ps-lg-3">
-            <div className="mb-2 text-uppercase text-primary fw-bold" style={{ fontSize: 13 }}>
-              {product.brand?.name || ""}
+            {/* Brand badge */}
+            {product.brand && (
+            <div className="mb-2 d-flex align-items-center gap-2">
+                {product.brand?.image_full_url?.path && (
+                <img
+                    src={product.brand.image_full_url.path}
+                    alt={product.brand.name}
+                    width={34}
+                    height={34}
+                    style={{ objectFit: "contain", borderRadius: 6 }}
+                />
+                )}
+
+                <Link
+                href={`/brand/${product.brand.id}`}
+                className="text-decoration-none fw-semibold"
+                style={{ color: "#222" }}
+                >
+                {product.brand.name}
+                </Link>
             </div>
+            )}
             <h2 className="fw-bold mb-2" style={{ fontSize: "2rem" }}>{product.name}</h2>
             <div className="mb-2">
               <span className="fw-bold" style={{ fontSize: 22, color: "#222" }}>{moneyBDT(price)}</span>
@@ -229,10 +310,16 @@ export default function ProductDetails() {
                         color: "#222",
                         boxShadow: selectedColor === c.color ? "0 0 0 2px #F67535" : "none",
                       }}
-                      onClick={() => {
-                        setSelectedColor(c.color);
-                        setMainImg(c.image);
-                      }}
+                    onClick={() => {
+                    setSelectedColor(c.color);
+                    setMainImg(c.image);
+
+                    // ✅ if variation types are color names, sync it
+                    const matchVar = (product.variation || []).find(
+                        (v) => norm(v.type) === norm(c.name)
+                    );
+                    if (matchVar) setSelectedVariation(matchVar.type);
+                    }}
                     >
                       <span
                         style={{
@@ -331,23 +418,117 @@ export default function ProductDetails() {
           </div>
         </div>
       </div>
-      {/* Details */}
-      {product.details && (
-        <div className="row mt-5">
-          <div className="col-12 col-lg-8 mx-auto">
-            <div className="bg-white rounded-4 p-4 shadow-sm border">
-              <div dangerouslySetInnerHTML={{ __html: product.details }} />
-            </div>
+      {/* Tabs: Specification, Description, FAQ */}
+      <div className="row mt-5">
+        <div className="col-12 col-lg-10">
+        <div className="d-flex gap-2 mb-4 flex-wrap">
+        {hasSpec && (
+            <button
+            className={`btn ${tab === "spec" ? "btn-warning text-white" : "btn-outline-light border"} fw-semibold nav-btn`}
+            style={{ background: "#F67535", borderRadius: 8, minWidth: 140 }}
+            onClick={() => setTab("spec")}
+            >
+            Specification
+            </button>
+        )}
+
+        <button
+            className={`btn ${tab === "desc" ? "btn-warning text-white" : "btn-outline-light border"} fw-semibold nav-btn`}
+            style={{ borderRadius: 8, minWidth: 140 }}
+            onClick={() => setTab("desc")}
+        >
+            Description
+        </button>
+
+        <button
+            className={`btn ${tab === "faq" ? "btn-warning text-white" : "btn-outline-light border"} fw-semibold nav-btn`}
+            style={{ borderRadius: 8, minWidth: 140 }}
+            onClick={() => setTab("faq")}
+        >
+            FAQ
+        </button>
+        </div>
+          <div className="bg-whitep-4">
+            {tab === "spec" && hasSpec && (
+              <>
+                <h4 className="fw-bold mb-3">Specification</h4>
+                {specificationRows.length > 0 ? (
+                  <div className="table-responsive spec-table-wrapper">
+                    <table className="table table-bordered align-middle mb-0">
+                      <tbody>
+                        {specificationRows}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-5 text-muted">No specification found.</div>
+                )}
+              </>
+            )}
+            {tab === "desc" && (
+              <>
+                <h4 className="fw-bold mb-3">Description</h4>
+                <div dangerouslySetInnerHTML={{ __html: product.details || "<div class='text-muted'>No description found.</div>" }} />
+              </>
+            )}
+            {tab === "faq" && (
+              <>
+                <h4 className="fw-bold mb-3">FAQ</h4>
+                {faqs.length > 0 ? (
+                  <div className="accordion" id="productFaqAccordion">
+                    {faqs.map((faq, idx) => (
+                      <div className="accordion-item" key={idx}>
+                        <h2 className="accordion-header" id={`faq-heading-${idx}`}>
+                          <button
+                            className={`accordion-button${idx !== 0 ? " collapsed" : ""}`}
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target={`#faq-collapse-${idx}`}
+                            aria-expanded={idx === 0 ? "true" : "false"}
+                            aria-controls={`faq-collapse-${idx}`}
+                          >
+                            {faq.question}
+                          </button>
+                        </h2>
+                        <div
+                          id={`faq-collapse-${idx}`}
+                          className={`accordion-collapse collapse${idx === 0 ? " show" : ""}`}
+                          aria-labelledby={`faq-heading-${idx}`}
+                          data-bs-parent="#productFaqAccordion"
+                        >
+                          <div className="accordion-body">{faq.answer}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-5 text-muted">No FAQs found for this product.</div>
+                )}
+              </>
+            )}
           </div>
         </div>
-      )}
+      </div>
       <style>{`
+      .spec-table-wrapper {
+        border-radius: .75rem;
+        border: 1px solid #e5e7eb;
+      }
         .product-zoom-img {
           transition: transform 0.2s;
         }
         .product-zoom-img:hover {
           transform: scale(1.08);
           z-index: 2;
+        }
+        .nav-btn {
+        color:#333;
+          transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .nav-btn:hover {
+          background-color: #F67535 !important;
+          color: #fff !important;
+          border-color: #F67535 !important;
         }
       `}</style>
     </div>
