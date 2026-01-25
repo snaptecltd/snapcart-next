@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getProductDetails } from "@/lib/api/global.service";
 import Breadcrumb from "@/components/html/Breadcrumb";
+import ProductCardType2 from "@/components/product/ProductCardType2";
 
 function moneyBDT(value) {
   const n = Number(value || 0);
@@ -36,28 +37,37 @@ export default function ProductDetails() {
   const [qty, setQty] = useState(1);
   const [zoom, setZoom] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
-  const [mounted, setMounted] = useState(false);
   const [tab, setTab] = useState("spec");
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // ✅ Reset product when slug changes (for Next Link navigation)
   useEffect(() => {
     if (!slug || !mounted) return;
+    setProduct(null); // Clear product to show loading state
+  }, [slug, mounted]);
+
+  useEffect(() => {
+    if (!slug || !mounted || product !== null) return; // Only fetch if product is null
+    
     getProductDetails(slug).then((data) => {
-    setProduct(data);
+      setProduct(data);
 
-    if (data?.images_full_url?.length) setMainImg(data.images_full_url[0].path);
-    else if (data?.thumbnail_full_url?.path) setMainImg(data.thumbnail_full_url.path);
+      if (data?.images_full_url?.length) setMainImg(data.images_full_url[0].path);
+      else if (data?.thumbnail_full_url?.path) setMainImg(data.thumbnail_full_url.path);
 
-    // set default color
-    if (data?.color_images_full_url?.length) setSelectedColor(data.color_images_full_url[0].color);
+      // set default color
+      if (data?.color_images_full_url?.length) setSelectedColor(data.color_images_full_url[0].color);
 
-    // ✅ hide spec tab if no specification
-    const specCount = (data?.specifications || []).filter(s => s?.pivot?.value).length;
-    setTab(specCount > 0 ? "spec" : "desc");
+      // ✅ hide spec tab if no specification
+      const specCount = (data?.specifications || []).filter(s => s?.pivot?.value).length;
+      setTab(specCount > 0 ? "spec" : "desc");
 
-    // ✅ default selected variation
-    // If variations are actually colors (WhiteSmoke/Black), match first color name
-    if (data?.variation?.length) {
+      // ✅ default selected variation
+      // If variations are actually colors (WhiteSmoke/Black), match first color name
+      if (data?.variation?.length) {
         const colorNames = new Set((data?.colors_formatted || []).map(c => String(c.name || "").toLowerCase()));
         const firstColorName = (data?.colors_formatted?.[0]?.name || "").toLowerCase();
 
@@ -69,13 +79,55 @@ export default function ProductDetails() {
 
         // if variations are color-based, sync variation with first color
         if (!firstNonColorVar && firstColorName) {
-        const match = data.variation.find(v => String(v.type || "").toLowerCase() === firstColorName);
-        if (match) setSelectedVariation(match.type);
+          const match = data.variation.find(v => String(v.type || "").toLowerCase() === firstColorName);
+          if (match) setSelectedVariation(match.type);
         }
-    }
+      }
+
+      // ✅ Store full product data in localStorage
+      if (data?.id) {
+        let viewed = [];
+        try {
+          const stored = localStorage.getItem("snapcart_recently_viewed");
+          if (stored) viewed = JSON.parse(stored);
+        } catch (e) {
+          viewed = [];
+        }
+
+        // Remove if already exists, add to front
+        viewed = viewed.filter(p => p.id !== data.id);
+
+        // Create product object with all needed fields
+        const productData = {
+          id: data.id,
+          name: data.name,
+          slug: data.slug,
+          unit_price: data.unit_price,
+          discount: data.discount,
+          discount_type: data.discount_type,
+          thumbnail_full_url: data.thumbnail_full_url,
+        };
+
+        viewed.unshift(productData);
+        // Keep max 8
+        viewed = viewed.slice(0, 8);
+        localStorage.setItem("snapcart_recently_viewed", JSON.stringify(viewed));
+      }
     });
     // eslint-disable-next-line
-  }, [slug, mounted]);
+  }, [slug, mounted, product]);
+
+  // ✅ Load recently viewed products
+  useEffect(() => {
+    if (!mounted) return;
+    try {
+      const stored = localStorage.getItem("snapcart_recently_viewed");
+      const viewed = stored ? JSON.parse(stored) : [];
+      setRecentlyViewed(viewed);
+    } catch (e) {
+      setRecentlyViewed([]);
+    }
+  }, [mounted]);
 
   if (!mounted) return null;
   if (!product) {
@@ -119,14 +171,10 @@ export default function ProductDetails() {
     name: product.colors_formatted?.find((f) => f.code === "#" + c.color)?.name || c.color,
   }));
 
-    // Variations excluding colors
-    const norm = (s) => String(s || "").trim().toLowerCase();
-
-    // colors list from API
-    const colorNameSet = new Set((product.colors_formatted || []).map((c) => norm(c.name)));
-
-    // exclude variations that are actually colors (WhiteSmoke/Black etc.)
-    const variations = (product.variation || []).filter((v) => !colorNameSet.has(norm(v.type)));
+  // Variations excluding colors
+  const norm = (s) => String(s || "").trim().toLowerCase();
+  const colorNameSet = new Set((product.colors_formatted || []).map((c) => norm(c.name)));
+  const variations = (product.variation || []).filter((v) => !colorNameSet.has(norm(v.type)));
 
   // Price/discount logic
   let price = product.unit_price;
@@ -142,10 +190,9 @@ export default function ProductDetails() {
   }
 
   // Stock
-  const stock =
-    selectedVariation && product.variation?.length
-      ? product.variation.find((v) => v.type === selectedVariation)?.qty ?? product.current_stock
-      : product.current_stock;
+  const stock = selectedVariation && product.variation?.length
+    ? product.variation.find((v) => v.type === selectedVariation)?.qty ?? product.current_stock
+    : product.current_stock;
 
   // Handle zoom
   const handleMouseMove = (e) => {
@@ -157,16 +204,16 @@ export default function ProductDetails() {
   };
 
   // Specification table
-    const specificationRows = (product.specifications || [])
+  const specificationRows = (product.specifications || [])
     .filter((s) => s?.pivot?.value)
     .map((s, idx) => (
-        <tr key={idx}>
+      <tr key={idx}>
         <td className="fw-semibold">{s.name || "-"}</td>
         <td>{s.pivot.value}</td>
-        </tr>
+      </tr>
     ));
 
-    const hasSpec = specificationRows.length > 0;
+  const hasSpec = specificationRows.length > 0;
 
   // FAQ
   const faqs = parseFaqs(product.faqs);
@@ -284,7 +331,7 @@ export default function ProductDetails() {
                 <span className="badge bg-warning text-dark ms-2">{discountType === "flat" ? `${moneyBDT(discount)} OFF` : `${discount}% OFF`}</span>
               )}
             </div>
-            <div className="mb-2">
+            <div className="w-100">
               <span className="text-success fw-semibold">
                 Availability: {stock > 0 ? "In Stock" : "Out of Stock"}
               </span>
@@ -292,6 +339,10 @@ export default function ProductDetails() {
                 Code: {product.code}
               </span>
             </div>
+            {/* Short details */}
+            {product.short_details && (
+              <div className="my-3" dangerouslySetInnerHTML={{ __html: product.short_details }} />
+            )}
             {/* Color selection */}
             {colorSwatches?.length > 0 && (
               <div className="mb-3">
@@ -342,7 +393,7 @@ export default function ProductDetails() {
               <div className="mb-3">
                 <div className="fw-semibold mb-1">Variation:</div>
                 <div className="d-flex flex-wrap gap-2">
-                  {variations.map((v, idx) => (
+                  {variations.map((v) => (
                     <button
                       key={v.type}
                       type="button"
@@ -402,10 +453,6 @@ export default function ProductDetails() {
                 <i className="fas fa-shopping-cart me-2"></i>Add To Cart
               </button>
             </div>
-            {/* Short details */}
-            {product.short_details && (
-              <div className="mb-3" dangerouslySetInnerHTML={{ __html: product.short_details }} />
-            )}
             {/* EMI, Whatsapp, etc. */}
             <div className="d-flex gap-3 align-items-center flex-wrap">
               <span className="badge bg-light text-dark border px-3 py-2">
@@ -420,93 +467,129 @@ export default function ProductDetails() {
       </div>
       {/* Tabs: Specification, Description, FAQ */}
       <div className="row mt-5">
-        <div className="col-12 col-lg-10">
-        <div className="d-flex gap-2 mb-4 flex-wrap">
-        {hasSpec && (
+        <div className="col-12 col-lg-8">
+            <div className="d-flex gap-2 mb-4 flex-wrap">
+            {hasSpec && (
+                <button
+                className={`btn ${tab === "spec" ? "btn-warning text-white" : "btn-outline-light border"} fw-semibold nav-btn`}
+                style={{ background: "#F67535", borderRadius: 8, minWidth: 140 }}
+                onClick={() => setTab("spec")}
+                >
+                Specification
+                </button>
+            )}
+
             <button
-            className={`btn ${tab === "spec" ? "btn-warning text-white" : "btn-outline-light border"} fw-semibold nav-btn`}
-            style={{ background: "#F67535", borderRadius: 8, minWidth: 140 }}
-            onClick={() => setTab("spec")}
+                className={`btn ${tab === "desc" ? "btn-warning text-white" : "btn-outline-light border"} fw-semibold nav-btn`}
+                style={{ borderRadius: 8, minWidth: 140 }}
+                onClick={() => setTab("desc")}
             >
-            Specification
+                Description
             </button>
-        )}
 
-        <button
-            className={`btn ${tab === "desc" ? "btn-warning text-white" : "btn-outline-light border"} fw-semibold nav-btn`}
-            style={{ borderRadius: 8, minWidth: 140 }}
-            onClick={() => setTab("desc")}
-        >
-            Description
-        </button>
-
-        <button
-            className={`btn ${tab === "faq" ? "btn-warning text-white" : "btn-outline-light border"} fw-semibold nav-btn`}
-            style={{ borderRadius: 8, minWidth: 140 }}
-            onClick={() => setTab("faq")}
-        >
-            FAQ
-        </button>
+            <button
+                className={`btn ${tab === "faq" ? "btn-warning text-white" : "btn-outline-light border"} fw-semibold nav-btn`}
+                style={{ borderRadius: 8, minWidth: 140 }}
+                onClick={() => setTab("faq")}
+            >
+                FAQ
+            </button>
         </div>
-          <div className="bg-whitep-4">
+        <div className="bg-whitep-4">
             {tab === "spec" && hasSpec && (
-              <>
+            <>
                 <h4 className="fw-bold mb-3">Specification</h4>
                 {specificationRows.length > 0 ? (
-                  <div className="table-responsive spec-table-wrapper">
-                    <table className="table table-bordered align-middle mb-0">
-                      <tbody>
+                <div className="table-responsive spec-table-wrapper">
+                    <table className="table align-middle mb-0">
+                    <tbody>
                         {specificationRows}
-                      </tbody>
+                    </tbody>
                     </table>
-                  </div>
+                </div>
                 ) : (
-                  <div className="text-center py-5 text-muted">No specification found.</div>
+                <div className="text-center py-5 text-muted">No specification found.</div>
                 )}
-              </>
+            </>
             )}
             {tab === "desc" && (
-              <>
+            <>
                 <h4 className="fw-bold mb-3">Description</h4>
                 <div dangerouslySetInnerHTML={{ __html: product.details || "<div class='text-muted'>No description found.</div>" }} />
-              </>
+            </>
             )}
             {tab === "faq" && (
-              <>
+            <>
                 <h4 className="fw-bold mb-3">FAQ</h4>
                 {faqs.length > 0 ? (
-                  <div className="accordion" id="productFaqAccordion">
+                <div className="accordion" id="productFaqAccordion">
                     {faqs.map((faq, idx) => (
-                      <div className="accordion-item" key={idx}>
+                    <div className="accordion-item" key={idx}>
                         <h2 className="accordion-header" id={`faq-heading-${idx}`}>
-                          <button
+                        <button
                             className={`accordion-button${idx !== 0 ? " collapsed" : ""}`}
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target={`#faq-collapse-${idx}`}
                             aria-expanded={idx === 0 ? "true" : "false"}
                             aria-controls={`faq-collapse-${idx}`}
-                          >
+                        >
                             {faq.question}
-                          </button>
+                        </button>
                         </h2>
                         <div
-                          id={`faq-collapse-${idx}`}
-                          className={`accordion-collapse collapse${idx === 0 ? " show" : ""}`}
-                          aria-labelledby={`faq-heading-${idx}`}
-                          data-bs-parent="#productFaqAccordion"
+                        id={`faq-collapse-${idx}`}
+                        className={`accordion-collapse collapse${idx === 0 ? " show" : ""}`}
+                        aria-labelledby={`faq-heading-${idx}`}
+                        data-bs-parent="#productFaqAccordion"
                         >
-                          <div className="accordion-body">{faq.answer}</div>
+                        <div className="accordion-body">{faq.answer}</div>
                         </div>
-                      </div>
+                    </div>
                     ))}
-                  </div>
+                </div>
                 ) : (
-                  <div className="text-center py-5 text-muted">No FAQs found for this product.</div>
+                <div className="text-center py-5 text-muted">No FAQs found for this product.</div>
                 )}
-              </>
+            </>
             )}
-          </div>
+        </div>
+        </div>
+        <div className="col-12 col-lg-4">
+            {/* recently viewed products place holder */}
+            {recentlyViewed.length > 0 && (
+            <div className="bg-white p-3">
+              <h5 className="fw-bold mb-3">
+                <i className="fas fa-history me-2" style={{ color: "#F67535" }}></i>Recently Viewed
+              </h5>
+              <div className="d-flex flex-column gap-3">
+                {recentlyViewed.map((p, idx) => (
+                  <div key={`${p.id}-${idx}`} style={{ position: "relative" }}>
+                    {/* Show "Currently Viewing" badge if this is the current product */}
+                    {p.id === product.id && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          zIndex: 10,
+                          background: "#F67535",
+                          color: "#fff",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                          fontSize: "11px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Currently Viewing
+                      </div>
+                    )}
+                    <ProductCardType2 product={p} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <style>{`
@@ -514,6 +597,12 @@ export default function ProductDetails() {
         border-radius: .75rem;
         border: 1px solid #e5e7eb;
       }
+
+      .spec-table-wrapper table tr :nth-child(odd) {
+        background-color: #fafafa;
+        border-right: 1px solid #e5e7eb;
+      }
+
         .product-zoom-img {
           transition: transform 0.2s;
         }
