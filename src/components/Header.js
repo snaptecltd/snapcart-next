@@ -205,19 +205,14 @@ export default function Header() {
                         top: "110%",
                         left: 0,
                         width: "100%",
-                        minWidth: 400,
-                        maxWidth: 950,
                         zIndex: 9999,
-                        minHeight: 350,
-                        maxHeight: 500,
                         overflowY: "auto",
                         border: "1px solid #eee",
                         display: "flex",
-                        gap: 24,
                       }}
                     >
                       {/* Left: Recent/Trending */}
-                      <div style={{ minWidth: 180, flex: "0 0 180px" }}>
+                      <div style={{ minWidth: 180, flex: "0 0 180px" }} className="d-none">
                         <div className="fw-bold mb-2">Recent Searches</div>
                         {/* For demo, just show last search */}
                         {searchValue && <div className="mb-2">{searchValue}</div>}
@@ -255,7 +250,7 @@ export default function Header() {
                                 >
                                   Search Results
                                 </div>
-                                <div className="d-flex flex-row gap-3 overflow-auto pb-2">
+                                <div className="d-flex flex-column gap-3 overflow-auto pb-2">
                                   {searched.map((product) => (
                                     <div
                                       style={{
@@ -274,7 +269,7 @@ export default function Header() {
                             </>
                           )}
                           {/* Trending products */}
-                          <div className="d-flex flex-row gap-3 overflow-auto pb-2">
+                          <div className="row gap-3 overflow-auto pb-2 m-0">
                             {trending.products.map((product) => (
                               <div
                                 style={{
@@ -284,7 +279,9 @@ export default function Header() {
                                 }}
                                 key={product.id}
                               >
-                                <ProductCard product={product} />
+                                <div className="col-12.col-md-3">
+                                  <ProductCard product={product} />
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -452,7 +449,7 @@ export default function Header() {
           </ul>
         </div>
       </nav>
-      <style jsx global>{`
+      <style>{`
         .search-btn:focus {
           outline: none;
           box-shadow: none;

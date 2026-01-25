@@ -33,19 +33,14 @@ export default function ProductCard({ product }) {
     <div
       className="card h-100 card-shadow border rounded-3xl overflow-hidden"
       style={{
-        minWidth: 180,
-        maxWidth: 220,
-        width: 180,
+        width: "100%",
         margin: "0 auto",
         boxSizing: "border-box",
       }}
     >
       <Link href={href} className="text-decoration-none text-dark">
         <div className="p-3">
-          <div
-            className="bg-white rounded-4 d-flex align-items-center justify-content-center"
-            style={{ height: 120 }}
-          >
+          <div className="bg-white rounded-4 d-flex align-items-center justify-content-center">
             {thumb ? (
               <img
                 src={thumb}
@@ -54,8 +49,7 @@ export default function ProductCard({ product }) {
                   maxWidth: "100%",
                   maxHeight: "100%",
                   objectFit: "contain",
-                  width: 60,
-                  height: 60,
+                  width: "90%",
                 }}
                 loading="lazy"
               />
@@ -66,9 +60,8 @@ export default function ProductCard({ product }) {
 
           <div className="mt-3">
             <div
-              className="fw-semibold text-center"
+              className="fw-semibold"
               style={{
-                minHeight: 44,
                 wordBreak: "break-word",
                 fontSize: 16,
                 lineHeight: "1.2",
@@ -77,11 +70,11 @@ export default function ProductCard({ product }) {
               {name}
             </div>
 
-            <div className="mt-2 fw-bold text-center" style={{ fontSize: 18 }}>
+            <div className="mt-2 fw-bold" style={{ fontSize: 16 }}>
               {moneyBDT(price)}
             </div>
 
-            <div className="d-flex flex-column align-items-center gap-1 mt-2">
+            <div className="d-flex align-items-center gap-1 mt-2">
               {oldPrice ? (
                 <div className="text-muted text-decoration-line-through small">
                   {moneyBDT(oldPrice)}
@@ -89,7 +82,7 @@ export default function ProductCard({ product }) {
               ) : null}
 
               {saveText ? (
-                <span className="badge rounded-pill text-success bg-success-subtle px-3 py-2">
+                <span className="badge rounded-pill text-success px-3 py-2" style={{ background: "#DCFCE7" }}>
                   {saveText}
                 </span>
               ) : null}
