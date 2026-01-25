@@ -107,8 +107,15 @@ export async function getTrendingSearches() {
 }
 
 export async function getSearchedProducts(query) {
-  const res = await api.get(ENDPOINTS.SEARCHED_PRODUCTS, {
+  const res = await api.get(ENDPOINTS.LIGHT_SEARCHED_PRODUCTS, {
     params: { keyword: query },
+  });
+  return res.data;
+}
+
+export async function filterProducts(filters) {
+  const res = await api.get(ENDPOINTS.PRODUCT_FILTER, {
+    params: filters,
   });
   return res.data;
 }

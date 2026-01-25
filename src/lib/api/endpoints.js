@@ -21,7 +21,8 @@ export const ENDPOINTS = {
   FAQ: `${PREFIX}/faq`,
   PRE_ORDER: `${PREFIX}/preorders/create`,
   TRENDING_SEARCHES: `${PREFIX}/products/most-searching`,
-  SEARCHED_PRODUCTS: `${PREFIX}/products/search`,
+  LIGHT_SEARCHED_PRODUCTS: `${PREFIX}/products/light-search`,
+  PRODUCT_FILTER: `${PREFIX}/products/search`,
   PRODUCT_DETAILS: `${PREFIX}/products/details`,
   RELATED_PRODUCTS: `${PREFIX}/products/related-products`,
 
