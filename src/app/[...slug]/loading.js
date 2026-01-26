@@ -209,6 +209,9 @@ export default function ListingPage() {
             onToggleAttr={onToggleAttr}
             onReset={onReset}
             onRemoveChip={onRemoveChip}
+            onToggleCategory={(slug)=>pushUrl({...ui,category:slug,page:1})}
+            onToggleSub={(slug)=>pushUrl({...ui,sub_category:slug,page:1})}
+            onToggleSubSub={(slug)=>pushUrl({...ui,sub_sub_category:slug,page:1})}
           />
         </div>
 

@@ -113,8 +113,8 @@ export default function ProductDetails() {
         };
 
         viewed.unshift(productData);
-        // Keep max 8
-        viewed = viewed.slice(0, 8);
+        // Keep max 5 items
+        viewed = viewed.slice(0, 5);
         localStorage.setItem("snapcart_recently_viewed", JSON.stringify(viewed));
       }
     });

@@ -3,6 +3,7 @@
 import AppliedChips from "./AppliedChips";
 import PriceRangeFilter from "./PriceRangeFilter";
 import CheckboxFilterGroup from "./CheckboxFilterGroup";
+import CategoryFilterSidebar from "./CategoryFilterSidebar";
 
 export default function FilterSidebar({
   meta,
@@ -62,7 +63,6 @@ export default function FilterSidebar({
         value={{ min_price: state?.min_price, max_price: state?.max_price }}
         onChange={onSetPrice}
       />
-
       <CheckboxFilterGroup
         title="Brands"
         options={meta?.brands || []}
