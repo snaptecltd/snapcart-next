@@ -19,7 +19,7 @@ export default function HomeSlider() {
           <div className="carousel-inner rounded-3 h-100">
             {/* Slide 1 */}
             <div className="carousel-item active h-100">
-              <Link href="/category/printer" className="d-block h-100">
+              <Link href="/printer" className="d-block h-100">
                 <div className="position-relative w-100 h-100">
                   <Image
                     src="/slider1.webp"
@@ -35,7 +35,7 @@ export default function HomeSlider() {
 
             {/* Slide 2 */}
             <div className="carousel-item h-100">
-              <Link href="/category/laptop" className="d-block h-100">
+              <Link href="/laptop" className="d-block h-100">
                 <div className="position-relative w-100 h-100">
                   <Image
                     src="/slider2.webp"

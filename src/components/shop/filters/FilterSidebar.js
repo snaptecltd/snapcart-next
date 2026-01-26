@@ -63,12 +63,12 @@ export default function FilterSidebar({
         value={{ min_price: state?.min_price, max_price: state?.max_price }}
         onChange={onSetPrice}
       />
-      <CheckboxFilterGroup
+      {/* <CheckboxFilterGroup
         title="Brands"
         options={meta?.brands || []}
         selected={state?.brands || []}
         onToggle={onToggleBrand}
-      />
+      /> */}
 
       <CheckboxFilterGroup
         title="Colors"

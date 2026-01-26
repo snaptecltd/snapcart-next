@@ -47,7 +47,7 @@ export default function HomeCategories() {
         <div className="row g-4 g-md-5 row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8">
           {visibleItems.map((cat) => {
             const icon = cat?.icon_full_url?.path;
-            const href = `/category/${cat.slug}`;
+            const href = `/${cat.slug}`;
 
             return (
               <div key={cat.id} className="col">

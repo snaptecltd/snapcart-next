@@ -99,20 +99,36 @@ export default function ListingPage() {
   async function load() {
     setLoading(true);
     try {
-      // ✅ IMPORTANT:
-      // তোমার backend response ideally হবে:
-      // { total_size, products, filter_meta: {brands, colors, attributes, price} }
       const data = await filterProducts(apiFilters);
 
       setProducts(data?.products || []);
       setTotal(Number(data?.total_size || 0));
 
-      // meta fallback
-      if (data?.filter_meta) {
-        setMeta(data.filter_meta);
+      // Transform facets into meta structure
+      if (data?.facets) {
+        const transformedMeta = {
+          brands: (data.facets.brands || []).map(b => ({
+            value: String(b.id),
+            label: b.name,
+            count: b.count,
+            image: b.image?.path
+          })),
+          colors: [],
+          attributes: (data.facets.attributes || []).map(attr => ({
+            key: attr.key,
+            title: attr.label,
+            options: (attr.options || []).map(opt => ({
+              value: opt.value,
+              label: opt.value,
+              count: opt.count
+            }))
+          })),
+          categories: data.facets.categories || [],
+          price: data.facets.price || { min: 0, max: 0 }
+        };
+        setMeta(transformedMeta);
       } else {
-        // If backend now doesn't send meta, keep empty (static only price)
-        setMeta((m) => ({ ...m }));
+        setMeta(m => ({ ...m }));
       }
     } finally {
       setLoading(false);

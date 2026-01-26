@@ -167,11 +167,11 @@ export default function ProductDetails() {
   const breadcrumbItems = [
     ...(product.category ? [{
       label: product.category.name,
-      href: `/category/${product.category.slug}`
+      href: `/${product.category.slug}`
     }] : []),
     ...(product.sub_category ? [{
       label: product.sub_category.name,
-      href: `/category/${product.category?.slug || ""}/${product.sub_category.slug}`
+      href: `/${product.category?.slug || ""}/${product.sub_category.slug}`
     }] : []),
     { label: product.name }
   ];
