@@ -52,7 +52,7 @@ export default function FilterSidebar({
   });
 
   return (
-    <div className="sticky-top" style={{ top: 12 }}>
+    <div className="sticky-top" style={{ top: 12, zIndex: 9 }}>
       <AppliedChips
         chips={chipsPretty}
         onRemoveAll={onReset}
