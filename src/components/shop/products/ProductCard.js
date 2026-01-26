@@ -4,11 +4,14 @@ import Link from "next/link";
 import { moneyBDT } from "@/lib/utils/money";
 
 export default function ProductCard({ p }) {
+  if (!p) return null;
+
   const img =
     p?.thumbnail_full_url?.path ||
     p?.images_full_url?.[0]?.path ||
     "/placeholder.png";
 
+  const name = p?.name || "Product";
   const price = p?.unit_price ?? 0;
   const discount = p?.discount ?? 0;
   const discountType = p?.discount_type;
@@ -23,25 +26,48 @@ export default function ProductCard({ p }) {
     oldPrice = Math.round(price / (1 - discount / 100));
     saveText = `${discount}% OFF`;
   }
-  
-  return (
-    <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-      <Link href={`/product/${p.slug}`} className="text-decoration-none">
-        <div
-          className="bg-white d-flex align-items-center justify-content-center"
-          style={{ height: 200 }}
-        >
-          <img
-            src={img}
-            alt={p.name}
-            style={{ width: "100%", height: "100%", objectFit: "contain" }}
-          />
-        </div>
 
-        <div className="card-body">
-          <div className="fw-semibold text-dark" style={{ minHeight: 44 }}>
-            {p.name}
+  // Check if product has variations or colors
+  const hasVariations = (p?.variation || []).length > 0;
+  const hasColors = (p?.colors || []).length > 0;
+  const showActionButtons = !hasVariations && !hasColors;
+
+  return (
+    <div
+      className="card h-100 card-shadow border rounded-3xl overflow-hidden position-relative"
+      style={{
+        width: "100%",
+        margin: "0 auto",
+        boxSizing: "border-box",
+      }}
+    >
+      <Link href={`/product/${p.slug}`} className="text-decoration-none text-dark">
+        <div className="p-3">
+          <div className="bg-white rounded-4 d-flex align-items-center justify-content-center">
+            <img
+              src={img}
+              alt={name}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+                width: "90%",
+              }}
+              loading="lazy"
+            />
           </div>
+
+          <div className="mt-3">
+            <div
+              className="fw-semibold"
+              style={{
+                wordBreak: "break-word",
+                fontSize: 16,
+                lineHeight: "1.2",
+              }}
+            >
+              {name}
+            </div>
 
             <div className="mt-2 fw-bold" style={{ fontSize: 16 }}>
               {moneyBDT(price)}
@@ -60,8 +86,35 @@ export default function ProductCard({ p }) {
                 </span>
               ) : null}
             </div>
+          </div>
         </div>
       </Link>
+
+      {/* Action Buttons - Show only if no variations or colors */}
+      {showActionButtons && (
+        <div className="position-absolute bottom-0 start-0 end-0 p-2 bg-white border-top d-flex gap-2">
+          <button
+            className="btn btn-sm fw-bold flex-grow-1 rounded-pill text-white"
+            style={{ background: "#F67535" }}
+            onClick={(e) => {
+              e.preventDefault();
+              // Handle shop now action
+            }}
+          >
+            Shop Now
+          </button>
+          <button
+            className="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center justify-content-center"
+            style={{ width: 40, minWidth: 40 }}
+            onClick={(e) => {
+              e.preventDefault();
+              // Handle add to cart action
+            }}
+          >
+            <i className="fas fa-shopping-cart"></i>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

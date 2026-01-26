@@ -421,7 +421,6 @@ export default function Header() {
                       href={`/${category.slug}`}
                       className="nav-link d-flex align-items-center gap-1"
                       role={hasChildren ? "button" : undefined}
-                      data-bs-toggle={hasChildren ? "dropdown" : undefined}
                       aria-expanded="false"
                     >
                       {category.name}
