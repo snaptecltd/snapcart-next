@@ -158,3 +158,26 @@ export async function resetPassword(data) {
   const res = await api.post(ENDPOINTS.AUTH_PASSWORD_RESET, data);
   return res.data;
 }
+
+// Cart
+export async function getCart() {
+  // Try to get token and user/guest id from localStorage
+  let params = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      // Auth user
+      const user = localStorage.getItem("snapcart_user");
+      try {
+        const userObj = user ? JSON.parse(user) : {};
+        if (userObj?.id) params.user_id = userObj.id;
+      } catch {}
+    } else {
+      // Guest user
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) params.guest_id = guestId;
+    }
+  }
+  const res = await api.get(ENDPOINTS.CART, { params });
+  return res.data;
+}

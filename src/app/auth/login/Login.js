@@ -72,6 +72,8 @@ export default function Login() {
         localStorage.setItem("snapcart_token", res.token);
       }
       localStorage.setItem("snapcart_user", JSON.stringify(res.user || { email_or_phone: form.email_or_phone }));
+      // Remove guest_id on login
+      localStorage.removeItem("guest_id");
       // Notify header to update
       window.dispatchEvent(new Event("snapcart-auth-change"));
       toast.success("Login successful!");
