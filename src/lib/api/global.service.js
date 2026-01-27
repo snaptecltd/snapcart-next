@@ -1,6 +1,10 @@
 import { api } from "./client";
 import { ENDPOINTS } from "./endpoints";
 
+export async function getGuestId() {
+  const res = await api.get(ENDPOINTS.GET_GUEST_ID);
+  return res.data;
+}
 
 /* =========================
    NAV

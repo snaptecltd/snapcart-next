@@ -9,6 +9,7 @@ import Footer from "../components/Footer";
 import Script from "next/script";
 import { GlobalConfigProvider } from "@/context/GlobalConfigContext";
 import FaviconUpdater from "../components/FaviconUpdater";
+import GuestInit from "./GuestInit";
 
 export default function RootLayout({ children }) {
   return (
@@ -22,6 +23,7 @@ export default function RootLayout({ children }) {
         <GlobalConfigProvider>
           <FaviconUpdater />
           <Header />
+          <GuestInit />
           {children}
           <ToastContainer position="top-right" autoClose={3000} />
           <Footer />

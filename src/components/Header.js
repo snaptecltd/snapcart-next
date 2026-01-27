@@ -29,7 +29,7 @@ export default function Header() {
   const categories = Array.isArray(data) ? data : (data?.data ?? []);
 
   const { data: config } = useGlobalConfig();
-  const logo = config?.company_logo?.path || "/logo.webp";
+  const logo = config?.company_logo?.path || "/logo.png";
 
   // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -121,19 +121,19 @@ export default function Header() {
         <div className="container">
           <div className="row align-items-center">
             {/* Logo */}
-            <div className="col-6 col-lg-2">
-              <Link href="/" className="navbar-brand text-white fw-bold">
-                <Image
-                  src={logo}
-                  alt={config?.company_name || "Logo"}
-                  width={140}
-                  height={40}
-                  unoptimized
-                />
-              </Link>
-            </div>
+                <div className="col-6 col-lg-2">
+                  <Link href="/" className="navbar-brand text-white fw-bold">
+                  <img
+                    src={logo}
+                    alt={config?.company_name || "Logo"}
+                    width={140}
+                    height={40}
+                    style={{ objectFit: "contain" }}
+                  />
+                  </Link>
+                </div>
 
-            {/* Search */}
+              {/* Search */}
             <div className="col-12 col-lg-5 order-3 order-lg-2 mt-2 mt-lg-0 position-relative">
               {!showSearch ? (
                 <button
@@ -388,15 +388,41 @@ export default function Header() {
         <div className="container">
           <ul className="navbar-nav gap-lg-2 flex-wrap">
             {/* Loading state */}
-            {isLoading && (
-              <>
-                <li className="nav-item">
-                  <span className="nav-link text-muted">Loading...</span>
-                </li>
-              </>
-            )}
+                  {isLoading && (
+                    <>
+                    {[...Array(6)].map((_, idx) => (
+                      <li
+                      className="nav-item"
+                      key={idx}
+                      style={{
+                        minWidth: 90,
+                        maxWidth: "100%",
+                        flex: "1 1 90px",
+                      }}
+                      >
+                      <span
+                        className="nav-link disabled placeholder-glow"
+                        style={{
+                        minWidth: 70,
+                        display: "inline-block",
+                        width: "100%",
+                        }}
+                      >
+                        <span
+                        className="placeholder col-6"
+                        style={{
+                          minWidth: 60,
+                          height: 18,
+                          display: "inline-block",
+                        }}
+                        ></span>
+                      </span>
+                      </li>
+                    ))}
+                    </>
+                  )}
 
-            {/* Error state */}
+                  {/* Error state */}
             {error && (
               <li className="nav-item">
                 <span className="nav-link text-danger">

@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import ProductCard from "@/components/product/ProductCard";
 import SectionTitle from "@/components/html/SectionTitle";
+import ProductCardSkeleton from "@/components/skeleton/ProductCardSkeleton";
 import {
   getFeaturedProducts,
   getBestSellingProducts,
@@ -89,7 +90,7 @@ export default function FeaturedProducts() {
         </div>
 
         {/* Loading / Error */}
-        {isLoading && <div className="text-muted">Loading...</div>}
+        {isLoading && <ProductCardSkeleton count={5} />}
         {error && <div className="text-danger">Failed to load products</div>}
 
         {/* Slider */}
