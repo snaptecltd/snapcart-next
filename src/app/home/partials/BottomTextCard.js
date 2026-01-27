@@ -22,7 +22,7 @@ export default function BottomTextCard() {
     }
   }, [data]);
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return null;
   if (error) return <div>Error fetching data</div>;
   if (!data) return <div>No data found</div>;
 

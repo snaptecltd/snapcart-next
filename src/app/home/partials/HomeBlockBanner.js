@@ -24,7 +24,7 @@ export default function HomeBlockBanner() {
   }, [data]);
 
   // Handle loading, error, or no data
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return null;
   if (error) return <div>Error fetching banner</div>;
   if (!banner) return <div>No banner found</div>;
 
