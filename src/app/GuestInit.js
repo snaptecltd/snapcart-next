@@ -6,6 +6,11 @@ import { getGuestId } from "@/lib/api/global.service";
 export default function GuestInit() {
   useEffect(() => {
     const initGuest = async () => {
+      // Prevent guest creation if user is logged in
+      const token = localStorage.getItem("snapcart_token");
+      if (token) return;
+
+      // Only create guest if not already present
       const existing = localStorage.getItem("guest_id");
       if (existing) return;
 
@@ -21,8 +26,5 @@ export default function GuestInit() {
 
     initGuest();
   }, []);
-// console.log(localStorage.getItem("guest_id"));
-// clear guest_id from local storage
-// localStorage.removeItem("guest_id");
   return null; // no ui
 }

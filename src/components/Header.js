@@ -10,6 +10,7 @@ import {
   logoutUser,
   getTrendingSearches,
   getSearchedProducts,
+  getCart, // <-- add this
 } from "@/lib/api/global.service";
 import { useGlobalConfig } from "@/context/GlobalConfigContext";
 import ProductCard from "@/components/product/ProductCard";
@@ -113,6 +114,24 @@ export default function Header() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [searchModalOpen]);
+
+  // Cart count state
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    // Fetch cart count on mount and on auth change
+    const fetchCart = async () => {
+      try {
+        const cart = await getCart();
+        setCartCount(Array.isArray(cart) ? cart.reduce((sum, item) => sum + (item.quantity || 0), 0) : 0);
+      } catch {
+        setCartCount(0);
+      }
+    };
+    fetchCart();
+    window.addEventListener("snapcart-auth-change", fetchCart);
+    return () => window.removeEventListener("snapcart-auth-change", fetchCart);
+  }, []);
 
   return (
     <header className={styles.snapheader}>
@@ -330,21 +349,22 @@ export default function Header() {
 
                 <div className="d-flex align-items-center gap-3">
                   {/* Cart – Desktop */}
-                  <button
-                    className={`btn ${styles.icon_btn} d-none d-xl-flex position-relative`}
-                    type="button"
-                  >
-                    <i className="fas fa-shopping-cart"></i>
-                    <span className={styles.cart_count}>0</span>
-                  </button>
+                            <Link
+                            href="/cart"
+                            className={`btn ${styles.icon_btn} d-none d-xl-flex position-relative`}
+                            type="button"
+                            >
+                            <i className="fas fa-shopping-cart"></i>
+                            <span className={`${styles.cart_count} cartItemCount`}>{cartCount}</span>
+                            </Link>
 
-                  {/* Cart – Mobile */}
+                            {/* Cart – Mobile */}
                   <Link
                     href="/cart"
                     className={`btn ${styles.icon_btn} d-flex d-xl-none position-relative`}
                   >
                     <i className="fas fa-shopping-cart"></i>
-                    <span className={styles.cart_count}>0</span>
+                    <span className={styles.cart_count}>{cartCount}</span>
                   </Link>
 
                   {/* User – Desktop */}

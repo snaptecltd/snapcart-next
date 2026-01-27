@@ -33,4 +33,5 @@ export const ENDPOINTS = {
   AUTH_LOGIN: `${PREFIX}/auth/login`,
   AUTH_LOGOUT: `${PREFIX}/auth/logout`,
   AUTH_PASSWORD_RESET: `${PREFIX}/auth/password-reset`,
+  CART: `${PREFIX}/cart`,
 };
