@@ -11,7 +11,9 @@
     --foreground: #ededed;
   }
 }
-
+.btn.disabled, .btn:disabled, fieldset:disabled .btn, .btn-outline-warning {
+  color: var(--primary-color);
+}
 .fs-12{
   font-size: 12px !important;
 }
