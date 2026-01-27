@@ -261,7 +261,15 @@ export default function ProductDetails() {
       <div className="row g-4">
         {/* Left: Image Gallery */}
         <div className="col-12 col-lg-6 p-0">
-          <div className="bg-white rounded-4 p-3 shadow-sm border" style={{ position: "sticky" }}>
+          <div
+            className="bg-white rounded-4 p-3 shadow-sm border"
+            style={{
+              position: "sticky",
+              top: 24,
+              height: "fit-content",
+              zIndex: 2,
+            }}
+          >
             <div
               className="position-relative"
               style={{ width: "100%", aspectRatio: "1/1", overflow: "hidden" }}
@@ -352,9 +360,9 @@ export default function ProductDetails() {
                   </Link>
               </div>
               )}
-              <h2 className="fw-bold mb-2" style={{ fontSize: "2rem" }}>{product.name}</h2>
+              <h4 className="fw-bold mb-2">{product.name}</h4>
               <div className="mb-2">
-                <span className="fw-bold" style={{ fontSize: 22, color: "#222" }}>{moneyBDT(price)}</span>
+                <span className="fw-bold" style={{ fontSize: 18, color: "#222" }}>{moneyBDT(price)}</span>
                 {oldPrice && (
                   <span className="text-muted ms-2 text-decoration-line-through" style={{ fontSize: 16 }}>
                     {moneyBDT(oldPrice)}
