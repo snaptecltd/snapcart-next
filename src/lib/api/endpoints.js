@@ -4,6 +4,7 @@ const { PREFIX } = API_CONFIG;
 
 export const ENDPOINTS = {
   GET_GUEST_ID: `${PREFIX}/get-guest-id`,
+  GET_MAIN_BANNERS: `${PREFIX}/get-main-banners`,
   NAV_CATEGORIES: `${PREFIX}/nav-categories`,
   CONFIG: `${PREFIX}/config`,
   COMPANY_LIABILITIES: `${PREFIX}/company-reliability`,

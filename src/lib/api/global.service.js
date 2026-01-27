@@ -14,6 +14,11 @@ export async function getNavCategories() {
   return res.data;
 }
 
+export async function getMainBanners() {
+  const res = await api.get(ENDPOINTS.GET_MAIN_BANNERS);
+  return res.data;
+}
+
 /* =========================
    GLOBAL CONFIG
 ========================= */

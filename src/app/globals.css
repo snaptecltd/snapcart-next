@@ -140,8 +140,8 @@ body {
   .carousel,
   .carousel-inner,
   .carousel-item {
-    height: 460px;
-    min-height: 460px;
+    height: 485px;
+    min-height: 485px;
   }
 }
 
