@@ -34,7 +34,7 @@ export default function NewArrivalProducts() {
   };
 
   // Handle loading, error, or no data
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return null;
   if (error) return <div>Error fetching data</div>;
   if (!products || products.length === 0) return <div>No products found</div>;
 

@@ -30,7 +30,7 @@ useEffect(() => {
 }, [data, selectedBrandId]);
 
   // Handle loading, error, or no data
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return null;
   if (error) return <div>Error fetching brands</div>;
   if (!data || !data.brands) return <div>No brands found</div>;
 

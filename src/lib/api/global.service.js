@@ -1,12 +1,21 @@
 import { api } from "./client";
 import { ENDPOINTS } from "./endpoints";
 
+export async function getGuestId() {
+  const res = await api.get(ENDPOINTS.GET_GUEST_ID);
+  return res.data;
+}
 
 /* =========================
    NAV
 ========================= */
 export async function getNavCategories() {
   const res = await api.get(ENDPOINTS.NAV_CATEGORIES);
+  return res.data;
+}
+
+export async function getMainBanners() {
+  const res = await api.get(ENDPOINTS.GET_MAIN_BANNERS);
   return res.data;
 }
 
