@@ -2,7 +2,7 @@
   --background: #ffffff;
   --foreground: #171717;
   --primary-color: #ff7a00;
-  --primary-hover-color: #e09757;
+  --primary-color-light: #fff3e0; /* light version for table header */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -254,6 +254,19 @@ body {
   border-top: 4px solid #0d6efd;
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
+}
+
+/* Cart table header background and font size */
+.cart-table-header {
+  background: var(--primary-color-light) !important;
+  font-size: 15px;
+}
+
+/* Responsive font size for cart table */
+@media (max-width: 767.98px) {
+  .cart-table-header, .cart-table-header th, .cart-table-header td {
+    font-size: 13px !important;
+  }
 }
 
 /* Animations */

@@ -15,7 +15,13 @@ export default function Cart() {
   // Calculate total
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-  if (loading) return <div className="container py-5 text-center">Loading cart...</div>;
+if (loading) return (
+    <div className="container py-5 d-flex justify-content-center align-items-center" style={{ minHeight: "300px" }}>
+        <div className="spinner-border text-warning" role="status" style={{ width: "3rem", height: "3rem" }}>
+            <span className="visually-hidden">Loading...</span>
+        </div>
+    </div>
+);
   if (!cart.length)
     return (
       <div className="container py-5 text-center">
@@ -32,7 +38,7 @@ export default function Cart() {
       <div className="table-responsive mb-4">
         <table className="table align-middle mb-0" style={{ minWidth: 700 }}>
           <thead>
-            <tr style={{ background: "#ededed" }}>
+            <tr className="cart-table-header">
               <th style={{ width: 120 }}>Product</th>
               <th>Product Name</th>
               <th style={{ width: 180 }}>Quantity</th>
@@ -87,22 +93,13 @@ export default function Cart() {
       </div>
 
       <div className="row g-4">
-        {/* Promo/Voucher */}
+        {/* Promo Code Only */}
         <div className="col-12 col-md-6 col-lg-5">
           <div className="bg-light rounded-3 p-4">
-            <div className="mb-3">
+            <div>
               <label className="form-label fw-semibold">Apply promo code</label>
               <div className="input-group">
                 <input type="text" className="form-control" placeholder="Apply promo code" />
-                <button className="btn btn-outline-warning fw-semibold" type="button" disabled>
-                  APPLY
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="form-label fw-semibold">Gift Voucher</label>
-              <div className="input-group">
-                <input type="text" className="form-control" placeholder="Gift Voucher" />
                 <button className="btn btn-outline-warning fw-semibold" type="button" disabled>
                   APPLY
                 </button>
@@ -129,7 +126,6 @@ export default function Cart() {
       <style>{`
         @media (max-width: 767.98px) {
           table { min-width: 0 !important; }
-          th, td { font-size: 13px; }
         }
       `}</style>
     </div>
