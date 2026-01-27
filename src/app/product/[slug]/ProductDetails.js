@@ -164,14 +164,19 @@ export default function ProductDetails() {
   }
 
   // Breadcrumbs
+  // Build breadcrumbs from all category levels if available
   const breadcrumbItems = [
     ...(product.category ? [{
       label: product.category.name,
-      href: `/${product.category.slug}`
+      href: `/category/${product.category.slug}`
     }] : []),
     ...(product.sub_category ? [{
       label: product.sub_category.name,
-      href: `/${product.category?.slug || ""}/${product.sub_category.slug}`
+      href: `/category/${product.category?.slug || ""}/sub-category/${product.sub_category.slug}`
+    }] : []),
+    ...(product.child_category ? [{
+      label: product.child_category.name,
+      href: `/category/${product.category?.slug || ""}/sub-category/${product.sub_category?.slug || ""}/child-category/${product.child_category.slug}`
     }] : []),
     { label: product.name }
   ];
@@ -255,8 +260,16 @@ export default function ProductDetails() {
       {/* Product Main Section */}
       <div className="row g-4">
         {/* Left: Image Gallery */}
-        <div className="col-12 col-lg-6">
-          <div className="bg-white rounded-4 p-3 shadow-sm border">
+        <div className="col-12 col-lg-6 p-0">
+          <div
+            className="bg-white rounded-4 p-3 shadow-sm border"
+            style={{
+              position: "sticky",
+              top: 24,
+              height: "fit-content",
+              zIndex: 2,
+            }}
+          >
             <div
               className="position-relative"
               style={{ width: "100%", aspectRatio: "1/1", overflow: "hidden" }}
@@ -322,166 +335,173 @@ export default function ProductDetails() {
           </div>
         </div>
         {/* Right: Product Info */}
-        <div className="col-12 col-lg-6">
+        <div className="col-12 col-lg-6 p-0">
           <div className="ps-lg-3">
-            {/* Brand badge */}
-            {product.brand && (
-            <div className="mb-2 d-flex align-items-center gap-2">
-                {product.brand?.image_full_url?.path && (
-                <img
-                    src={product.brand.image_full_url.path}
-                    alt={product.brand.name}
-                    width={34}
-                    height={34}
-                    style={{ objectFit: "contain", borderRadius: 6 }}
-                />
+            <div className="bg-white rounded-4 p-4 shadow-sm border h-100 d-flex flex-column">
+              {/* Brand badge */}
+              {product.brand && (
+              <div className="mb-2 d-flex align-items-center gap-2">
+                  {/* {product.brand?.image_full_url?.path && (
+                  <img
+                      src={product.brand.image_full_url.path}
+                      alt={product.brand.name}
+                      width={34}
+                      height={34}
+                      style={{ objectFit: "contain", borderRadius: 6 }}
+                  />
+                  )} */}
+
+                  <Link
+                  href={`/brand/${product.brand.id}`}
+                  className="text-decoration-none fw-semibold snap-shadow text-primary px-2 py-1 rounded"
+                  style={{ color: "#222", fontSize: 12 }}
+                  >
+                  Brand: {product.brand.name}
+                  </Link>
+              </div>
+              )}
+              <h4 className="fw-bold mb-2">{product.name}</h4>
+              <div className="mb-2">
+                <span className="fw-bold" style={{ fontSize: 18, color: "#222" }}>{moneyBDT(price)}</span>
+                {oldPrice && (
+                  <span className="text-muted ms-2 text-decoration-line-through" style={{ fontSize: 16 }}>
+                    {moneyBDT(oldPrice)}
+                  </span>
                 )}
-
-                <Link
-                href={`/brand/${product.brand.id}`}
-                className="text-decoration-none fw-semibold"
-                style={{ color: "#222" }}
-                >
-                {product.brand.name}
-                </Link>
-            </div>
-            )}
-            <h2 className="fw-bold mb-2" style={{ fontSize: "2rem" }}>{product.name}</h2>
-            <div className="mb-2">
-              <span className="fw-bold" style={{ fontSize: 22, color: "#222" }}>{moneyBDT(price)}</span>
-              {oldPrice && (
-                <span className="text-muted ms-2 text-decoration-line-through" style={{ fontSize: 16 }}>
-                  {moneyBDT(oldPrice)}
+                {discount > 0 && (
+                  <span className="badge bg-warning text-dark ms-2">{discountType === "flat" ? `${moneyBDT(discount)} OFF` : `${discount}% OFF`}</span>
+                )}
+              </div>
+              <div className="w-100">
+                <span className="text-success fw-semibold fs-12">
+                  Availability: {stock > 0 ? "In Stock" : "Out of Stock"}
                 </span>
-              )}
-              {discount > 0 && (
-                <span className="badge bg-warning text-dark ms-2">{discountType === "flat" ? `${moneyBDT(discount)} OFF` : `${discount}% OFF`}</span>
+                <span className="ms-3 text-muted small fs-12">
+                  SKU: {product.code}
+                </span>
+              </div>
+              {/* Short details */}
+              {product.short_details && (
+                <div className="my-3" dangerouslySetInnerHTML={{ __html: product.short_details }} />
               )}
             </div>
-            <div className="w-100">
-              <span className="text-success fw-semibold">
-                Availability: {stock > 0 ? "In Stock" : "Out of Stock"}
-              </span>
-              <span className="ms-3 text-muted small">
-                Code: {product.code}
-              </span>
-            </div>
-            {/* Short details */}
-            {product.short_details && (
-              <div className="my-3" dangerouslySetInnerHTML={{ __html: product.short_details }} />
-            )}
-            {/* Color selection */}
-            {colorSwatches?.length > 0 && (
-              <div className="mb-3">
-                <div className="fw-semibold mb-1">Color:</div>
-                <div className="d-flex flex-wrap gap-2">
-                  {colorSwatches.map((c, idx) => (
-                    <button
-                      key={c.color || idx}
-                      type="button"
-                      className={`btn btn-sm border d-flex align-items-center gap-2 ${selectedColor === c.color ? "border-warning" : "border-light"}`}
-                      style={{
-                        background: "#fff",
-                        minWidth: 44,
-                        borderRadius: 20,
-                        fontWeight: 500,
-                        color: "#222",
-                        boxShadow: selectedColor === c.color ? "0 0 0 2px #F67535" : "none",
-                      }}
-                    onClick={() => {
-                    setSelectedColor(c.color);
-                    setMainImg(c.image);
-
-                    // ✅ if variation types are color names, sync it
-                    const matchVar = (product.variation || []).find(
-                        (v) => norm(v.type) === norm(c.name)
-                    );
-                    if (matchVar) setSelectedVariation(matchVar.type);
-                    }}
-                    >
-                      <span
+          
+            <div className="bg-white rounded-4 p-4 my-3 shadow-sm border h-100 d-flex flex-column">
+              {/* Color selection */}
+              {colorSwatches?.length > 0 && (
+                <div className="mb-3">
+                  <div className="fw-semibold mb-1">Color:</div>
+                  <div className="d-flex flex-wrap gap-2">
+                    {colorSwatches.map((c, idx) => (
+                      <button
+                        key={c.color || idx}
+                        type="button"
+                        className={`btn btn-sm border d-flex align-items-center gap-2 ${selectedColor === c.color ? "border-warning" : "border-light"}`}
                         style={{
-                          display: "inline-block",
-                          width: 18,
-                          height: 18,
-                          borderRadius: "50%",
-                          background: c.code,
-                          border: "1px solid #ddd",
+                          background: "#fff",
+                          minWidth: 44,
+                          borderRadius: 20,
+                          fontWeight: 500,
+                          color: "#222",
+                          boxShadow: selectedColor === c.color ? "0 0 0 2px #F67535" : "none",
                         }}
-                      />
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {/* Variation selection */}
-            {variations.length > 0 && (
-              <div className="mb-3">
-                <div className="fw-semibold mb-1">Variation:</div>
-                <div className="d-flex flex-wrap gap-2">
-                  {variations.map((v) => (
-                    <button
-                      key={v.type}
-                      type="button"
-                      className={`btn btn-sm border ${selectedVariation === v.type ? "border-warning" : "border-light"}`}
-                      style={{
-                        background: "#fff",
-                        minWidth: 44,
-                        borderRadius: 20,
-                        fontWeight: 500,
-                        color: "#222",
-                        boxShadow: selectedVariation === v.type ? "0 0 0 2px #F67535" : "none",
-                      }}
                       onClick={() => {
-                        setSelectedVariation(v.type);
-                        setMainImg(galleryImages[0]?.path);
+                      setSelectedColor(c.color);
+                      setMainImg(c.image);
+
+                      // ✅ if variation types are color names, sync it
+                      const matchVar = (product.variation || []).find(
+                          (v) => norm(v.type) === norm(c.name)
+                      );
+                      if (matchVar) setSelectedVariation(matchVar.type);
                       }}
-                    >
-                      {v.type}
-                    </button>
-                  ))}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 18,
+                            height: 18,
+                            borderRadius: "50%",
+                            background: c.code,
+                            border: "1px solid #ddd",
+                          }}
+                        />
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Variation selection */}
+              {variations.length > 0 && (
+                <div className="mb-3">
+                  <div className="fw-semibold mb-1">Variation:</div>
+                  <div className="d-flex flex-wrap gap-2">
+                    {variations.map((v) => (
+                      <button
+                        key={v.type}
+                        type="button"
+                        className={`btn btn-sm border ${selectedVariation === v.type ? "border-warning" : "border-light"}`}
+                        style={{
+                          background: "#fff",
+                          minWidth: 44,
+                          borderRadius: 20,
+                          fontWeight: 500,
+                          color: "#222",
+                          boxShadow: selectedVariation === v.type ? "0 0 0 2px #F67535" : "none",
+                        }}
+                        onClick={() => {
+                          setSelectedVariation(v.type);
+                          setMainImg(galleryImages[0]?.path);
+                        }}
+                      >
+                        {v.type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Quantity */}
+              <div className="mb-3">
+                <div className="fw-semibold mb-1">Select Quantity:</div>
+                <div className="input-group" style={{ maxWidth: 140 }}>
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    disabled={qty <= 1}
+                  >-</button>
+                  <input
+                    type="number"
+                    className="form-control text-center"
+                    value={qty}
+                    min={1}
+                    max={stock}
+                    onChange={(e) => setQty(Math.max(1, Math.min(stock, Number(e.target.value) || 1)))}
+                    style={{ width: 50 }}
+                  />
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={() => setQty((q) => Math.min(stock, q + 1))}
+                    disabled={qty >= stock}
+                  >+</button>
                 </div>
               </div>
-            )}
-            {/* Quantity */}
-            <div className="mb-3">
-              <div className="fw-semibold mb-1">Select Quantity:</div>
-              <div className="input-group" style={{ maxWidth: 140 }}>
-                <button
-                  className="btn btn-outline-secondary"
-                  type="button"
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  disabled={qty <= 1}
-                >-</button>
-                <input
-                  type="number"
-                  className="form-control text-center"
-                  value={qty}
-                  min={1}
-                  max={stock}
-                  onChange={(e) => setQty(Math.max(1, Math.min(stock, Number(e.target.value) || 1)))}
-                  style={{ width: 50 }}
-                />
-                <button
-                  className="btn btn-outline-secondary"
-                  type="button"
-                  onClick={() => setQty((q) => Math.min(stock, q + 1))}
-                  disabled={qty >= stock}
-                >+</button>
+            </div>  
+            <div className="bg-white rounded-4 p-4 shadow-sm border h-100 d-flex flex-column">
+              {/* Actions */}
+              <div className="d-flex gap-3 mb-3 flex-wrap">
+                <button className="btn btn-warning fw-bold px-4 rounded-pill" style={{ background: "#F67535", color: "#fff" }}>
+                  Shop Now
+                </button>
+                <button className="btn btn-outline-dark fw-bold px-4 rounded-pill">
+                  <i className="fas fa-shopping-cart me-2"></i>Add To Cart
+                </button>
               </div>
-            </div>
-            {/* Actions */}
-            <div className="d-flex gap-3 mb-3 flex-wrap">
-              <button className="btn btn-warning fw-bold px-4 rounded-pill" style={{ background: "#F67535", color: "#fff" }}>
-                Shop Now
-              </button>
-              <button className="btn btn-outline-dark fw-bold px-4 rounded-pill">
-                <i className="fas fa-shopping-cart me-2"></i>Add To Cart
-              </button>
             </div>
             {/* EMI, Whatsapp, etc. */}
-            <div className="d-flex gap-3 align-items-center flex-wrap">
+            <div className="d-flex gap-3 mt-3 align-items-center flex-wrap">
               <span className="badge bg-light text-dark border px-3 py-2">
                 <i className="fas fa-credit-card me-2"></i>EMI Available <a href="#" className="text-primary ms-1">View Plans</a>
               </span>
