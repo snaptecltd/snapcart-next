@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getSearchedProducts, getProductDetails } from "@/lib/api/global.service";
 import Link from "next/link";
 import Breadcrumb from "@/components/html/Breadcrumb";
@@ -27,24 +27,28 @@ export default function ComparePage() {
   const [searchResults, setSearchResults] = useState([[], [], []]);
   const [loading, setLoading] = useState([false, false, false]);
   const [specList, setSpecList] = useState([]);
+  const didInit = useRef(false);
 
-  // Load compare from localStorage
+  // Load compare from localStorage only once on mount
   useEffect(() => {
+    if (didInit.current) return;
     let stored = [];
     try {
-      stored = JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]");
+      stored = JSON.parse(window.localStorage.getItem(LOCAL_KEY) || "[]");
     } catch {}
-    // Always 3 slots
     setCompare([
       stored[0] || null,
       stored[1] || null,
       stored[2] || null,
     ]);
+    didInit.current = true;
+    // eslint-disable-next-line
   }, []);
 
-  // Save compare to localStorage
+  // Save compare to localStorage only after initial load
   useEffect(() => {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(compare));
+    if (!didInit.current) return;
+    window.localStorage.setItem(LOCAL_KEY, JSON.stringify(compare));
     // Update spec list
     const allSpecs = compare
       .filter(Boolean)
@@ -128,7 +132,7 @@ export default function ComparePage() {
       <div className="row g-0 mb-4 rounded-4 overflow-hidden shadow-sm bg-white">
         {/* Left info panel */}
         <div className="col-12 col-lg-3 border rounded-4 p-4 d-flex flex-column justify-content-center" style={{ minHeight: 320 }}>
-          <h className="fw-bold mb-2">Compare Products</h>
+          <h5 className="fw-bold mb-2">Compare Products</h5>
           <div className="text-muted mb-2" style={{ fontSize: 15 }}>
             Find and select products to see the differences and similarities between them
           </div>
