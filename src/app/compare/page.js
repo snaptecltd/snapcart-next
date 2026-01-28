@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { getSearchedProducts, getProductDetails } from "@/lib/api/global.service";
 import Link from "next/link";
+import Breadcrumb from "@/components/html/Breadcrumb";
 
 const LOCAL_KEY = "snapcart_compare_products";
 const MAX_COMPARE = 3;
@@ -120,17 +121,14 @@ export default function ComparePage() {
   // Responsive: stack on mobile, 3 columns on desktop
   return (
     <div className="container py-4">
-      <nav aria-label="breadcrumb" className="mb-3">
-        <ol className="breadcrumb">
-          <li className="breadcrumb-item"><Link href="/">Home</Link></li>
-          <li className="breadcrumb-item active" aria-current="page">Compare</li>
-        </ol>
-      </nav>
-      <h1 className="fw-bold mb-4" style={{ fontSize: 36 }}>Compare Selected Product</h1>
+        
+    <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Compare" }]} />
+
+      <h3 className="fw-bold mb-4 mt-3" style={{ fontSize: 25 }}>Compare Selected Product</h3>
       <div className="row g-0 mb-4 rounded-4 overflow-hidden shadow-sm bg-white">
         {/* Left info panel */}
-        <div className="col-12 col-lg-3 border-end p-4 d-flex flex-column justify-content-center" style={{ minHeight: 320 }}>
-          <h5 className="fw-bold mb-2">Compare Products</h5>
+        <div className="col-12 col-lg-3 border rounded-4 p-4 d-flex flex-column justify-content-center" style={{ minHeight: 320 }}>
+          <h className="fw-bold mb-2">Compare Products</h>
           <div className="text-muted mb-2" style={{ fontSize: 15 }}>
             Find and select products to see the differences and similarities between them
           </div>
@@ -139,7 +137,7 @@ export default function ComparePage() {
         <div className="col-12 col-lg-9">
           <div className="row g-0">
             {[0, 1, 2].map((idx) => (
-              <div key={idx} className="col-12 col-md-4 border-end p-3 d-flex flex-column align-items-center" style={{ minHeight: 320 }}>
+              <div key={idx} className="col-12 col-md-4 border rounded-4  p-3 d-flex flex-column align-items-center position-relative" style={{ minHeight: 320 }}>
                 {/* Search bar */}
                 {!compare[idx] && (
                   <div className="w-100 mb-3">
