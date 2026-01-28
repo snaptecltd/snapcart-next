@@ -46,4 +46,8 @@ export const ENDPOINTS = {
   CUSTOMER_UPDATE_PROFILE: `${PREFIX}/customer/update-profile`,
   CUSTOMER_ORDER_LIST: `${PREFIX}/customer/order/list`,
   CUSTOMER_ORDER_DETAILS: `${PREFIX}/customer/order/details`,
+
+  // wishlist endpoints
+  CUSTOMER_WISHLIST: `${PREFIX}/customer/wish-list`,
+  CUSTOMER_WISHLIST_REMOVE: `${PREFIX}/customer/wish-list/remove`,
 };

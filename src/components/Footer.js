@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Footer() {
@@ -64,6 +65,11 @@ export default function Footer() {
         </div>
 
         {/* Middle Section */}
+        <hr className="border-secondary my-4" />
+        <div className="row g-4">
+          <Image src="/images/ssl-commerce2.png" alt="Payment Methods" width={0} height={40} style={{ width: "100%", height: "auto" }}
+                sizes="100vw" />
+        </div>
         <hr className="border-secondary my-4" />
 
         <div className="row g-4 align-items-center">
