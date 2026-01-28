@@ -50,4 +50,11 @@ export const ENDPOINTS = {
   // wishlist endpoints
   CUSTOMER_WISHLIST: `${PREFIX}/customer/wish-list`,
   CUSTOMER_WISHLIST_REMOVE: `${PREFIX}/customer/wish-list/remove`,
+
+  // support ticket endpoints
+  CUSTOMER_SUPPORT_TICKET_LIST: `${PREFIX}/customer/support-ticket/get`,
+  CUSTOMER_SUPPORT_TICKET_CREATE: `${PREFIX}/customer/support-ticket/create`,
+  CUSTOMER_SUPPORT_TICKET_CONV: `${PREFIX}/customer/support-ticket/conv`,
+  CUSTOMER_SUPPORT_TICKET_REPLY: `${PREFIX}/customer/support-ticket/reply`,
+  CUSTOMER_SUPPORT_TICKET_CLOSE: `${PREFIX}/customer/support-ticket/close`,
 };

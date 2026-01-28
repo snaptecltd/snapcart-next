@@ -323,3 +323,62 @@ export async function removeFromWishlist(product_id) {
   });
   return res.data;
 }
+
+export async function getCustomerSupportTickets() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.CUSTOMER_SUPPORT_TICKET_LIST, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function createCustomerSupportTicket(data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  formData.append("subject", data.subject);
+  formData.append("type", data.type);
+  formData.append("priority", data.priority);
+  formData.append("description", data.description);
+  if (data.images && Array.isArray(data.images)) {
+    data.images.forEach((img) => formData.append("image[]", img));
+  }
+  const res = await api.post(ENDPOINTS.CUSTOMER_SUPPORT_TICKET_CREATE, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function getCustomerSupportTicketConv(ticketId) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.CUSTOMER_SUPPORT_TICKET_CONV}/${ticketId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function replyCustomerSupportTicket(ticketId, message, images) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  formData.append("message", message);
+  if (images && Array.isArray(images)) {
+    images.forEach((img) => formData.append("image[]", img));
+  }
+  const res = await api.post(`${ENDPOINTS.CUSTOMER_SUPPORT_TICKET_REPLY}/${ticketId}`, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function closeCustomerSupportTicket(ticketId) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.CUSTOMER_SUPPORT_TICKET_CLOSE}/${ticketId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
