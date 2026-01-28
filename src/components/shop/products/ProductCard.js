@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { moneyBDT } from "@/lib/utils/money";
+import { addToCart } from "@/lib/api/global.service";
+import { useState } from "react";
+import { toast } from "react-toastify";
 
 export default function ProductCard({ p }) {
   if (!p) return null;
@@ -31,6 +34,22 @@ export default function ProductCard({ p }) {
   const hasVariations = (p?.variation || []).length > 0;
   const hasColors = (p?.colors || []).length > 0;
   const showActionButtons = !hasVariations && !hasColors;
+
+  const [adding, setAdding] = useState(false);
+
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    if (adding) return;
+    setAdding(true);
+    try {
+      await addToCart({ id: p.id, quantity: 1 });
+      toast.success("Added to cart!");
+      window.dispatchEvent(new Event("snapcart-auth-change")); // update header cart count
+    } catch {
+      toast.error("Failed to add to cart.");
+    }
+    setAdding(false);
+  };
 
   return (
     <div
@@ -96,20 +115,16 @@ export default function ProductCard({ p }) {
           <button
             className="btn btn-sm fw-bold flex-grow-1 rounded-pill text-white"
             style={{ background: "#F67535" }}
-            onClick={(e) => {
-              e.preventDefault();
-              // Handle shop now action
-            }}
+            onClick={handleAddToCart}
+            disabled={adding}
           >
-            Shop Now
+            {adding ? "Adding..." : "Shop Now"}
           </button>
           <button
             className="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center justify-content-center"
             style={{ width: 40, minWidth: 40 }}
-            onClick={(e) => {
-              e.preventDefault();
-              // Handle add to cart action
-            }}
+            onClick={handleAddToCart}
+            disabled={adding}
           >
             <i className="fas fa-shopping-cart"></i>
           </button>
