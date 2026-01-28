@@ -3,7 +3,8 @@ import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getProductDetails, getRelatedProducts } from "@/lib/api/global.service";
+import { getProductDetails, getRelatedProducts, addToCart } from "@/lib/api/global.service";
+import { toast } from "react-toastify";
 import Breadcrumb from "@/components/html/Breadcrumb";
 import ProductCardType2 from "@/components/product/ProductCardType2";
 import ProductCard from "@/components/product/ProductCard";
@@ -43,6 +44,7 @@ export default function ProductDetails() {
   const [mounted, setMounted] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
+  const [adding, setAdding] = useState(false);
   const carouselRef = useRef(null);
 
   useEffect(() => { setMounted(true); }, []);
@@ -152,6 +154,53 @@ export default function ProductDetails() {
     const current = carouselRef.current.scrollLeft;
     const target = direction === "next" ? current + scrollAmount : current - scrollAmount;
     carouselRef.current.scrollTo({ left: target, behavior: "smooth" });
+  };
+
+  // Add to Cart handler
+  const handleAddToCart = async () => {
+    if (adding || stock < 1) return;
+    setAdding(true);
+    try {
+      const payload = {
+        id: product.id,
+        quantity: qty,
+      };
+      // Only send color if valid color object found
+      if (selectedColor) {
+        // Find color object by color code or name
+        let colorObj = null;
+        if (product.colors_formatted && Array.isArray(product.colors_formatted)) {
+          colorObj = product.colors_formatted.find(
+            c =>
+              c.code === selectedColor ||
+              c.color === selectedColor ||
+              c.name === selectedColor ||
+              c.code === "#" + selectedColor
+          );
+        }
+        // Only send color if found, otherwise skip
+        if (colorObj && colorObj.code) {
+          payload.color = colorObj.code;
+        }
+      }
+      // Send variant if selected
+      if (selectedVariation) payload.variant = selectedVariation;
+      // If product has choice_options, send each choice as field
+      if (product.choice_options && Array.isArray(product.choice_options)) {
+        product.choice_options.forEach(choice => {
+          // You may want to add UI for choices, here just send default if available
+          if (choice.name && product[choice.name]) {
+            payload[choice.name] = product[choice.name];
+          }
+        });
+      }
+      await addToCart(payload);
+      toast.success("Added to cart!");
+      window.dispatchEvent(new Event("snapcart-auth-change"));
+    } catch {
+      toast.error("Failed to add to cart.");
+    }
+    setAdding(false);
   };
 
   if (!mounted) return null;
@@ -492,11 +541,19 @@ export default function ProductDetails() {
             <div className="bg-white rounded-4 p-4 shadow-sm border h-100 d-flex flex-column">
               {/* Actions */}
               <div className="d-flex gap-3 mb-3 flex-wrap">
-                <button className="btn btn-warning fw-bold px-4 rounded-pill" style={{ background: "#F67535", color: "#fff" }}>
-                  Shop Now
+                <button
+                  className="btn btn-warning fw-bold px-4 rounded-pill"
+                  style={{ background: "#F67535", color: "#fff" }}
+                  onClick={handleAddToCart}
+                  disabled={adding || stock < 1}
+                >
+                  {adding ? "Adding..." : "Add To Cart"}
                 </button>
-                <button className="btn btn-outline-dark fw-bold px-4 rounded-pill">
-                  <i className="fas fa-shopping-cart me-2"></i>Add To Cart
+                <button
+                  className="btn btn-outline-dark fw-bold px-4 rounded-pill"
+                  disabled
+                >
+                  <i className="fas fa-shopping-cart me-2"></i>Shop Now
                 </button>
               </div>
             </div>
@@ -511,9 +568,7 @@ export default function ProductDetails() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Tabs: Specification, Description, FAQ */}
+      </div>      {/* Tabs: Specification, Description, FAQ */}
       <div className="row mt-5">
         <div className="col-12 col-lg-8">
             <div className="d-flex gap-2 mb-4 flex-wrap">
