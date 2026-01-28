@@ -40,4 +40,8 @@ export const ENDPOINTS = {
   UPDATE_CART_ITEM: `${PREFIX}/cart/update`,
   REMOVE_CART_ITEM: `${PREFIX}/cart/remove`,
   REMOVE_CART_ALL_ITEMS: `${PREFIX}/cart/remove-all`,
+
+  // customer endpoints
+  CUSTOMER_INFO: `${PREFIX}/customer/info`,
+  CUSTOMER_UPDATE_PROFILE: `${PREFIX}/customer/update-profile`,
 };

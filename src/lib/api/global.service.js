@@ -261,3 +261,26 @@ export async function removeAllCartItems() {
   const res = await api.delete(ENDPOINTS.REMOVE_CART_ALL_ITEMS, payload);
   return res.data;
 }
+
+export async function getCustomerInfo() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.CUSTOMER_INFO, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function updateCustomerProfile(data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) formData.append(key, value);
+  });
+  const res = await api.put(ENDPOINTS.CUSTOMER_UPDATE_PROFILE, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}

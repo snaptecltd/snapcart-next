@@ -379,7 +379,7 @@ export default function Header() {
                   ) : (
                     <>
                       <Link
-                        href="/profile"
+                        href="/customer"
                         className={`btn ${styles.icon_btn} d-none d-xl-flex`}
                         type="button"
                         title="Profile"
