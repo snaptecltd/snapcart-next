@@ -44,4 +44,6 @@ export const ENDPOINTS = {
   // customer endpoints
   CUSTOMER_INFO: `${PREFIX}/customer/info`,
   CUSTOMER_UPDATE_PROFILE: `${PREFIX}/customer/update-profile`,
+  CUSTOMER_ORDER_LIST: `${PREFIX}/customer/order/list`,
+  CUSTOMER_ORDER_DETAILS: `${PREFIX}/customer/order/details`,
 };

@@ -291,3 +291,19 @@ export async function updateCustomerProfile(data) {
   });
   return res.data;
 }
+
+export async function getCustomerOrderList() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.CUSTOMER_ORDER_LIST, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function getCustomerOrderDetails(order_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.CUSTOMER_ORDER_DETAILS}?order_id=${order_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
