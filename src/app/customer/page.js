@@ -32,7 +32,8 @@ export default function CustomerProfilePage() {
           confirm_password: "",
           image: null,
         });
-        setImgPreview(data.image_full_url?.path || "");
+        // Show image only if path is valid, else show placeholder
+        setImgPreview(data.image_full_url?.path ? data.image_full_url.path : "/user-placeholder.png");
       })
       .catch(() => toast.error("Failed to load profile"))
       .finally(() => setLoading(false));
@@ -105,12 +106,14 @@ export default function CustomerProfilePage() {
           <div className="bg-white rounded-4 shadow-sm p-4 p-md-5">
             <div className="d-flex flex-column align-items-center mb-4">
               <div className="position-relative mb-2">
-                <img
-                  src={imgPreview || "/user-placeholder.png"}
-                  alt="Profile"
-                  className="rounded-circle"
-                  style={{ width: 110, height: 110, objectFit: "cover", background: "#f3f3f3" }}
-                />
+                {imgPreview ? (
+                  <img
+                    src={imgPreview}
+                    alt="Profile"
+                    className="rounded-circle border"
+                    style={{ width: 100, height: 100, objectFit: "cover", background: "#f3f3f3" }}
+                  />
+                ) : null}
                 <button
                   type="button"
                   className="btn btn-primary position-absolute"
@@ -129,57 +132,62 @@ export default function CustomerProfilePage() {
                   onChange={handleChange}
                 />
               </div>
-              <h5 className="fw-bold mb-0">
+              <h5 className="fw-bold mb-0" style={{ fontSize: "1.15rem" }}>
                 {form.f_name} {form.l_name}
               </h5>
             </div>
             <form onSubmit={handleSubmit} className="row g-3">
               <div className="col-md-6">
-                <label className="form-label fw-semibold">First Name</label>
+                <label className="form-label fw-semibold" style={{ fontSize: 15 }}>First Name</label>
                 <input
                   type="text"
                   name="f_name"
                   className={`form-control${errors.f_name ? " is-invalid" : ""}`}
                   value={form.f_name}
                   onChange={handleChange}
+                  style={{ fontSize: 15 }}
                 />
                 {errors.f_name && <div className="invalid-feedback">{errors.f_name}</div>}
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Last Name</label>
+                <label className="form-label fw-semibold" style={{ fontSize: 15 }}>Last Name</label>
                 <input
                   type="text"
                   name="l_name"
                   className={`form-control${errors.l_name ? " is-invalid" : ""}`}
                   value={form.l_name}
                   onChange={handleChange}
+                  style={{ fontSize: 15 }}
                 />
                 {errors.l_name && <div className="invalid-feedback">{errors.l_name}</div>}
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Phone Number</label>
+                <label className="form-label fw-semibold" style={{ fontSize: 15 }}>Phone Number</label>
                 <input
                   type="text"
                   name="phone"
                   className={`form-control${errors.phone ? " is-invalid" : ""}`}
                   value={form.phone}
                   onChange={handleChange}
+                  style={{ fontSize: 15 }}
                 />
                 {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Email</label>
+                <label className="form-label fw-semibold" style={{ fontSize: 15 }}>Email</label>
                 <input
                   type="email"
                   name="email"
+                  autoComplete="username"
                   className={`form-control${errors.email ? " is-invalid" : ""}`}
                   value={form.email}
                   onChange={handleChange}
+                  style={{ fontSize: 15 }}
                 />
                 {errors.email && <div className="invalid-feedback">{errors.email}</div>}
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold">New Password</label>
+                <label className="form-label fw-semibold" style={{ fontSize: 15 }}>New Password</label>
                 <input
                   type="password"
                   name="password"
@@ -188,11 +196,12 @@ export default function CustomerProfilePage() {
                   onChange={handleChange}
                   placeholder="Minimum 8 characters long"
                   autoComplete="new-password"
+                  style={{ fontSize: 15 }}
                 />
                 {errors.password && <div className="invalid-feedback">{errors.password}</div>}
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Confirm Password</label>
+                <label className="form-label fw-semibold" style={{ fontSize: 15 }}>Confirm Password</label>
                 <input
                   type="password"
                   name="confirm_password"
@@ -201,11 +210,12 @@ export default function CustomerProfilePage() {
                   onChange={handleChange}
                   placeholder="Minimum 8 characters long"
                   autoComplete="new-password"
+                  style={{ fontSize: 15 }}
                 />
                 {errors.confirm_password && <div className="invalid-feedback">{errors.confirm_password}</div>}
               </div>
               <div className="col-12 text-end">
-                <button type="submit" className="btn btn-primary px-4" disabled={updating}>
+                <button type="submit" className="btn btn-primary px-4" disabled={updating} style={{ fontSize: 16 }}>
                   {updating ? "Updating..." : "Update"}
                 </button>
               </div>
@@ -217,6 +227,14 @@ export default function CustomerProfilePage() {
         .sticky-top {
           position: sticky !important;
           top: 24px;
+        }
+        @media (max-width: 767.98px) {
+          .bg-white.rounded-4.shadow-sm.p-4.p-md-5 {
+            padding: 1.2rem !important;
+          }
+          .form-label, .form-control, .btn {
+            font-size: 15px !important;
+          }
         }
       `}</style>
     </div>
