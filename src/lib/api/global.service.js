@@ -181,3 +181,79 @@ export async function getCart() {
   const res = await api.get(ENDPOINTS.CART, { params });
   return res.data;
 }
+
+export async function addToCart(data) {
+  let payload = { ...data };
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      const user = localStorage.getItem("snapcart_user");
+      try {
+        const userObj = user ? JSON.parse(user) : {};
+        if (userObj?.id) payload.user_id = userObj.id;
+      } catch {}
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) payload.guest_id = guestId;
+    }
+  }
+  const res = await api.post(ENDPOINTS.ADD_TO_CART, payload);
+  return res.data;
+}
+
+export async function updateCartItem(data) {
+  let payload = { ...data };
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      const user = localStorage.getItem("snapcart_user");
+      try {
+        const userObj = user ? JSON.parse(user) : {};
+        if (userObj?.id) payload.user_id = userObj.id;
+      } catch {}
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) payload.guest_id = guestId;
+    }
+  }
+  const res = await api.post(ENDPOINTS.UPDATE_CART_ITEM, payload);
+  return res.data;
+}
+
+export async function removeCartItem(data) {
+  let payload = { ...data };
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      const user = localStorage.getItem("snapcart_user");
+      try {
+        const userObj = user ? JSON.parse(user) : {};
+        if (userObj?.id) payload.user_id = userObj.id;
+      } catch {}
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) payload.guest_id = guestId;
+    }
+  }
+  const res = await api.post(ENDPOINTS.REMOVE_CART_ITEM, payload);
+  return res.data;
+}
+
+export async function removeAllCartItems() {
+  let payload = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      const user = localStorage.getItem("snapcart_user");
+      try {
+        const userObj = user ? JSON.parse(user) : {};
+        if (userObj?.id) payload.user_id = userObj.id;
+      } catch {}
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) payload.guest_id = guestId;
+    }
+  }
+  const res = await api.post(ENDPOINTS.REMOVE_CART_ALL_ITEMS, payload);
+  return res.data;
+}
