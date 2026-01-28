@@ -382,3 +382,34 @@ export async function closeCustomerSupportTicket(ticketId) {
   });
   return res.data;
 }
+
+export async function getCustomerAddressList() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.CUSTOMER_ADDRESS_LIST, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function addCustomerAddress(data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) formData.append(key, value);
+  });
+  const res = await api.post(ENDPOINTS.CUSTOMER_ADDRESS_ADD, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function deleteCustomerAddress(address_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.delete(`${ENDPOINTS.CUSTOMER_ADDRESS_DELETE}?address_id=${address_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}

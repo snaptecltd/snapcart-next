@@ -57,4 +57,9 @@ export const ENDPOINTS = {
   CUSTOMER_SUPPORT_TICKET_CONV: `${PREFIX}/customer/support-ticket/conv`,
   CUSTOMER_SUPPORT_TICKET_REPLY: `${PREFIX}/customer/support-ticket/reply`,
   CUSTOMER_SUPPORT_TICKET_CLOSE: `${PREFIX}/customer/support-ticket/close`,
+
+  // address endpoints
+  CUSTOMER_ADDRESS_LIST: `${PREFIX}/customer/address/list`,
+  CUSTOMER_ADDRESS_ADD: `${PREFIX}/customer/address/add`,
+  CUSTOMER_ADDRESS_DELETE: `${PREFIX}/customer/address`,
 };
