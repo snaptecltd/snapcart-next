@@ -9,7 +9,7 @@ const menu = [
   { label: "My Address", icon: "fas fa-map-marker-alt", href: "/customer/address" },
   { label: "Support Ticket", icon: "fas fa-headset", href: "/customer/support" },
   { label: "Coupons", icon: "fas fa-ticket-alt", href: "/customer/coupons" },
-  { label: "Track Order", icon: "fas fa-shipping-fast", href: "/customer/track" },
+  { label: "Track Order", icon: "fas fa-shipping-fast", href: "/order/tracking" },
 ];
 
 export default function Sidebar({ active }) {

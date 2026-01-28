@@ -66,4 +66,7 @@ export const ENDPOINTS = {
   // restock endpoints
   CUSTOMER_RESTOCK_LIST: `${PREFIX}/customer/restock-requests/list`,
   CUSTOMER_RESTOCK_DELETE: `${PREFIX}/customer/restock-requests/delete`,
+
+  // order tracking endpoint
+  ORDER_TRACK: `${PREFIX}/order/track-order`,
 };

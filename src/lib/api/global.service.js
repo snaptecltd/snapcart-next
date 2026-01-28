@@ -432,3 +432,8 @@ export async function deleteCustomerRestock({ id, type }) {
   });
   return res.data;
 }
+
+export async function trackOrder({ order_id, phone_number }) {
+  const res = await api.post(ENDPOINTS.ORDER_TRACK, { order_id, phone_number });
+  return res.data;
+}
