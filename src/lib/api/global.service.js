@@ -437,3 +437,11 @@ export async function trackOrder({ order_id, phone_number }) {
   const res = await api.post(ENDPOINTS.ORDER_TRACK, { order_id, phone_number });
   return res.data;
 }
+
+export async function getCouponList() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.COUPON_LIST, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}

@@ -69,4 +69,7 @@ export const ENDPOINTS = {
 
   // order tracking endpoint
   ORDER_TRACK: `${PREFIX}/order/track-order`,
+
+  // coupon endpoints
+  COUPON_LIST: `${PREFIX}/coupon/list`,
 };
