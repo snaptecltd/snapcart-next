@@ -52,7 +52,7 @@ export default function Cart() {
   };
 
   if (loading) return (
-    <div className="container py-5 d-flex justify-content-center align-items-center" style={{ minHeight: "300px" }}>
+    <div className="container py-5 d-flex justify-content-center align-items-center" style={{ minHeight: "300px", background: "transparent" }}>
         <div className="spinner-border text-warning" role="status" style={{ width: "3rem", height: "3rem" }}>
             <span className="visually-hidden">Loading...</span>
         </div>
