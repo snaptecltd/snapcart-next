@@ -81,7 +81,8 @@ export default function CustomerProfilePage() {
       toast.success(res?.message || "Profile updated!");
       setForm((f) => ({ ...f, password: "", confirm_password: "" }));
     } catch (err) {
-      if (err?.errors) {
+      // Show all error messages from API
+      if (err?.errors && Array.isArray(err.errors)) {
         const apiErrors = {};
         err.errors.forEach((e) => {
           apiErrors[e.code] = e.message;

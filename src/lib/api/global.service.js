@@ -273,10 +273,17 @@ export async function getCustomerInfo() {
 export async function updateCustomerProfile(data) {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
   const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) formData.append(key, value);
-  });
-  const res = await api.put(ENDPOINTS.CUSTOMER_UPDATE_PROFILE, formData, {
+
+  // Always append all required fields, even if empty string
+  formData.append("f_name", data.f_name ?? "");
+  formData.append("l_name", data.l_name ?? "");
+  formData.append("phone", data.phone ?? "");
+  formData.append("email", data.email ?? "");
+  if (data.password) formData.append("password", data.password);
+  if (data.image) formData.append("image", data.image);
+  formData.append("_method", "POST"); // Laravel expects this for POST with FormData
+
+  const res = await api.post(ENDPOINTS.CUSTOMER_UPDATE_PROFILE, formData, {
     headers: {
       Authorization: token ? `Bearer ${token}` : "",
       "Content-Type": "multipart/form-data",

@@ -17,7 +17,7 @@ export default function Sidebar({ active }) {
     <aside className="sticky-top" style={{ top: 24 }}>
       <ul className="list-group list-group-flush shadow rounded-4 bg-white">
         {menu.map((item, idx) => (
-          <li key={item.label} className="list-group-item border-0 px-4 py-3">
+          <li key={item.label} className="list-group-item border-0 px-4 py-2">
             <Link
               href={item.href}
               className={`d-flex align-items-center gap-3 text-decoration-none ${active === idx ? "fw-bold text-primary" : "text-dark"}`}
