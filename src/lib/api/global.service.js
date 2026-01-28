@@ -197,6 +197,10 @@ export async function addToCart(data) {
       if (guestId) payload.guest_id = guestId;
     }
   }
+  // Remove undefined/null fields
+  Object.keys(payload).forEach(
+    (k) => (payload[k] === undefined || payload[k] === null) && delete payload[k]
+  );
   const res = await api.post(ENDPOINTS.ADD_TO_CART, payload);
   return res.data;
 }
