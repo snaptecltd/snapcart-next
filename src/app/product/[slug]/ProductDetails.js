@@ -165,9 +165,35 @@ export default function ProductDetails() {
         id: product.id,
         quantity: qty,
       };
-      // Add color/variation if selected
-      if (selectedColor) payload.color = selectedColor;
+      // Only send color if valid color object found
+      if (selectedColor) {
+        // Find color object by color code or name
+        let colorObj = null;
+        if (product.colors_formatted && Array.isArray(product.colors_formatted)) {
+          colorObj = product.colors_formatted.find(
+            c =>
+              c.code === selectedColor ||
+              c.color === selectedColor ||
+              c.name === selectedColor ||
+              c.code === "#" + selectedColor
+          );
+        }
+        // Only send color if found, otherwise skip
+        if (colorObj && colorObj.code) {
+          payload.color = colorObj.code;
+        }
+      }
+      // Send variant if selected
       if (selectedVariation) payload.variant = selectedVariation;
+      // If product has choice_options, send each choice as field
+      if (product.choice_options && Array.isArray(product.choice_options)) {
+        product.choice_options.forEach(choice => {
+          // You may want to add UI for choices, here just send default if available
+          if (choice.name && product[choice.name]) {
+            payload[choice.name] = product[choice.name];
+          }
+        });
+      }
       await addToCart(payload);
       toast.success("Added to cart!");
       window.dispatchEvent(new Event("snapcart-auth-change"));
