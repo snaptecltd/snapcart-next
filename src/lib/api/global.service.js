@@ -413,3 +413,22 @@ export async function deleteCustomerAddress(address_id) {
   });
   return res.data;
 }
+
+export async function getCustomerRestockList() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.CUSTOMER_RESTOCK_LIST, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function deleteCustomerRestock({ id, type }) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  let url = ENDPOINTS.CUSTOMER_RESTOCK_DELETE;
+  if (type === "all") url += "?type=all";
+  else if (id) url += `?id=${id}`;
+  const res = await api.post(url, {}, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
