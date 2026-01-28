@@ -197,6 +197,10 @@ export async function addToCart(data) {
       if (guestId) payload.guest_id = guestId;
     }
   }
+  // Remove undefined/null fields
+  Object.keys(payload).forEach(
+    (k) => (payload[k] === undefined || payload[k] === null) && delete payload[k]
+  );
   const res = await api.post(ENDPOINTS.ADD_TO_CART, payload);
   return res.data;
 }
@@ -255,5 +259,189 @@ export async function removeAllCartItems() {
     }
   }
   const res = await api.delete(ENDPOINTS.REMOVE_CART_ALL_ITEMS, payload);
+  return res.data;
+}
+
+export async function getCustomerInfo() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.CUSTOMER_INFO, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function updateCustomerProfile(data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+
+  // Always append all required fields, even if empty string
+  formData.append("f_name", data.f_name ?? "");
+  formData.append("l_name", data.l_name ?? "");
+  formData.append("phone", data.phone ?? "");
+  formData.append("email", data.email ?? "");
+  if (data.password) formData.append("password", data.password);
+  if (data.image) formData.append("image", data.image);
+  formData.append("_method", "POST"); // Laravel expects this for POST with FormData
+
+  const res = await api.post(ENDPOINTS.CUSTOMER_UPDATE_PROFILE, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function getCustomerOrderList() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.CUSTOMER_ORDER_LIST, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function getCustomerOrderDetails(order_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.CUSTOMER_ORDER_DETAILS}?order_id=${order_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function getCustomerWishlist() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.CUSTOMER_WISHLIST, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function removeFromWishlist(product_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.delete(`${ENDPOINTS.CUSTOMER_WISHLIST_REMOVE}?product_id=${product_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function getCustomerSupportTickets() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.CUSTOMER_SUPPORT_TICKET_LIST, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function createCustomerSupportTicket(data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  formData.append("subject", data.subject);
+  formData.append("type", data.type);
+  formData.append("priority", data.priority);
+  formData.append("description", data.description);
+  if (data.images && Array.isArray(data.images)) {
+    data.images.forEach((img) => formData.append("image[]", img));
+  }
+  const res = await api.post(ENDPOINTS.CUSTOMER_SUPPORT_TICKET_CREATE, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function getCustomerSupportTicketConv(ticketId) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.CUSTOMER_SUPPORT_TICKET_CONV}/${ticketId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function replyCustomerSupportTicket(ticketId, message, images) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  formData.append("message", message);
+  if (images && Array.isArray(images)) {
+    images.forEach((img) => formData.append("image[]", img));
+  }
+  const res = await api.post(`${ENDPOINTS.CUSTOMER_SUPPORT_TICKET_REPLY}/${ticketId}`, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function closeCustomerSupportTicket(ticketId) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.CUSTOMER_SUPPORT_TICKET_CLOSE}/${ticketId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function getCustomerAddressList() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.CUSTOMER_ADDRESS_LIST, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function addCustomerAddress(data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) formData.append(key, value);
+  });
+  const res = await api.post(ENDPOINTS.CUSTOMER_ADDRESS_ADD, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function deleteCustomerAddress(address_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.delete(`${ENDPOINTS.CUSTOMER_ADDRESS_DELETE}?address_id=${address_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function getCustomerRestockList() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.CUSTOMER_RESTOCK_LIST, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function deleteCustomerRestock({ id, type }) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  let url = ENDPOINTS.CUSTOMER_RESTOCK_DELETE;
+  if (type === "all") url += "?type=all";
+  else if (id) url += `?id=${id}`;
+  const res = await api.post(url, {}, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function trackOrder({ order_id, phone_number }) {
+  const res = await api.post(ENDPOINTS.ORDER_TRACK, { order_id, phone_number });
+  return res.data;
+}
+
+export async function getCouponList() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.COUPON_LIST, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
   return res.data;
 }
