@@ -235,8 +235,16 @@ export default function ListingPage() {
 
         {/* Main Content */}
         <div className="col-12 col-lg-9">
+            <div className="d-md-none d-flex flex-column mb-3">
+              <div className="fw-bold" style={{ fontSize: 18 }}>
+                Products
+              </div>
+              <div className="text-muted small">
+                Found: {total}
+              </div>
+            </div>
           <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-            <div>
+            <div className="d-none d-md-flex flex-column">
               <div className="fw-bold" style={{ fontSize: 18 }}>
                 Products
               </div>
@@ -260,7 +268,7 @@ export default function ListingPage() {
 
             {/* Filter Button (Mobile only) */}
             <button
-              className="btn btn-dark d-lg-none d-flex align-items-center gap-2"
+              className="btn btn-dark d-md-none d-flex align-items-center gap-2"
               type="button"
               onClick={() => setMobileFilterOpen(true)}
               style={{ minWidth: 90 }}
