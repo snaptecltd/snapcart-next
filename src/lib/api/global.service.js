@@ -324,6 +324,15 @@ export async function removeFromWishlist(product_id) {
   return res.data;
 }
 
+export async function addToWishlist(product_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  if (!token) throw new Error("Not authenticated");
+  const res = await api.post(`${ENDPOINTS.CUSTOMER_WISHLIST_ADD}?product_id=${product_id}`, {}, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+}
+
 export async function getCustomerSupportTickets() {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
   const res = await api.get(ENDPOINTS.CUSTOMER_SUPPORT_TICKET_LIST, {

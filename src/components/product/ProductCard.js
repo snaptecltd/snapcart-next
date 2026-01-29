@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { addToCart, addToWishlist, removeFromWishlist } from "@/lib/api/global.service";
+import { toast } from "react-toastify";
 
 function moneyBDT(value) {
   const n = Number(value || 0);
@@ -28,6 +31,52 @@ export default function ProductCard({ product }) {
     oldPrice = Math.round(price / (1 - discount / 100));
     saveText = `${discount}% OFF`;
   }
+
+  // Wishlist logic
+  const [wishlisted, setWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  useEffect(() => {
+    let wishlist = [];
+    try {
+      const stored = localStorage.getItem("snapcart_wishlist");
+      if (stored) wishlist = JSON.parse(stored);
+    } catch {}
+    setWishlisted(wishlist.includes(product.id));
+  }, [product.id]);
+
+  const handleWishlist = async (e) => {
+    e.preventDefault();
+    if (wishlistLoading) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+    if (!token) {
+      toast.info("Please login to add to wishlist.");
+      return;
+    }
+    setWishlistLoading(true);
+    try {
+      let wishlist = [];
+      try {
+        const stored = localStorage.getItem("snapcart_wishlist");
+        if (stored) wishlist = JSON.parse(stored);
+      } catch {}
+      if (wishlisted) {
+        await removeFromWishlist(product.id);
+        setWishlisted(false);
+        wishlist = wishlist.filter(id => id !== product.id);
+        toast.success("Removed from wishlist!");
+      } else {
+        await addToWishlist(product.id);
+        setWishlisted(true);
+        if (!wishlist.includes(product.id)) wishlist.push(product.id);
+        toast.success("Added to wishlist!");
+      }
+      localStorage.setItem("snapcart_wishlist", JSON.stringify(wishlist));
+    } catch {
+      toast.error("Failed to update wishlist.");
+    }
+    setWishlistLoading(false);
+  };
 
   return (
     <div
@@ -115,6 +164,36 @@ export default function ProductCard({ product }) {
           </div>
         </div>
       </Link>
+
+      {/* Wishlist Heart Floating Top Left */}
+      <button
+        className="btn btn-light border-0 position-absolute"
+        style={{
+          top: 12,
+          left: 12,
+          zIndex: 10,
+          background: "rgba(255,255,255,0.85)",
+          borderRadius: "50%",
+          width: 36,
+          height: 36,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
+        }}
+        title={wishlisted ? "Wishlisted" : "Add to wishlist"}
+        onClick={handleWishlist}
+        disabled={wishlistLoading}
+      >
+        <i
+          className={`fa${wishlisted ? "s" : "r"} fa-heart`}
+          style={{
+            color: wishlisted ? "#F67535" : "#bbb",
+            fontSize: 20,
+            transition: "color 0.2s",
+          }}
+        ></i>
+      </button>
     </div>
   );
 }
