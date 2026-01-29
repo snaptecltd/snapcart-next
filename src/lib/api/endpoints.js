@@ -80,4 +80,7 @@ export const ENDPOINTS = {
   
   // shipping methods endpoint
   SHIPPING_METHODS: `${PREFIX}/products/shipping-methods`,
+
+  // offline payment methods
+  OFFLINE_PAYMENT_METHOD_LIST: `${PREFIX}/customer/order/offline-payment-method-list`,
 };

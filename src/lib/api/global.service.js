@@ -475,3 +475,19 @@ export async function applyCoupon(code) {
   const res = await api.get(`${ENDPOINTS.COUPON_APPLY}?code=${encodeURIComponent(code)}`, { headers });
   return res.data;
 }
+
+export async function getOfflinePaymentMethods() {
+  let headers = {};
+  let params = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) params.guest_id = guestId;
+    }
+  }
+  const res = await api.get(ENDPOINTS.OFFLINE_PAYMENT_METHOD_LIST, { params, headers });
+  return res.data;
+}

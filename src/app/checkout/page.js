@@ -246,7 +246,7 @@ export default function CheckoutPage() {
               <span>Total</span>
               <span>৳2,405.00</span>
             </div>
-            <button className="btn btn-primary w-100 mb-2">Proceed to Checkout</button>
+            <button className="btn btn-primary w-100 mb-2">Proceed to Payment</button>
             <button className="btn btn-link w-100"> &lt; Continue Shopping</button>
           </div>
         </div>

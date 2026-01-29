@@ -43,6 +43,18 @@ export default function Cart() {
       .finally(() => setShippingLoading(false));
   }, []);
 
+  // Save shipping method and coupon to localStorage for checkout
+  useEffect(() => {
+    if (shippingMethodId) {
+      localStorage.setItem("snapcart_shipping_method_id", shippingMethodId);
+    }
+  }, [shippingMethodId]);
+  useEffect(() => {
+    if (couponApplied && couponApplied.coupon_discount > 0) {
+      localStorage.setItem("snapcart_coupon_applied", JSON.stringify(couponApplied));
+    }
+  }, [couponApplied]);
+
   // Calculate subtotal and total
   const subtotal = Array.isArray(cart)
     ? cart.reduce((sum, item) => {
@@ -341,11 +353,16 @@ export default function Cart() {
               CONTINUE SHOPPING
             </Link>
             <Link
-              href="/checkout"
+              href={shippingMethodId ? "/checkout" : "#"}
               className="btn btn-dark px-4 fw-semibold"
               style={{ minWidth: 180 }}
-              // You can pass coupon, shippingMethodId, orderNote as query or context for checkout
-              // disabled={!shippingMethodId}
+              disabled={!shippingMethodId}
+              onClick={e => {
+                if (!shippingMethodId) {
+                  e.preventDefault();
+                  toast.error("Please select a shipping method.");
+                }
+              }}
             >
               CHECK OUT
             </Link>
