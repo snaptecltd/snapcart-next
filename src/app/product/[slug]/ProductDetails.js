@@ -650,7 +650,9 @@ export default function ProductDetails() {
               </span>
               {whatsappActive && whatsappPhone && (
                 <a
-                  href={`https://wa.me/${whatsappPhone.replace(/\D/g, "")}`}
+                href={`https://wa.me/${whatsappPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                          `I want to know more about this product: ${typeof window !== "undefined" ? window.location.href : ""}`
+                          )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="badge bg-success-subtle text-success border px-3 py-2"
