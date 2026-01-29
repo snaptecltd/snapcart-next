@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { moneyBDT } from "@/lib/utils/money";
-import { addToCart } from "@/lib/api/global.service";
-import { useState } from "react";
+import { addToCart, addToWishlist } from "@/lib/api/global.service";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 
 export default function ProductCard({ p }) {
@@ -52,6 +52,49 @@ export default function ProductCard({ p }) {
     setAdding(false);
   };
 
+  // Wishlist logic
+  const [wishlisted, setWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  useEffect(() => {
+    // Check if product is in wishlist (from localStorage or API)
+    let wishlist = [];
+    try {
+      const stored = localStorage.getItem("snapcart_wishlist");
+      if (stored) wishlist = JSON.parse(stored);
+    } catch {}
+    setWishlisted(wishlist.includes(p.id));
+  }, [p.id]);
+
+  const handleWishlist = async (e) => {
+    e.preventDefault();
+    if (wishlistLoading) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+    if (!token) {
+      toast.info("Please login to add to wishlist.");
+      return;
+    }
+    setWishlistLoading(true);
+    try {
+      await addToWishlist(p.id);
+      setWishlisted(true);
+      // Optionally update localStorage
+      let wishlist = [];
+      try {
+        const stored = localStorage.getItem("snapcart_wishlist");
+        if (stored) wishlist = JSON.parse(stored);
+      } catch {}
+      if (!wishlist.includes(p.id)) {
+        wishlist.push(p.id);
+        localStorage.setItem("snapcart_wishlist", JSON.stringify(wishlist));
+      }
+      toast.success("Added to wishlist!");
+    } catch {
+      toast.error("Failed to add to wishlist.");
+    }
+    setWishlistLoading(false);
+  };
+
   return (
     <div
       className="card h-100 card-shadow border rounded-3xl overflow-hidden position-relative"
@@ -61,6 +104,36 @@ export default function ProductCard({ p }) {
         boxSizing: "border-box",
       }}
     >
+      {/* Wishlist Heart Floating Top Left */}
+      <button
+        className="btn btn-light border-0 position-absolute"
+        style={{
+          top: 12,
+          left: 12,
+          zIndex: 10,
+          background: "rgba(255,255,255,0.85)",
+          borderRadius: "50%",
+          width: 36,
+          height: 36,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
+        }}
+        title={wishlisted ? "Wishlisted" : "Add to wishlist"}
+        onClick={handleWishlist}
+        disabled={wishlistLoading}
+      >
+        <i
+          className={`fa${wishlisted ? "s" : "r"} fa-heart`}
+          style={{
+            color: wishlisted ? "#F67535" : "#bbb",
+            fontSize: 20,
+            transition: "color 0.2s",
+          }}
+        ></i>
+      </button>
+
       {/* Stock Out Ribbon */}
       {currentStock < 1 && (
         <div

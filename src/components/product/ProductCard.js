@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { addToCart, addToWishlist } from "@/lib/api/global.service";
+import { toast } from "react-toastify";
 
 function moneyBDT(value) {
   const n = Number(value || 0);
@@ -28,6 +31,46 @@ export default function ProductCard({ product }) {
     oldPrice = Math.round(price / (1 - discount / 100));
     saveText = `${discount}% OFF`;
   }
+
+  // Wishlist logic
+  const [wishlisted, setWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  useEffect(() => {
+    let wishlist = [];
+    try {
+      const stored = localStorage.getItem("snapcart_wishlist");
+      if (stored) wishlist = JSON.parse(stored);
+    } catch {}
+    setWishlisted(wishlist.includes(product.id));
+  }, [product.id]);
+
+  const handleWishlist = async (e) => {
+    e.preventDefault();
+    const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+    if (!token) {
+      toast.info("Please login to add to wishlist.");
+      return;
+    }
+    setWishlistLoading(true);
+    try {
+      await addToWishlist(product.id);
+      setWishlisted(true);
+      let wishlist = [];
+      try {
+        const stored = localStorage.getItem("snapcart_wishlist");
+        if (stored) wishlist = JSON.parse(stored);
+      } catch {}
+      if (!wishlist.includes(product.id)) {
+        wishlist.push(product.id);
+        localStorage.setItem("snapcart_wishlist", JSON.stringify(wishlist));
+      }
+      toast.success("Added to wishlist!");
+    } catch {
+      toast.error("Failed to add to wishlist.");
+    }
+    setWishlistLoading(false);
+  };
 
   return (
     <div
@@ -115,6 +158,36 @@ export default function ProductCard({ product }) {
           </div>
         </div>
       </Link>
+
+      {/* Wishlist Heart Floating Top Left */}
+      <button
+        className="btn btn-light border-0 position-absolute"
+        style={{
+          top: 12,
+          left: 12,
+          zIndex: 10,
+          background: "rgba(255,255,255,0.85)",
+          borderRadius: "50%",
+          width: 36,
+          height: 36,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
+        }}
+        title={wishlisted ? "Wishlisted" : "Add to wishlist"}
+        onClick={handleWishlist}
+        disabled={wishlistLoading}
+      >
+        <i
+          className={`fa${wishlisted ? "s" : "r"} fa-heart`}
+          style={{
+            color: wishlisted ? "#F67535" : "#bbb",
+            fontSize: 20,
+            transition: "color 0.2s",
+          }}
+        ></i>
+      </button>
     </div>
   );
 }
