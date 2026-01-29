@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getProductDetails, getRelatedProducts, addToCart } from "@/lib/api/global.service";
+import { getProductDetails, getRelatedProducts, addToCart, checkRestockRequest, requestProductRestock } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 import Breadcrumb from "@/components/html/Breadcrumb";
 import ProductCardType2 from "@/components/product/ProductCardType2";
@@ -45,7 +45,18 @@ export default function ProductDetails() {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [restockStatus, setRestockStatus] = useState(null); // null | "not_requested" | "requested"
+  const [restockLoading, setRestockLoading] = useState(false);
+  const [isAuth, setIsAuth] = useState(false);
   const carouselRef = useRef(null);
+
+  let stock = 0;
+  if (product) {
+    stock = selectedVariation && product.variation?.length
+      ? product.variation.find((v) => v.type === selectedVariation)?.qty ?? product.current_stock
+      : product.current_stock;
+    stock = typeof stock === "number" ? stock : 0;
+  }
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -206,6 +217,43 @@ export default function ProductDetails() {
     setAdding(false);
   };
 
+  // Detect auth on mount
+  useEffect(() => {
+    setIsAuth(typeof window !== "undefined" && !!localStorage.getItem("snapcart_token"));
+  }, [mounted]);
+
+  // Check restock status if out of stock and authenticated
+  useEffect(() => {
+    if (!mounted || !product?.id) return;
+    if (stock > 0) {
+      setRestockStatus(null);
+      return;
+    }
+    if (isAuth) {
+      setRestockLoading(true);
+      checkRestockRequest(product.id)
+        .then((res) => setRestockStatus(res.exists ? "requested" : "not_requested"))
+        .catch(() => setRestockStatus("not_requested"))
+        .finally(() => setRestockLoading(false));
+    } else {
+      setRestockStatus(null);
+    }
+  }, [mounted, product?.id, stock, isAuth]);
+
+  // Restock request handler
+  const handleRestockRequest = async () => {
+    if (restockLoading || restockStatus === "requested") return;
+    setRestockLoading(true);
+    try {
+      await requestProductRestock(product.id);
+      toast.success("Restock request sent!");
+      setRestockStatus("requested");
+    } catch {
+      toast.error("Failed to request restock.");
+    }
+    setRestockLoading(false);
+  };
+
   if (!mounted) return null;
   if (!product) {
     return (
@@ -270,11 +318,6 @@ export default function ProductDetails() {
     const v = product.variation.find((v) => v.type === selectedVariation);
     if (v) price = v.price;
   }
-
-  // Stock
-  const stock = selectedVariation && product.variation?.length
-    ? product.variation.find((v) => v.type === selectedVariation)?.qty ?? product.current_stock
-    : product.current_stock;
 
   // Handle zoom
   const handleMouseMove = (e) => {
@@ -425,7 +468,7 @@ export default function ProductDetails() {
                 )}
               </div>
               <div className="w-100">
-                <span className="text-success fw-semibold fs-12">
+                <span className={` ${stock > 0 ? "text-success" : "text-danger"} fw-semibold fs-12`}>
                   Availability: {stock > 0 ? "In Stock" : "Out of Stock"}
                 </span>
                 <span className="ms-3 text-muted small fs-12">
@@ -544,14 +587,45 @@ export default function ProductDetails() {
             <div className="bg-white rounded-4 p-4 shadow-sm border h-100 d-flex flex-column">
               {/* Actions */}
               <div className="d-flex gap-3 mb-3 flex-wrap">
-                <button
-                  className="btn btn-warning fw-bold px-4 rounded-pill"
-                  style={{ background: "#F67535", color: "#fff" }}
-                  onClick={handleAddToCart}
-                  disabled={adding || stock < 1}
-                >
-                  {adding ? "Adding..." : "Add To Cart"}
-                </button>
+                {/* If in stock, show Add to Cart */}
+                {stock > 0 ? (
+                  <button
+                    className="btn btn-warning fw-bold px-4 rounded-pill"
+                    style={{ background: "#F67535", color: "#fff" }}
+                    onClick={handleAddToCart}
+                    disabled={adding || stock < 1}
+                  >
+                    {adding ? "Adding..." : "Add To Cart"}
+                  </button>
+                ) : isAuth ? (
+                  // If out of stock and authenticated, show restock request
+                  restockStatus === "requested" ? (
+                    <button
+                      className="btn btn-outline-secondary fw-bold px-4 rounded-pill"
+                      disabled
+                      style={{ color: "#888", borderColor: "#bbb" }}
+                    >
+                      Already Requested
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-outline-warning fw-bold px-4 rounded-pill"
+                      style={{ color: "#F67535", borderColor: "#F67535" }}
+                      onClick={handleRestockRequest}
+                      disabled={restockLoading}
+                    >
+                      {restockLoading ? "Requesting..." : "Request Restock"}
+                    </button>
+                  )
+                ) : (
+                  // If out of stock and not authenticated, show Stock Out
+                  <button
+                    className="btn btn-danger fw-bold px-4 rounded-pill"
+                    disabled
+                  >
+                    Stock Out
+                  </button>
+                )}
                 <button
                   className="btn btn-outline-dark fw-bold px-4 rounded-pill"
                   disabled
