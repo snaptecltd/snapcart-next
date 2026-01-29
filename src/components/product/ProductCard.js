@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { addToCart, addToWishlist } from "@/lib/api/global.service";
+import { addToCart, addToWishlist, removeFromWishlist } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 
 function moneyBDT(value) {
@@ -47,6 +47,7 @@ export default function ProductCard({ product }) {
 
   const handleWishlist = async (e) => {
     e.preventDefault();
+    if (wishlistLoading) return;
     const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
     if (!token) {
       toast.info("Please login to add to wishlist.");
@@ -54,20 +55,25 @@ export default function ProductCard({ product }) {
     }
     setWishlistLoading(true);
     try {
-      await addToWishlist(product.id);
-      setWishlisted(true);
       let wishlist = [];
       try {
         const stored = localStorage.getItem("snapcart_wishlist");
         if (stored) wishlist = JSON.parse(stored);
       } catch {}
-      if (!wishlist.includes(product.id)) {
-        wishlist.push(product.id);
-        localStorage.setItem("snapcart_wishlist", JSON.stringify(wishlist));
+      if (wishlisted) {
+        await removeFromWishlist(product.id);
+        setWishlisted(false);
+        wishlist = wishlist.filter(id => id !== product.id);
+        toast.success("Removed from wishlist!");
+      } else {
+        await addToWishlist(product.id);
+        setWishlisted(true);
+        if (!wishlist.includes(product.id)) wishlist.push(product.id);
+        toast.success("Added to wishlist!");
       }
-      toast.success("Added to wishlist!");
+      localStorage.setItem("snapcart_wishlist", JSON.stringify(wishlist));
     } catch {
-      toast.error("Failed to add to wishlist.");
+      toast.error("Failed to update wishlist.");
     }
     setWishlistLoading(false);
   };
