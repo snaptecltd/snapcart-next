@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Sidebar from "../partials/Sidebar";
 import { getCouponList } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
+import Image from "next/image";
 
 function moneyBDT(value) {
   const n = Number(value || 0);
@@ -54,15 +55,17 @@ export default function CouponsPage() {
                 {coupons.map((c) => (
                   <div className="ticket-box" key={c.id}>
                     <div className="ticket-start">
-                        <img width="30" src="http://localhost/snapcart/resources/themes/snap_glacier/public/assets/front-end/img/icons/dollar.png" alt="" /> 
+                        <Image src="/images/dollar.png" alt="Coupon" width={30} height={30} />
                         <h2 className="ticket-amount"> {moneyBDT(c.discount)} </h2>
-                        <p className="d-flex flex-column"> On <a className="shop-name" href="http://localhost/snapcart/shopView/rsm-international-9751"> {c.seller?.name || "RSM International"} </a> </p>
+                        <p className="d-flex flex-column"> On                       
+                          <div className="text-muted" style={{ fontSize: 13 }}>{c.seller?.name || "RSM International"}</div> 
+                        </p>
                     </div>
                     <div className="ticket-border"></div>
                     <div className="ticket-end">
-                        <button className="ticket-welcome-btn click-to-copy-coupon" data-value="5jikgjyfpt">5jikgjyfpt</button> 
-                        <h6>Valid till 07 Feb, 2026</h6>
-                        <p className="m-0">Available from minimum purchase ৳1,000.00</p>
+                        <button className="ticket-welcome-btn click-to-copy-coupon" onClick={() => handleCopy(c.code)} title="Copy code" data-value={c.code}>{c.code}</button> 
+                        <h6>Valid till {formatDate(c.plain_expire_date)}</h6>
+                        <p className="m-0">Available from minimum purchase {moneyBDT(c.min_purchase)}</p>
                     </div>
                   </div>
                 ))}
