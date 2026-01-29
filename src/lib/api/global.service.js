@@ -161,37 +161,28 @@ export async function resetPassword(data) {
 
 // Cart
 export async function getCart() {
-  // Try to get token and user/guest id from localStorage
+  let headers = {};
   let params = {};
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
-      // Auth user
-      const user = localStorage.getItem("snapcart_user");
-      try {
-        const userObj = user ? JSON.parse(user) : {};
-        if (userObj?.id) params.user_id = userObj.id;
-      } catch {}
+      headers.Authorization = `Bearer ${token}`;
     } else {
-      // Guest user
       const guestId = localStorage.getItem("guest_id");
       if (guestId) params.guest_id = guestId;
     }
   }
-  const res = await api.get(ENDPOINTS.CART, { params });
+  const res = await api.get(ENDPOINTS.CART, { params, headers });
   return res.data;
 }
 
 export async function addToCart(data) {
   let payload = { ...data };
+  let headers = {};
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
-      const user = localStorage.getItem("snapcart_user");
-      try {
-        const userObj = user ? JSON.parse(user) : {};
-        if (userObj?.id) payload.user_id = userObj.id;
-      } catch {}
+      headers.Authorization = `Bearer ${token}`;
     } else {
       const guestId = localStorage.getItem("guest_id");
       if (guestId) payload.guest_id = guestId;
@@ -201,64 +192,55 @@ export async function addToCart(data) {
   Object.keys(payload).forEach(
     (k) => (payload[k] === undefined || payload[k] === null) && delete payload[k]
   );
-  const res = await api.post(ENDPOINTS.ADD_TO_CART, payload);
+  const res = await api.post(ENDPOINTS.ADD_TO_CART, payload, { headers });
   return res.data;
 }
 
 export async function updateCartItem(data) {
   let payload = { ...data };
+  let headers = {};
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
-      const user = localStorage.getItem("snapcart_user");
-      try {
-        const userObj = user ? JSON.parse(user) : {};
-        if (userObj?.id) payload.user_id = userObj.id;
-      } catch {}
+      headers.Authorization = `Bearer ${token}`;
     } else {
       const guestId = localStorage.getItem("guest_id");
       if (guestId) payload.guest_id = guestId;
     }
   }
-  const res = await api.put(ENDPOINTS.UPDATE_CART_ITEM, payload);
+  const res = await api.put(ENDPOINTS.UPDATE_CART_ITEM, payload, { headers });
   return res.data;
 }
 
 export async function removeCartItem(data) {
   let payload = { ...data };
+  let headers = {};
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
-      const user = localStorage.getItem("snapcart_user");
-      try {
-        const userObj = user ? JSON.parse(user) : {};
-        if (userObj?.id) payload.user_id = userObj.id;
-      } catch {}
+      headers.Authorization = `Bearer ${token}`;
     } else {
       const guestId = localStorage.getItem("guest_id");
       if (guestId) payload.guest_id = guestId;
     }
   }
-  const res = await api.delete(ENDPOINTS.REMOVE_CART_ITEM, payload);
+  const res = await api.delete(ENDPOINTS.REMOVE_CART_ITEM, { data: payload, headers });
   return res.data;
 }
 
 export async function removeAllCartItems() {
+  let headers = {};
   let payload = {};
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
-      const user = localStorage.getItem("snapcart_user");
-      try {
-        const userObj = user ? JSON.parse(user) : {};
-        if (userObj?.id) payload.user_id = userObj.id;
-      } catch {}
+      headers.Authorization = `Bearer ${token}`;
     } else {
       const guestId = localStorage.getItem("guest_id");
       if (guestId) payload.guest_id = guestId;
     }
   }
-  const res = await api.delete(ENDPOINTS.REMOVE_CART_ALL_ITEMS, payload);
+  const res = await api.delete(ENDPOINTS.REMOVE_CART_ALL_ITEMS, { data: payload, headers });
   return res.data;
 }
 
