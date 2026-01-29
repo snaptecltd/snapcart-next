@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getOfflinePaymentMethods } from "@/lib/api/global.service";
+import { getOfflinePaymentMethods, placeOrder } from "@/lib/api/global.service";
+import { toast } from "react-toastify";
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -18,10 +19,10 @@ export default function PaymentPage() {
   const [discount, setDiscount] = useState(0);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(null);
+  const [shippingMethodId, setShippingMethodId] = useState(null);
 
   // Load cart summary from localStorage
   useEffect(() => {
-    // Example: you should load these from your cart context or localStorage
     setSubtotal(Number(localStorage.getItem("snapcart_cart_subtotal") || 2400));
     setShipping(Number(localStorage.getItem("snapcart_shipping_cost") || 5));
     try {
@@ -30,8 +31,10 @@ export default function PaymentPage() {
         const c = JSON.parse(stored);
         setDiscount(Number(c.coupon_discount || 0));
         setCouponApplied(c);
+        setCoupon(c.code || c.coupon_code || "");
       }
     } catch {}
+    setShippingMethodId(localStorage.getItem("snapcart_shipping_method_id") || "");
   }, []);
 
   // Load offline payment methods
@@ -54,10 +57,34 @@ export default function PaymentPage() {
   };
 
   // Proceed to checkout
-  const handleProceed = () => {
-    if (!agreed) return;
-    // ...submit order logic...
-    alert("Proceeding to checkout...");
+  const handleProceed = async () => {
+    if (!agreed || !paymentMethod) return;
+    try {
+      const res = await placeOrder({
+        coupon_code: coupon,
+        shipping_method_id: shippingMethodId,
+        payment_method: paymentMethod,
+        offline_fields: offlineFields,
+      });
+      // Clear cart count in header
+      window.dispatchEvent(new Event("snapcart-auth-change"));
+      // Show success modal
+      if (typeof window !== "undefined" && window.Swal) {
+        window.Swal.fire({
+          icon: "success",
+          title: "Order Placed!",
+          html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
+          confirmButtonText: "Continue Shopping",
+        }).then(() => {
+          window.location.href = "/";
+        });
+      } else {
+        toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
+        setTimeout(() => { window.location.href = "/"; }, 1200);
+      }
+    } catch (e) {
+      toast.error("Failed to place order. Please try again.");
+    }
   };
 
   return (

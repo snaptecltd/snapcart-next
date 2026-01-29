@@ -491,3 +491,29 @@ export async function getOfflinePaymentMethods() {
   const res = await api.get(ENDPOINTS.OFFLINE_PAYMENT_METHOD_LIST, { params, headers });
   return res.data;
 }
+
+export async function placeOrder({ coupon_code, shipping_method_id, payment_method, offline_fields }) {
+  let headers = {};
+  let params = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) params.guest_id = guestId;
+    }
+  }
+  const payload = {
+    coupon_code,
+    shipping_method_id,
+    payment_method,
+    ...offline_fields,
+  };
+  // Remove undefined/null fields
+  Object.keys(payload).forEach(
+    (k) => (payload[k] === undefined || payload[k] === null) && delete payload[k]
+  );
+  const res = await api.get(ENDPOINTS.ORDER_PLACE, { params: { ...params, ...payload }, headers });
+  return res.data;
+}
