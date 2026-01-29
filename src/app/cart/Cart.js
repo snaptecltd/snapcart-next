@@ -1,13 +1,22 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getCart, updateCartItem, removeCartItem } from "@/lib/api/global.service";
+import { getCart, updateCartItem, removeCartItem, getShippingMethods } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 import Link from "next/link";
+import axios from "axios";
 
 export default function Cart() {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState({}); // { [cartId]: boolean }
+  const [coupon, setCoupon] = useState("");
+  const [couponApplied, setCouponApplied] = useState(null); // {coupon_discount, coupon_type}
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [shippingMethods, setShippingMethods] = useState([]);
+  const [shippingMethodId, setShippingMethodId] = useState("");
+  const [shippingLoading, setShippingLoading] = useState(true);
+  const [orderNoteEnabled, setOrderNoteEnabled] = useState(false);
+  const [orderNote, setOrderNote] = useState("");
 
   const fetchCart = () => {
     setLoading(true);
@@ -20,13 +29,39 @@ export default function Cart() {
     fetchCart();
   }, []);
 
-  // Calculate total
-  const total = Array.isArray(cart)
+  // Fetch shipping methods
+  useEffect(() => {
+    setShippingLoading(true);
+    getShippingMethods()
+      .then(res => setShippingMethods(Array.isArray(res) ? res : []))
+      .catch(() => setShippingMethods([]))
+      .finally(() => setShippingLoading(false));
+  }, []);
+
+  // Calculate subtotal and total
+  const subtotal = Array.isArray(cart)
     ? cart.reduce((sum, item) => {
         if (!item || typeof item.price !== "number" || typeof item.quantity !== "number") return sum;
         return sum + (item.price * item.quantity);
       }, 0)
     : 0;
+  const couponDiscount = couponApplied?.coupon_discount || 0;
+  const total = Math.max(0, subtotal - couponDiscount);
+
+  // Coupon apply handler
+  const handleApplyCoupon = async () => {
+    if (!coupon) return;
+    setCouponLoading(true);
+    try {
+      const res = await axios.get(`/api/v1/coupon/apply?code=${encodeURIComponent(coupon)}`);
+      setCouponApplied(res.data);
+      toast.success("Coupon applied!");
+    } catch {
+      setCouponApplied(null);
+      toast.error("Invalid or expired coupon.");
+    }
+    setCouponLoading(false);
+  };
 
   const handleUpdateQty = async (item, newQty) => {
     if (newQty < 1 || updating[item.id]) return;
@@ -149,23 +184,95 @@ export default function Cart() {
       </div>
 
       <div className="row g-4">
-        {/* Promo Code Only */}
+        {/* Promo Code & Shipping */}
         <div className="col-12 col-md-6 col-lg-5">
           <div className="bg-light rounded-3 p-4">
+            {/* Coupon */}
             <div>
               <label className="form-label fw-semibold">Apply promo code</label>
-              <div className="input-group">
-                <input type="text" className="form-control" placeholder="Apply promo code" />
-                <button className="btn btn-outline-warning fw-semibold" type="button" disabled>
-                  APPLY
+              <div className="input-group mb-2">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Apply promo code"
+                  value={coupon}
+                  onChange={e => setCoupon(e.target.value)}
+                  disabled={couponLoading}
+                />
+                <button
+                  className="btn btn-outline-warning fw-semibold"
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={couponLoading || !coupon}
+                >
+                  {couponLoading ? "Applying..." : "APPLY"}
                 </button>
               </div>
+              {couponApplied && (
+                <div className="text-success small mb-2">
+                  Coupon applied: <b>{coupon}</b> ({couponApplied.coupon_type}), Discount: <b>{couponDiscount} BDT</b>
+                </div>
+              )}
+            </div>
+            {/* Shipping Method */}
+            <div className="mt-4">
+              <label className="form-label fw-semibold">Select Shipping Method <span className="text-danger">*</span></label>
+              {shippingLoading ? (
+                <div className="text-muted small">Loading shipping methods...</div>
+              ) : (
+                <select
+                  className="form-select"
+                  value={shippingMethodId}
+                  onChange={e => setShippingMethodId(e.target.value)}
+                  required
+                >
+                  <option value="">Select shipping method</option>
+                  {(shippingMethods || []).map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.title} ({m.duration}) - {m.cost} BDT
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            {/* Order Note */}
+            <div className="mt-4">
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="orderNoteCheck"
+                  checked={orderNoteEnabled}
+                  onChange={e => setOrderNoteEnabled(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="orderNoteCheck">
+                  Add Order Note (Optional)
+                </label>
+              </div>
+              {orderNoteEnabled && (
+                <textarea
+                  className="form-control mt-2"
+                  rows={2}
+                  placeholder="Order note (optional)"
+                  value={orderNote}
+                  onChange={e => setOrderNote(e.target.value)}
+                />
+              )}
             </div>
           </div>
         </div>
         {/* Total & Actions */}
         <div className="col-12 col-md-6 col-lg-7 d-flex flex-column justify-content-end align-items-end">
-          <div className="mb-3 w-100 d-flex justify-content-end align-items-center">
+          <div className="mb-3 w-100 d-flex justify-content-end align-items-center flex-column flex-md-row">
+            <div className="me-md-4 mb-2 mb-md-0">
+              <span className="fw-bold me-2">Subtotal:</span>
+              <span>{subtotal.toLocaleString()} BDT</span>
+              {couponDiscount > 0 && (
+                <>
+                  <span className="fw-bold ms-3 text-success">Coupon: -{couponDiscount} BDT</span>
+                </>
+              )}
+            </div>
             <span className="fw-bold fs-5 me-3">Total:</span>
             <span className="fw-bold fs-4">{total.toLocaleString()} BDT</span>
           </div>
@@ -173,7 +280,13 @@ export default function Cart() {
             <Link href="/" className="btn btn-outline-warning px-4 fw-semibold" style={{ minWidth: 180 }}>
               CONTINUE SHOPPING
             </Link>
-            <Link href="/checkout" className="btn btn-dark px-4 fw-semibold" style={{ minWidth: 180 }}>
+            <Link
+              href="/checkout"
+              className="btn btn-dark px-4 fw-semibold"
+              style={{ minWidth: 180 }}
+              // You can pass coupon, shippingMethodId, orderNote as query or context for checkout
+              // disabled={!shippingMethodId}
+            >
               CHECK OUT
             </Link>
           </div>

@@ -452,3 +452,8 @@ export async function requestProductRestock(product_id) {
   });
   return res.data;
 }
+
+export async function getShippingMethods() {
+  const res = await api.get(ENDPOINTS.SHIPPING_METHODS);
+  return res.data;
+}
