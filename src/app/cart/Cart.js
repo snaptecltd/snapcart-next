@@ -27,6 +27,11 @@ export default function Cart() {
 
   useEffect(() => {
     fetchCart();
+    // Load coupon from localStorage
+    try {
+      const stored = localStorage.getItem("snapcart_coupon_applied");
+      if (stored) setCouponApplied(JSON.parse(stored));
+    } catch {}
   }, []);
 
   // Fetch shipping methods
@@ -55,17 +60,27 @@ export default function Cart() {
     try {
       const data = await applyCoupon(coupon);
       if (data && data.coupon_discount > 0) {
-        setCouponApplied(data);
+        setCouponApplied({ ...data, code: coupon });
+        localStorage.setItem("snapcart_coupon_applied", JSON.stringify({ ...data, code: coupon }));
         toast.success("Coupon applied!");
       } else {
         setCouponApplied(null);
+        localStorage.removeItem("snapcart_coupon_applied");
         toast.error("Invalid or expired coupon.");
       }
     } catch {
       setCouponApplied(null);
+      localStorage.removeItem("snapcart_coupon_applied");
       toast.error("Invalid or expired coupon.");
     }
     setCouponLoading(false);
+  };
+
+  // Coupon clear handler
+  const handleClearCoupon = () => {
+    setCouponApplied(null);
+    localStorage.removeItem("snapcart_coupon_applied");
+    setCoupon("");
   };
 
   const handleUpdateQty = async (item, newQty) => {
@@ -184,6 +199,36 @@ export default function Cart() {
                 </td>
               </tr>
             ))}
+            {/* Subtotal row */}
+            <tr>
+              <td colSpan={4} className="text-end fw-bold">Subtotal:</td>
+              <td className="fw-bold">{subtotal.toLocaleString()} BDT</td>
+              <td></td>
+            </tr>
+            {/* Discount row if coupon applied */}
+            {couponApplied && couponApplied.coupon_discount > 0 && (
+              <tr>
+                <td colSpan={4} className="text-end fw-bold text-success">
+                  Discount ({couponApplied.code || couponApplied.coupon_code || "Coupon"}):
+                </td>
+                <td className="fw-bold text-success">- {couponApplied.coupon_discount.toLocaleString()} BDT</td>
+                <td>
+                  <button
+                    className="btn btn-link text-danger p-0"
+                    title="Clear Coupon"
+                    onClick={handleClearCoupon}
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </td>
+              </tr>
+            )}
+            {/* Total row */}
+            <tr>
+              <td colSpan={4} className="text-end fw-bold fs-5">Total:</td>
+              <td className="fw-bold fs-5">{total.toLocaleString()} BDT</td>
+              <td></td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -212,10 +257,20 @@ export default function Cart() {
                 >
                   {couponLoading ? "Applying..." : "APPLY"}
                 </button>
+                {couponApplied && couponApplied.coupon_discount > 0 && (
+                  <button
+                    className="btn btn-outline-danger fw-semibold"
+                    type="button"
+                    onClick={handleClearCoupon}
+                    style={{ marginLeft: 8 }}
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
               {couponApplied && couponApplied.coupon_discount > 0 && (
                 <div className="text-success small mb-2">
-                  Coupon applied: <b>{coupon}</b> ({couponApplied.coupon_type}), Discount: <b>{couponDiscount} BDT</b>
+                  Coupon applied: <b>{couponApplied.code || couponApplied.coupon_code}</b> ({couponApplied.coupon_type}), Discount: <b>{couponDiscount} BDT</b>
                 </div>
               )}
             </div>
