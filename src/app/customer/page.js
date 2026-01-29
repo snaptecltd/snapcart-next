@@ -118,7 +118,7 @@ export default function CustomerProfilePage() {
                 <button
                   type="button"
                   className="btn btn-primary position-absolute"
-                  style={{ bottom: 0, right: 0, borderRadius: "50%", padding: 8 }}
+                  style={{ bottom: 0, right: 0, borderRadius: "50%", padding: 8, width: 40, height: 40 }}
                   onClick={() => fileInputRef.current?.click()}
                   tabIndex={-1}
                 >

@@ -7,7 +7,7 @@ export default function SectionTitle({
   return (
     <h2
       className={`fw-bold mb-4 text-${align} ${className}`}
-      style={{ fontSize: "clamp(25px, 4vw, 40px)" }}
+      style={{ fontSize: "clamp(25px, 4vw, 36px)" }}
     >
       {first}{" "}
       <span

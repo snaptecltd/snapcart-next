@@ -106,7 +106,7 @@ export default function WishlistPage() {
                       </div>
                       {/* Remove button */}
                       <button
-                        className="btn btn-light border rounded-circle ms-3"
+                        className="btn btn-light border rounded-circle ms-3 d-flex align-items-center justify-content-center"
                         style={{ width: 40, height: 40 }}
                         title="Remove from wishlist"
                         onClick={() => handleRemove(p.id)}

@@ -1,5 +1,7 @@
 .snapheader {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: .875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
 }
 
 /* Search pill */

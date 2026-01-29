@@ -15,7 +15,7 @@ export const metadata = {
 
 export default function HomePage() {
   return (
-    <div className="container py-5">
+    <div className="container py-4">
       <Slider />
       <CompanyLiability />
       <HomeCategories />

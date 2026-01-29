@@ -15,15 +15,15 @@ const menu = [
 export default function Sidebar({ active }) {
   return (
     <aside className="sticky-top" style={{ top: 24 }}>
-      <ul className="list-group list-group-flush shadow rounded-4 bg-white">
+      <ul className="list-group list-group-flush shadow-sm rounded-4 py-3 bg-white">
         {menu.map((item, idx) => (
           <li key={item.label} className="list-group-item border-0 px-4 py-2">
             <Link
               href={item.href}
               className={`d-flex align-items-center gap-3 text-decoration-none ${active === idx ? "fw-bold text-primary" : "text-dark"}`}
-              style={{ fontSize: 17 }}
+              style={{ fontSize: 15 }}
             >
-              <i className={item.icon + " me-2"} style={{ opacity: active === idx ? 1 : 0.5 }} />
+              <i className={item.icon + " me-1"} style={{ opacity: active === idx ? 1 : 0.5 }} />
               {item.label}
             </Link>
           </li>

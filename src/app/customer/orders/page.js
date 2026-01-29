@@ -142,7 +142,7 @@ export default function CustomerOrderPage() {
                         background: statusMap[details[0].order?.order_status]?.color || "#e5e7eb",
                         color: "#fff",
                         fontWeight: 500,
-                        fontSize: 14,
+                        fontSize: 13
                       }}>
                         {statusMap[details[0].order?.order_status]?.label || details[0].order?.order_status}
                       </span>
