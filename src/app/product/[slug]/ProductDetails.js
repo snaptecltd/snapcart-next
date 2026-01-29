@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import Breadcrumb from "@/components/html/Breadcrumb";
 import ProductCardType2 from "@/components/product/ProductCardType2";
 import ProductCard from "@/components/product/ProductCard";
+import { useGlobalConfig } from "@/context/GlobalConfigContext";
 
 function moneyBDT(value) {
   const n = Number(value || 0);
@@ -49,6 +50,10 @@ export default function ProductDetails() {
   const [restockLoading, setRestockLoading] = useState(false);
   const [isAuth, setIsAuth] = useState(false);
   const carouselRef = useRef(null);
+  const { data: config } = useGlobalConfig();
+  const companyWhatsapp = config?.company_whatsapp;
+  const whatsappActive = companyWhatsapp?.status === "1";
+  const whatsappPhone = (companyWhatsapp?.phone || "").replace(/^\+/, "");
 
   let stock = 0;
   if (product) {
@@ -268,15 +273,15 @@ export default function ProductDetails() {
   const breadcrumbItems = [
     ...(product.category ? [{
       label: product.category.name,
-      href: `/category/${product.category.slug}`
+      href: `/${product.category.slug}`
     }] : []),
     ...(product.sub_category ? [{
       label: product.sub_category.name,
-      href: `/category/${product.category?.slug || ""}/sub-category/${product.sub_category.slug}`
+      href: `/${product.category?.slug || ""}/${product.sub_category.slug}`
     }] : []),
-    ...(product.child_category ? [{
-      label: product.child_category.name,
-      href: `/category/${product.category?.slug || ""}/sub-category/${product.sub_category?.slug || ""}/child-category/${product.child_category.slug}`
+    ...(product.sub_sub_category ? [{
+      label: product.sub_sub_category.name,
+      href: `/${product.category?.slug || ""}/${product.sub_category?.slug || ""}/${product.sub_sub_category.slug}`
     }] : []),
     { label: product.name }
   ];
@@ -595,6 +600,7 @@ export default function ProductDetails() {
                     onClick={handleAddToCart}
                     disabled={adding || stock < 1}
                   >
+                    <i className="fas fa-cart-plus me-2"></i>
                     {adding ? "Adding..." : "Add To Cart"}
                   </button>
                 ) : isAuth ? (
@@ -605,43 +611,55 @@ export default function ProductDetails() {
                       disabled
                       style={{ color: "#888", borderColor: "#bbb" }}
                     >
+                      <i className="fas fa-check-circle me-2"></i>
                       Already Requested
                     </button>
                   ) : (
                     <button
-                      className="btn btn-outline-warning fw-bold px-4 rounded-pill"
+                      className="btn btn-outline-danger text-danger fw-bold px-4 rounded-pill"
                       style={{ color: "#F67535", borderColor: "#F67535" }}
                       onClick={handleRestockRequest}
                       disabled={restockLoading}
                     >
+                    <i className="fas fa-times-circle me-2"></i>
                       {restockLoading ? "Requesting..." : "Request Restock"}
                     </button>
                   )
                 ) : (
-                  // If out of stock and not authenticated, show Stock Out
+                    // If out of stock and not authenticated, show Stock Out with login prompt
+                    <button
+                    className="btn btn-outline-danger text-danger fw-bold px-4 rounded-pill"
+                    onClick={() => toast.info("Please login to request restock.")}
+                    >
+                    <i className="fas fa-times-circle me-2"></i>
+                    Request Restock
+                    </button>
+                  )}
                   <button
-                    className="btn btn-danger fw-bold px-4 rounded-pill"
+                    className="btn btn-outline-dark fw-bold px-4 rounded-pill"
                     disabled
                   >
-                    Stock Out
+                    <i className="fas fa-shopping-cart me-2"></i>Shop Now
                   </button>
-                )}
-                <button
-                  className="btn btn-outline-dark fw-bold px-4 rounded-pill"
-                  disabled
-                >
-                  <i className="fas fa-shopping-cart me-2"></i>Shop Now
-                </button>
-              </div>
-            </div>
-            {/* EMI, Whatsapp, etc. */}
+                  </div>
+                </div>
+                {/* EMI, Whatsapp, etc. */}
             <div className="d-flex gap-3 mt-3 align-items-center flex-wrap">
               <span className="badge bg-light text-dark border px-3 py-2">
                 <i className="fas fa-credit-card me-2"></i>EMI Available <a href="#" className="text-primary ms-1">View Plans</a>
               </span>
-              <a href="https://wa.me/8801000000000" target="_blank" rel="noopener noreferrer" className="badge bg-success-subtle text-success border px-3 py-2">
-                <i className="fab fa-whatsapp me-2"></i>Whatsapp
-              </a>
+              {whatsappActive && whatsappPhone && (
+                <a
+                href={`https://wa.me/${whatsappPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                          `I want to know more about this product: ${typeof window !== "undefined" ? window.location.href : ""}`
+                          )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="badge bg-success-subtle text-success border px-3 py-2"
+                >
+                  <i className="fab fa-whatsapp me-2"></i>Whatsapp
+                </a>
+              )}
             </div>
           </div>
         </div>

@@ -13,10 +13,10 @@ export default function ProductCard({ product }) {
   const href = `/product/${product.slug}`;
   const thumb = product?.thumbnail_full_url?.path;
   const name = product?.name || "Product";
-
   const price = product?.unit_price ?? 0;
   const discount = product?.discount ?? 0;
   const discountType = product?.discount_type;
+  const currentStock = product?.current_stock ?? 0;
 
   let oldPrice = null;
   let saveText = null;
@@ -31,13 +31,38 @@ export default function ProductCard({ product }) {
 
   return (
     <div
-      className="card h-100 card-shadow border rounded-3xl overflow-hidden"
+      className="card h-100 card-shadow border rounded-3xl overflow-hidden position-relative"
       style={{
         width: "100%",
         margin: "0 auto",
         boxSizing: "border-box",
       }}
     >
+      {/* Stock Out Ribbon */}
+      {currentStock < 1 && (
+        <div className="shadow"
+          style={{
+            position: "absolute",
+            top: 25,
+            right: -32,
+            width: 140,
+            background: "#EF4444",
+            color: "#fff",
+            textAlign: "center",
+            fontWeight: 700,
+            transform: "rotate(45deg)",
+            zIndex: 2,
+            fontSize: 11,
+            padding: "4px 0",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            letterSpacing: 1,
+          }}
+        >
+          <i className="fas fa-box-open me-1"></i>
+          STOCK OUT
+        </div>
+      )}
+
       <Link href={href} className="text-decoration-none text-dark">
         <div className="p-3">
           <div className="bg-white rounded-4 d-flex align-items-center justify-content-center">

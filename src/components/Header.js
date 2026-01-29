@@ -202,10 +202,9 @@ export default function Header() {
                         background: "#F67535",
                         color: "#fff",
                         borderRadius: "50%",
-                        marginLeft: -48,
+                        marginLeft: -43,
                         zIndex: 2,
-                        width: 40,
-                        height: 40,
+                        height: 38,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -218,12 +217,11 @@ export default function Header() {
                   {/* Floating Modal */}
                   {mounted && searchModalOpen && (
                     <div
-                      className="shadow-lg bg-white rounded-4 p-4"
+                      className="shadow-lg bg-white rounded-4 p-4 search-modal"
                       style={{
                         position: "absolute",
                         top: "110%",
                         left: 0,
-                        width: "100%",
                         zIndex: 9999,
                         overflowY: "auto",
                         border: "1px solid #eee",
@@ -257,28 +255,29 @@ export default function Header() {
                       </div>
                       {/* Right: Trending Products & Searched */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="fw-bold mb-3">Trending Products</div>
-                        <div className="row g-3 flex-nowrap overflow-auto" style={{ flexWrap: "nowrap" }}>
-                          {/* Searched products row */}
+                        <div className="row g-3 overflow-y-auto" style={{ maxHeight: 450 }}>
+                          <style>{`
+                            .badge{
+                                font-size: 8px !important;
+                                }
+                                .fw-semibold{
+                                font-size: 14px !important;
+                                }
+                            `}
+                            </style>
+                          /* Searched products row */
                           {searchValue && searched.length > 0 && (
                             <>
                               <div className="col-12">
                                 <div
-                                  className="fw-semibold mb-2"
+                                  className="fw-semibold mb-3 text-dark"
                                   style={{ fontSize: 15 }}
                                 >
-                                  Search Results
+                                  Search Results: {searched.length}
                                 </div>
-                                <div className="d-flex flex-column gap-3 overflow-auto pb-2">
+                                <div className="row fw-semibold m-auto">
                                   {searched.map((product) => (
-                                    <div
-                                      style={{
-                                        minWidth: 180,
-                                        maxWidth: 220,
-                                        flex: "0 0 180px",
-                                      }}
-                                      key={product.id}
-                                    >
+                                    <div className="col-6 col-md-3 col-lg-3 p-1" key={product.id}>
                                       <ProductCard product={product} />
                                     </div>
                                   ))}
@@ -287,23 +286,16 @@ export default function Header() {
                               </div>
                             </>
                           )}
-                          {/* Trending products */}
-                          <div className="row gap-3 overflow-auto pb-2 m-0">
-                            {trending.products.map((product) => (
-                              <div
-                                style={{
-                                  minWidth: 180,
-                                  maxWidth: 220,
-                                  flex: "0 0 180px",
-                                }}
-                                key={product.id}
-                              >
-                                <div className="col-12.col-md-3">
-                                  <ProductCard product={product} />
-                                </div>
-                              </div>
-                            ))}
+                        <div className="col-12">
+                         <div className="fw-bold mb-3 text-dark">Trending Products</div>
+                            <div className="row fw-semibold m-auto">
+                              {trending.products.map((product) => (
+                                  <div className="col-6 col-md-3 col-lg-3 p-1" key={product.id}>
+                                    <ProductCard product={product} />
+                                  </div>
+                              ))}
                           </div>
+                        </div>
                         </div>
                         {searchLoading && (
                           <div className="text-center py-3">Searching...</div>

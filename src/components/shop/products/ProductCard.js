@@ -18,6 +18,7 @@ export default function ProductCard({ p }) {
   const price = p?.unit_price ?? 0;
   const discount = p?.discount ?? 0;
   const discountType = p?.discount_type;
+  const currentStock = p?.current_stock ?? 0;
 
   let oldPrice = null;
   let saveText = null;
@@ -33,7 +34,7 @@ export default function ProductCard({ p }) {
   // Check if product has variations or colors
   const hasVariations = (p?.variation || []).length > 0;
   const hasColors = (p?.colors || []).length > 0;
-  const showActionButtons = !hasVariations && !hasColors;
+  const showActionButtons = !hasVariations && !hasColors && currentStock > 0;
 
   const [adding, setAdding] = useState(false);
 
@@ -60,6 +61,32 @@ export default function ProductCard({ p }) {
         boxSizing: "border-box",
       }}
     >
+      {/* Stock Out Ribbon */}
+      {currentStock < 1 && (
+        <div
+          className="shadow"
+          style={{
+            position: "absolute",
+            top: 25,
+            right: -32,
+            width: 140,
+            background: "#EF4444",
+            color: "#fff",
+            textAlign: "center",
+            fontWeight: 700,
+            transform: "rotate(45deg)",
+            zIndex: 2,
+            fontSize: 11,
+            padding: "4px 0",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            letterSpacing: 1,
+          }}
+        >
+          <i className="fas fa-box-open me-1"></i>
+          STOCK OUT
+        </div>
+      )}
+
       <Link href={`/product/${p.slug}`} className="text-decoration-none text-dark">
         <div className="p-3">
           <div className="bg-white rounded-4 d-flex align-items-center justify-content-center">
@@ -109,7 +136,7 @@ export default function ProductCard({ p }) {
         </div>
       </Link>
 
-      {/* Action Buttons - Show only if no variations or colors */}
+      {/* Action Buttons - Show only if no variations/colors and in stock */}
       {showActionButtons && (
         <div className="position-absolute bottom-0 start-0 end-0 p-2 bg-white border-top d-flex gap-2">
           <button
