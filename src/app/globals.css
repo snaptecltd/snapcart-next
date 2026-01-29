@@ -78,6 +78,46 @@ body {
   padding: 0;
   margin: 0;
 }
+/* Default (mobile) */
+
+/* small screen  */
+@media (max-width: 425.98px) {
+    .search-modal {
+        width: 350px;
+    }
+}
+
+/* tablet and below */
+@media (min-width: 426px) AND (max-width: 767.98px) {
+    .search-modal {
+        width: 370px;
+    }
+}
+
+/* Medium screens: tablets 768px+ */
+@media (min-width: 768px) AND (max-width: 1024px) {
+    .search-modal {
+        width: 700px;
+    }
+}
+
+/* Large screens: 1024px+ */
+@media (min-width: 1025px) AND (max-width: 1399px) {
+    .search-modal {
+        width: 820px;
+    }
+}
+
+/* Extra Large screens: 1400px+ */
+@media (min-width: 1400px) {
+    .search-modal {
+        width: 820px;
+    }
+}
+
+.navbar .dropdown-item{
+  font-size: 14px;
+}
 
 .bg-gray{
   background-color: #FAFAFA!important;
