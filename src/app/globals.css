@@ -13,7 +13,7 @@
   }
 }
 .text-primary, .btn.btn-primary, .btn.btn-outline-primary{
-  color: var(--primary-color)!important;
+  color: #fff !important;
 }
 .btn.disabled, .btn:disabled, fieldset:disabled .btn, .btn-outline-warning {
   color: var(--primary-color);
@@ -24,6 +24,7 @@
 
 .bg-primary, .btn-primary, .btn-primary:focus, .btn-primary:hover {
   background-color: var(--primary-color) !important;
+  color: #fff !important;
 } 
 
 .btn-primary:focus, .btn-primary:hover {
