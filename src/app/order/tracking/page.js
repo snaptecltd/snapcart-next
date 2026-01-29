@@ -82,11 +82,11 @@ export default function OrderTrackingPage() {
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
-        <div className="col-12 col-md-8 col-lg-7">
+        <div className="col-12 col-md-12 col-lg-12">
           <div className="bg-white rounded-4 shadow-sm p-4 p-md-5">
             <h3 className="fw-bold mb-4">Track Your Order</h3>
             <form onSubmit={handleSubmit} className="row g-3 mb-4">
-              <div className="col-md-6">
+              <div className="col-md-4">
                 <label className="form-label fw-semibold">Order ID</label>
                 <input
                   type="text"
@@ -98,7 +98,7 @@ export default function OrderTrackingPage() {
                 />
                 {errors.order_id && <div className="invalid-feedback">{errors.order_id}</div>}
               </div>
-              <div className="col-md-6">
+              <div className="col-md-4">
                 <label className="form-label fw-semibold">Phone Number</label>
                 <input
                   type="text"
@@ -110,14 +110,14 @@ export default function OrderTrackingPage() {
                 />
                 {errors.phone_number && <div className="invalid-feedback">{errors.phone_number}</div>}
               </div>
-              <div className="col-12 text-end">
-                <button type="submit" className="btn btn-primary px-4" disabled={loading}>
+              <div className="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" className="btn btn-primary" disabled={loading}>
                   {loading ? "Tracking..." : "Track Order"}
                 </button>
               </div>
             </form>
             {/* Stepper */}
-            {result && (
+            {result ? (
               <div className="bg-light rounded-4 p-4">
                 <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap" style={{ gap: 8 }}>
                   {STATUS_STEPS.map((step, idx) => (
@@ -129,8 +129,8 @@ export default function OrderTrackingPage() {
                           height: 48,
                           borderRadius: 12,
                           background: idx <= stepIndex ? "#e0f2fe" : "#f3f4f6",
-                          border: idx === stepIndex ? "2px solid #38bdf8" : "2px dashed #d1d5db",
-                          color: "#2563eb",
+                          border: idx === stepIndex ? "2px solid var(--primary-color)" : "2px dashed var(--primary-color)",
+                          color: "#d3ab8aff",
                           fontSize: 24,
                         }}
                       >
@@ -140,8 +140,14 @@ export default function OrderTrackingPage() {
                         {step.label}
                       </div>
                       <div className="text-muted small mt-1" style={{ fontSize: 13 }}>
-                        <i className="far fa-clock me-1"></i>
-                        {formatDateTime(statusDates[step.key])}
+                        {idx <= stepIndex ? (
+                          <>
+                            <i className="far fa-clock me-1"></i>
+                            {formatDateTime(statusDates[step.key])}
+                          </>
+                        ) : (
+                          "-"
+                        )}
                       </div>
                     </div>
                   ))}
@@ -153,7 +159,7 @@ export default function OrderTrackingPage() {
                   </span>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

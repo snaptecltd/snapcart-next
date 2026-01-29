@@ -153,7 +153,7 @@ export default function Header() {
                 </div>
 
               {/* Search */}
-            <div className="col-12 col-lg-5 order-3 order-lg-2 mt-2 mt-lg-0 position-relative">
+            <div className="col-12 col-lg-4 order-3 order-lg-2 mt-2 mt-lg-0 position-relative">
               {!showSearch ? (
                 <button
                   type="button"
@@ -316,7 +316,7 @@ export default function Header() {
             </div>
 
             {/* Right links */}
-            <div className="col-6 col-lg-5 order-2 order-lg-4 text-end">
+            <div className="col-6 col-lg-6 order-2 order-lg-4 text-end">
               <div className="d-flex justify-content-end align-items-center gap-4 small">
                 <Link
                   href="/store-location"
@@ -404,7 +404,7 @@ export default function Header() {
       </div>
 
       {/* ================= MENU BAR ================= */}
-      <nav className="navbar navbar-expand-lg navbar-light shadow-sm border-top">
+      <nav className="navbar navbar-expand-lg navbar-light shadow-sm border-top pt-2">
         <div className="container">
           <ul className="navbar-nav gap-lg-2 flex-wrap">
             {/* Loading state */}

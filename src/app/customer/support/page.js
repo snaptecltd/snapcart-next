@@ -300,8 +300,8 @@ export default function SupportTicketPage() {
                             />
                             <button
                               type="button"
-                              className="btn btn-sm btn-danger position-absolute"
-                              style={{ top: -8, right: -8, borderRadius: "50%", padding: 2 }}
+                              className="btn btn-sm btn-danger pt-1 d-flex align-items-center position-absolute"
+                              style={{ top: -8, right: -8, borderRadius: "50%", padding: 2, width: 20, height: 20 }}
                               onClick={() => handleRemoveModalImage(idx)}
                             >
                               <i className="fas fa-times"></i>

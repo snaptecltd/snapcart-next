@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Sidebar from "../partials/Sidebar";
 import { getCouponList } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
+import Image from "next/image";
 
 function moneyBDT(value) {
   const n = Number(value || 0);
@@ -52,36 +53,19 @@ export default function CouponsPage() {
             ) : (
               <div className="d-flex flex-wrap gap-4">
                 {coupons.map((c) => (
-                  <div
-                    key={c.id}
-                    className="d-flex flex-row align-items-center bg-light rounded-4 shadow-sm p-4 gap-4"
-                    style={{ minWidth: 320, minHeight: 140, position: "relative" }}
-                  >
-                    <div className="d-flex flex-column align-items-center justify-content-center" style={{ minWidth: 120 }}>
-                      <div className="mb-2" style={{ fontSize: 32 }}>
-                        <i className="fas fa-money-bill-wave text-success"></i>
-                      </div>
-                      <div className="fw-bold" style={{ fontSize: 22 }}>{moneyBDT(c.discount)}</div>
-                      <div className="text-muted" style={{ fontSize: 13 }}>On {c.seller?.name || "RSM International"}</div>
+                  <div className="ticket-box" key={c.id}>
+                    <div className="ticket-start">
+                        <Image src="/images/dollar.png" alt="Coupon" width={30} height={30} />
+                        <h2 className="ticket-amount"> {moneyBDT(c.discount)} </h2>
+                        <p className="d-flex flex-column"> On                       
+                          <div className="text-muted" style={{ fontSize: 13 }}>{c.seller?.name || "RSM International"}</div> 
+                        </p>
                     </div>
-                    <div className="flex-grow-1 d-flex flex-column align-items-start justify-content-center">
-                      <div className="mb-2">
-                        <span
-                          className="border border-primary rounded px-3 py-1 fw-bold"
-                          style={{ fontSize: 16, cursor: "pointer", userSelect: "all", background: "#fff" }}
-                          onClick={() => handleCopy(c.code)}
-                          title="Copy code"
-                        >
-                          {c.code}
-                          <i className="fas fa-copy ms-2 text-primary"></i>
-                        </span>
-                      </div>
-                      <div className="text-muted mb-1" style={{ fontSize: 14 }}>
-                        Valid till {formatDate(c.plain_expire_date)}
-                      </div>
-                      <div className="text-muted" style={{ fontSize: 13 }}>
-                        Available from minimum purchase {moneyBDT(c.min_purchase)}
-                      </div>
+                    <div className="ticket-border"></div>
+                    <div className="ticket-end">
+                        <button className="ticket-welcome-btn click-to-copy-coupon" onClick={() => handleCopy(c.code)} title="Copy code" data-value={c.code}>{c.code}</button> 
+                        <h6>Valid till {formatDate(c.plain_expire_date)}</h6>
+                        <p className="m-0">Available from minimum purchase {moneyBDT(c.min_purchase)}</p>
                     </div>
                   </div>
                 ))}
