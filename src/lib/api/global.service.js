@@ -405,6 +405,14 @@ export async function deleteCustomerAddress(address_id) {
   return res.data;
 }
 
+export async function getAddressDetails(address_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.GET_ADDRESS_DETAILS}?address_id=${address_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
 export async function getCustomerRestockList() {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
   const res = await api.get(ENDPOINTS.CUSTOMER_RESTOCK_LIST, {

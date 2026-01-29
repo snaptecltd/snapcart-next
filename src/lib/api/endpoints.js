@@ -63,6 +63,7 @@ export const ENDPOINTS = {
   CUSTOMER_ADDRESS_LIST: `${PREFIX}/customer/address/list`,
   CUSTOMER_ADDRESS_ADD: `${PREFIX}/customer/address/add`,
   CUSTOMER_ADDRESS_DELETE: `${PREFIX}/customer/address`,
+  GET_ADDRESS_DETAILS: `${PREFIX}/customer/address/get`,
 
   // restock endpoints
   CUSTOMER_RESTOCK_LIST: `${PREFIX}/customer/restock-requests/list`,
