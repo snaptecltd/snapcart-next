@@ -1,15 +1,29 @@
 import ProductDetails from "./ProductDetails";
+import { getProductDetails } from "@/lib/api/global.service";
 
-export const metadata = {
-  title: "ProductDetails - Snapcart",
-  description:
-    "Discover detailed information about our products on Snapcart. Explore features, specifications, pricing, and customer reviews to make informed purchasing decisions. Shop with confidence and find the perfect products for your needs.",
-};
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const product = await getProductDetails(slug);
 
-export default function StoreLocationPage() {
-  return (
-    <section className="py-5">
-        <ProductDetails />
-    </section>
-  );
+  const image =
+    product.thumbnail_full_url?.path ||
+    product.images_full_url?.[0]?.path;
+
+  return {
+    title: `${product.name} | SnapCart`,
+    description: product.short_details?.replace(/<[^>]+>/g, "").slice(0, 160),
+    openGraph: {
+      type: "website",
+      title: product.name,
+      description: product.short_details,
+      images: image ? [{ url: image }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+    },
+  };
+}
+
+export default function ProductPage({ params }) {
+  return <ProductDetails />;
 }
