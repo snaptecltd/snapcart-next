@@ -1,0 +1,240 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getOfflinePaymentMethods } from "@/lib/api/global.service";
+
+export default function PaymentPage() {
+  const router = useRouter();
+  const [offlineMethods, setOfflineMethods] = useState([]);
+  const [showMore, setShowMore] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [offlineFields, setOfflineFields] = useState({});
+  const [agreed, setAgreed] = useState(false);
+
+  // Cart summary
+  const [subtotal, setSubtotal] = useState(0);
+  const [shipping, setShipping] = useState(0);
+  const [discount, setDiscount] = useState(0);
+  const [coupon, setCoupon] = useState("");
+  const [couponApplied, setCouponApplied] = useState(null);
+
+  // Load cart summary from localStorage
+  useEffect(() => {
+    // Example: you should load these from your cart context or localStorage
+    setSubtotal(Number(localStorage.getItem("snapcart_cart_subtotal") || 2400));
+    setShipping(Number(localStorage.getItem("snapcart_shipping_cost") || 5));
+    try {
+      const stored = localStorage.getItem("snapcart_coupon_applied");
+      if (stored) {
+        const c = JSON.parse(stored);
+        setDiscount(Number(c.coupon_discount || 0));
+        setCouponApplied(c);
+      }
+    } catch {}
+  }, []);
+
+  // Load offline payment methods
+  useEffect(() => {
+    getOfflinePaymentMethods()
+      .then(res => setOfflineMethods(res?.offline_methods || []))
+      .catch(() => setOfflineMethods([]));
+  }, []);
+
+  const total = Math.max(0, subtotal + shipping - discount);
+
+  // Handle offline payment field change
+  const handleOfflineFieldChange = (input, value) => {
+    setOfflineFields((prev) => ({ ...prev, [input]: value }));
+  };
+
+  // Handle coupon apply (dummy, real logic should call API)
+  const handleApplyCoupon = () => {
+    // ...implement as needed...
+  };
+
+  // Proceed to checkout
+  const handleProceed = () => {
+    if (!agreed) return;
+    // ...submit order logic...
+    alert("Proceeding to checkout...");
+  };
+
+  return (
+    <div className="container py-5">
+      {/* Stepper */}
+      <div className="mb-4">
+        <div className="d-flex align-items-center justify-content-center gap-4">
+          <div className="text-center">
+            <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>1</div>
+            <div style={{ fontSize: 13 }}>Cart</div>
+          </div>
+          <div style={{ width: 80, height: 2, background: "#1976d2" }} />
+          <div className="text-center">
+            <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>2</div>
+            <div style={{ fontSize: 13 }}>Shipping And billing</div>
+          </div>
+          <div style={{ width: 80, height: 2, background: "#1976d2" }} />
+          <div className="text-center">
+            <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>3</div>
+            <div style={{ fontSize: 13 }}>Payment</div>
+          </div>
+        </div>
+      </div>
+      <div className="row g-4">
+        {/* Payment Method Card */}
+        <div className="col-12 col-lg-7">
+          <div className="bg-white rounded-4 p-4 shadow-sm mb-4">
+            <h4 className="fw-bold mb-3">Payment method</h4>
+            <div className="mb-3">Select A Payment Method To Proceed</div>
+            <div className="d-flex flex-column gap-3">
+              {/* Cash on Delivery */}
+              <div
+                className={`d-flex align-items-center border rounded-3 p-3 ${paymentMethod === "cod" ? "border-primary bg-light" : "border-light"}`}
+                style={{ cursor: "pointer" }}
+                onClick={() => setPaymentMethod("cod")}
+              >
+                <input
+                  type="radio"
+                  className="form-check-input me-3"
+                  checked={paymentMethod === "cod"}
+                  onChange={() => setPaymentMethod("cod")}
+                  id="cod"
+                />
+                <span className="me-2" style={{ fontSize: 22 }}>
+                  <i className="fas fa-money-bill-wave text-success"></i>
+                </span>
+                <label htmlFor="cod" className="mb-0 fw-semibold" style={{ cursor: "pointer" }}>
+                  Cash on Delivery
+                </label>
+              </div>
+              {/* See More */}
+              {offlineMethods.length > 0 && !showMore && (
+                <div className="text-end">
+                  <button className="btn btn-link p-0" onClick={() => setShowMore(true)}>
+                    See More
+                  </button>
+                </div>
+              )}
+              {/* Offline Payment Methods */}
+              {showMore && offlineMethods.map((method) => (
+                <div
+                  key={method.id}
+                  className={`d-flex flex-column border rounded-3 p-3 mb-2 ${paymentMethod === String(method.id) ? "border-primary bg-light" : "border-light"}`}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setPaymentMethod(String(method.id))}
+                >
+                  <div className="d-flex align-items-center">
+                    <input
+                      type="radio"
+                      className="form-check-input me-3"
+                      checked={paymentMethod === String(method.id)}
+                      onChange={() => setPaymentMethod(String(method.id))}
+                      id={`offline-${method.id}`}
+                    />
+                    <span className="me-2" style={{ fontSize: 22 }}>
+                      <i className="fas fa-university text-info"></i>
+                    </span>
+                    <label htmlFor={`offline-${method.id}`} className="mb-0 fw-semibold" style={{ cursor: "pointer" }}>
+                      {method.method_name}
+                    </label>
+                  </div>
+                  {/* Show method fields */}
+                  {paymentMethod === String(method.id) && (
+                    <div className="ps-4 pt-2">
+                      {Array.isArray(method.method_fields) && method.method_fields.map((f, idx) => (
+                        <div key={idx} className="mb-1">
+                          <span className="text-muted small">{f.input_name}: </span>
+                          <span className="fw-semibold">{f.input_data}</span>
+                        </div>
+                      ))}
+                      {Array.isArray(method.method_informations) && method.method_informations.map((info, idx) => (
+                        <div key={idx} className="mb-2">
+                          <input
+                            className="form-control"
+                            required={info.is_required === 1}
+                            placeholder={info.customer_placeholder}
+                            value={offlineFields[info.customer_input] || ""}
+                            onChange={e => handleOfflineFieldChange(info.customer_input, e.target.value)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="mt-3">
+              <a href="/checkout" className="text-primary text-decoration-none">
+                &lt; Go back
+              </a>
+            </div>
+          </div>
+        </div>
+        {/* Order Summary */}
+        <div className="col-12 col-lg-5">
+          <div className="bg-white rounded-4 p-4 shadow-sm mb-4">
+            <div className="mb-3 d-flex justify-content-between">
+              <span>Sub total</span>
+              <span>৳{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="mb-3 d-flex justify-content-between">
+              <span>Shipping</span>
+              <span>৳{shipping.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="mb-3 d-flex justify-content-between">
+              <span>Discount on product</span>
+              <span>- ৳{discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="input-group mb-3">
+              <span className="input-group-text"><i className="fas fa-ticket-alt"></i></span>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Coupon code"
+                value={coupon}
+                onChange={e => setCoupon(e.target.value)}
+              />
+              <button className="btn btn-outline-secondary" type="button" onClick={handleApplyCoupon}>APPLY</button>
+            </div>
+            <div className="mb-3 d-flex justify-content-between fw-bold fs-5">
+              <span>Total</span>
+              <span>৳{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="form-check mb-3">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="agree"
+                checked={agreed}
+                onChange={e => setAgreed(e.target.checked)}
+              />
+              <label className="form-check-label" htmlFor="agree">
+                I agree to Your <a href="/terms" className="text-primary">Terms and condition</a>, <a href="/privacy" className="text-primary">Privacy policy</a>, <a href="/refund" className="text-primary">Refund policy</a>
+              </label>
+            </div>
+            <button
+              className="btn btn-primary w-100 mb-2"
+              disabled={!agreed || !paymentMethod}
+              onClick={handleProceed}
+            >
+              Proceed to Checkout
+            </button>
+            <a href="/" className="btn btn-link w-100"> &lt; Continue Shopping</a>
+          </div>
+        </div>
+      </div>
+      <style>{`
+        .border-primary {
+          border-color: #1976d2 !important;
+        }
+        .bg-light {
+          background: #f8f9fa !important;
+        }
+        .rounded-4 {
+          border-radius: 1.25rem !important;
+        }
+      `}</style>
+    </div>
+  );
+}
