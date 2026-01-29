@@ -46,7 +46,7 @@ export default function ContactUs() {
 
   // Load and render reCAPTCHA v2
   useEffect(() => {
-    const RECAPTCHA_SITE_KEY = "6Ld0p1QsAAAAAIv_rtcGJE-RtIb5hV5LQauO6A3I"; // <-- Replace with your site key
+    const RECAPTCHA_SITE_KEY = "6Ld2vVksAAAAAGAJkkCRglydbT2VEtBpAayJ9c0_"; // <-- Replace with your site key
 
     // Only load once
     if (typeof window === "undefined" || window.recaptchaLoaded) return;

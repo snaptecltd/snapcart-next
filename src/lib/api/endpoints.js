@@ -40,4 +40,36 @@ export const ENDPOINTS = {
   UPDATE_CART_ITEM: `${PREFIX}/cart/update`,
   REMOVE_CART_ITEM: `${PREFIX}/cart/remove`,
   REMOVE_CART_ALL_ITEMS: `${PREFIX}/cart/remove-all`,
+
+  // customer endpoints
+  CUSTOMER_INFO: `${PREFIX}/customer/info`,
+  CUSTOMER_UPDATE_PROFILE: `${PREFIX}/customer/update-profile`,
+  CUSTOMER_ORDER_LIST: `${PREFIX}/customer/order/list`,
+  CUSTOMER_ORDER_DETAILS: `${PREFIX}/customer/order/details`,
+
+  // wishlist endpoints
+  CUSTOMER_WISHLIST: `${PREFIX}/customer/wish-list`,
+  CUSTOMER_WISHLIST_REMOVE: `${PREFIX}/customer/wish-list/remove`,
+
+  // support ticket endpoints
+  CUSTOMER_SUPPORT_TICKET_LIST: `${PREFIX}/customer/support-ticket/get`,
+  CUSTOMER_SUPPORT_TICKET_CREATE: `${PREFIX}/customer/support-ticket/create`,
+  CUSTOMER_SUPPORT_TICKET_CONV: `${PREFIX}/customer/support-ticket/conv`,
+  CUSTOMER_SUPPORT_TICKET_REPLY: `${PREFIX}/customer/support-ticket/reply`,
+  CUSTOMER_SUPPORT_TICKET_CLOSE: `${PREFIX}/customer/support-ticket/close`,
+
+  // address endpoints
+  CUSTOMER_ADDRESS_LIST: `${PREFIX}/customer/address/list`,
+  CUSTOMER_ADDRESS_ADD: `${PREFIX}/customer/address/add`,
+  CUSTOMER_ADDRESS_DELETE: `${PREFIX}/customer/address`,
+
+  // restock endpoints
+  CUSTOMER_RESTOCK_LIST: `${PREFIX}/customer/restock-requests/list`,
+  CUSTOMER_RESTOCK_DELETE: `${PREFIX}/customer/restock-requests/delete`,
+
+  // order tracking endpoint
+  ORDER_TRACK: `${PREFIX}/order/track-order`,
+
+  // coupon endpoints
+  COUPON_LIST: `${PREFIX}/coupon/list`,
 };

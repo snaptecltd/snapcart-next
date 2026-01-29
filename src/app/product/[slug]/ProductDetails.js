@@ -165,35 +165,38 @@ export default function ProductDetails() {
         id: product.id,
         quantity: qty,
       };
-      // Only send color if valid color object found
-      if (selectedColor) {
-        // Find color object by color code or name
-        let colorObj = null;
-        if (product.colors_formatted && Array.isArray(product.colors_formatted)) {
-          colorObj = product.colors_formatted.find(
-            c =>
-              c.code === selectedColor ||
-              c.color === selectedColor ||
-              c.name === selectedColor ||
-              c.code === "#" + selectedColor
-          );
-        }
-        // Only send color if found, otherwise skip
+
+      // Color: always send color code if selected and valid
+      if (selectedColor && Array.isArray(product.colors_formatted)) {
+        const colorObj = product.colors_formatted.find(
+          c =>
+            c.code === selectedColor ||
+            c.color === selectedColor ||
+            c.name === selectedColor ||
+            c.code === "#" + selectedColor
+        );
         if (colorObj && colorObj.code) {
           payload.color = colorObj.code;
         }
       }
-      // Send variant if selected
+
+      // Variant: always send if selected
       if (selectedVariation) payload.variant = selectedVariation;
-      // If product has choice_options, send each choice as field
-      if (product.choice_options && Array.isArray(product.choice_options)) {
+
+      // Choice options: if present, send the first value (for demo, as UI is not implemented)
+      if (Array.isArray(product.choice_options)) {
         product.choice_options.forEach(choice => {
-          // You may want to add UI for choices, here just send default if available
-          if (choice.name && product[choice.name]) {
-            payload[choice.name] = product[choice.name];
+          if (Array.isArray(choice.options) && choice.options.length > 0) {
+            payload[choice.name] = choice.options[0];
           }
         });
       }
+
+      // Remove undefined/null fields
+      Object.keys(payload).forEach(
+        (k) => (payload[k] === undefined || payload[k] === null) && delete payload[k]
+      );
+
       await addToCart(payload);
       toast.success("Added to cart!");
       window.dispatchEvent(new Event("snapcart-auth-change"));

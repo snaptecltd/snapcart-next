@@ -21,7 +21,12 @@ export default function Cart() {
   }, []);
 
   // Calculate total
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const total = Array.isArray(cart)
+    ? cart.reduce((sum, item) => {
+        if (!item || typeof item.price !== "number" || typeof item.quantity !== "number") return sum;
+        return sum + (item.price * item.quantity);
+      }, 0)
+    : 0;
 
   const handleUpdateQty = async (item, newQty) => {
     if (newQty < 1 || updating[item.id]) return;
@@ -58,7 +63,7 @@ export default function Cart() {
         </div>
     </div>
 );
-  if (!cart.length)
+  if (!Array.isArray(cart) || !cart.length)
     return (
       <div className="container py-5 text-center">
         <h4>Your cart is empty.</h4>
@@ -84,7 +89,7 @@ export default function Cart() {
             </tr>
           </thead>
           <tbody>
-            {cart.map((item) => (
+            {cart.filter(item => item && typeof item.price === "number" && typeof item.quantity === "number").map((item) => (
               <tr key={item.id} className="bg-white">
                 <td>
                   <img

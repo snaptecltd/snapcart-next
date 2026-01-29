@@ -340,7 +340,7 @@ export default function Header() {
                 </Link>
 
                 <Link
-                  href="#"
+                  href="/compare"
                   className={`d-none d-md-flex text-white text-decoration-none d-flex align-items-center gap-1 ${styles.nav_link}`}
                 >
                   <i className="fas fa-code-compare"></i>
@@ -379,7 +379,7 @@ export default function Header() {
                   ) : (
                     <>
                       <Link
-                        href="/profile"
+                        href="/customer"
                         className={`btn ${styles.icon_btn} d-none d-xl-flex`}
                         type="button"
                         title="Profile"
