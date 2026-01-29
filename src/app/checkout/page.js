@@ -24,6 +24,7 @@ export default function CheckoutPage() {
   const [showMap, setShowMap] = useState(false);
   const [showBilling, setShowBilling] = useState(false);
   const [updateAddress, setUpdateAddress] = useState(false);
+  const [errors, setErrors] = useState({ shipping: {}, billing: {} });
 
   // Only allow access if shipping method is selected in cart (pseudo check)
   useEffect(() => {
@@ -73,6 +74,31 @@ export default function CheckoutPage() {
     if (sameAsShipping) setBilling({ ...shipping });
   }, [sameAsShipping, shipping]);
 
+  // Validation
+  const validateAddress = (addr) => {
+    const required = ["contact_name", "phone", "country", "city", "zip", "address"];
+    const errs = {};
+    required.forEach((k) => {
+      if (!addr[k] || String(addr[k]).trim() === "") errs[k] = "Required";
+    });
+    return errs;
+  };
+
+  const handleProceedToPayment = (e) => {
+    e.preventDefault();
+    const shippingErrs = validateAddress(shipping);
+    const billingErrs = sameAsShipping ? {} : validateAddress(billing);
+    setErrors({ shipping: shippingErrs, billing: billingErrs });
+    if (Object.keys(shippingErrs).length || Object.keys(billingErrs).length) {
+      toast.error("Please fill all required address fields.");
+      return;
+    }
+    // Save addresses to localStorage if needed
+    localStorage.setItem("snapcart_checkout_shipping", JSON.stringify(shipping));
+    localStorage.setItem("snapcart_checkout_billing", JSON.stringify(sameAsShipping ? shipping : billing));
+    router.push("/checkout/payment");
+  };
+
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
@@ -121,11 +147,13 @@ export default function CheckoutPage() {
             <div className="row g-3">
               <div className="col-md-6">
                 <label className="form-label">Contact person name *</label>
-                <input type="text" className="form-control" name="contact_name" value={shipping.contact_name} onChange={handleShippingChange} required />
+                <input type="text" className={`form-control${errors.shipping.contact_name ? " is-invalid" : ""}`} name="contact_name" value={shipping.contact_name} onChange={handleShippingChange} required />
+                {errors.shipping.contact_name && <div className="invalid-feedback">{errors.shipping.contact_name}</div>}
               </div>
               <div className="col-md-6">
                 <label className="form-label">Phone *</label>
-                <input type="text" className="form-control" name="phone" value={shipping.phone} onChange={handleShippingChange} required />
+                <input type="text" className={`form-control${errors.shipping.phone ? " is-invalid" : ""}`} name="phone" value={shipping.phone} onChange={handleShippingChange} required />
+                {errors.shipping.phone && <div className="invalid-feedback">{errors.shipping.phone}</div>}
               </div>
               <div className="col-md-6">
                 <label className="form-label">Address type</label>
@@ -137,19 +165,23 @@ export default function CheckoutPage() {
               </div>
               <div className="col-md-6">
                 <label className="form-label">Country *</label>
-                <input type="text" className="form-control" name="country" value={shipping.country} onChange={handleShippingChange} required />
+                <input type="text" className={`form-control${errors.shipping.country ? " is-invalid" : ""}`} name="country" value={shipping.country} onChange={handleShippingChange} required />
+                {errors.shipping.country && <div className="invalid-feedback">{errors.shipping.country}</div>}
               </div>
               <div className="col-md-6">
                 <label className="form-label">City *</label>
-                <input type="text" className="form-control" name="city" value={shipping.city} onChange={handleShippingChange} required />
+                <input type="text" className={`form-control${errors.shipping.city ? " is-invalid" : ""}`} name="city" value={shipping.city} onChange={handleShippingChange} required />
+                {errors.shipping.city && <div className="invalid-feedback">{errors.shipping.city}</div>}
               </div>
               <div className="col-md-6">
                 <label className="form-label">Zip code *</label>
-                <input type="text" className="form-control" name="zip" value={shipping.zip} onChange={handleShippingChange} required />
+                <input type="text" className={`form-control${errors.shipping.zip ? " is-invalid" : ""}`} name="zip" value={shipping.zip} onChange={handleShippingChange} required />
+                {errors.shipping.zip && <div className="invalid-feedback">{errors.shipping.zip}</div>}
               </div>
               <div className="col-12">
                 <label className="form-label">Address *</label>
-                <textarea className="form-control" name="address" value={shipping.address} onChange={handleShippingChange} required />
+                <textarea className={`form-control${errors.shipping.address ? " is-invalid" : ""}`} name="address" value={shipping.address} onChange={handleShippingChange} required />
+                {errors.shipping.address && <div className="invalid-feedback">{errors.shipping.address}</div>}
               </div>
               {/* Map */}
               {shipping.latitude && shipping.longitude && (
@@ -189,11 +221,13 @@ export default function CheckoutPage() {
               <div className="row g-3">
                 <div className="col-md-6">
                   <label className="form-label">Contact person name *</label>
-                  <input type="text" className="form-control" name="contact_name" value={billing.contact_name} onChange={handleBillingChange} required />
+                  <input type="text" className={`form-control${errors.billing.contact_name ? " is-invalid" : ""}`} name="contact_name" value={billing.contact_name} onChange={handleBillingChange} required />
+                  {errors.billing.contact_name && <div className="invalid-feedback">{errors.billing.contact_name}</div>}
                 </div>
                 <div className="col-md-6">
                   <label className="form-label">Phone *</label>
-                  <input type="text" className="form-control" name="phone" value={billing.phone} onChange={handleBillingChange} required />
+                  <input type="text" className={`form-control${errors.billing.phone ? " is-invalid" : ""}`} name="phone" value={billing.phone} onChange={handleBillingChange} required />
+                  {errors.billing.phone && <div className="invalid-feedback">{errors.billing.phone}</div>}
                 </div>
                 <div className="col-md-6">
                   <label className="form-label">Address type</label>
@@ -205,19 +239,23 @@ export default function CheckoutPage() {
                 </div>
                 <div className="col-md-6">
                   <label className="form-label">Country *</label>
-                  <input type="text" className="form-control" name="country" value={billing.country} onChange={handleBillingChange} required />
+                  <input type="text" className={`form-control${errors.billing.country ? " is-invalid" : ""}`} name="country" value={billing.country} onChange={handleBillingChange} required />
+                  {errors.billing.country && <div className="invalid-feedback">{errors.billing.country}</div>}
                 </div>
                 <div className="col-md-6">
                   <label className="form-label">City *</label>
-                  <input type="text" className="form-control" name="city" value={billing.city} onChange={handleBillingChange} required />
+                  <input type="text" className={`form-control${errors.billing.city ? " is-invalid" : ""}`} name="city" value={billing.city} onChange={handleBillingChange} required />
+                  {errors.billing.city && <div className="invalid-feedback">{errors.billing.city}</div>}
                 </div>
                 <div className="col-md-6">
                   <label className="form-label">Zip code *</label>
-                  <input type="text" className="form-control" name="zip" value={billing.zip} onChange={handleBillingChange} required />
+                  <input type="text" className={`form-control${errors.billing.zip ? " is-invalid" : ""}`} name="zip" value={billing.zip} onChange={handleBillingChange} required />
+                  {errors.billing.zip && <div className="invalid-feedback">{errors.billing.zip}</div>}
                 </div>
                 <div className="col-12">
                   <label className="form-label">Address *</label>
-                  <textarea className="form-control" name="address" value={billing.address} onChange={handleBillingChange} required />
+                  <textarea className={`form-control${errors.billing.address ? " is-invalid" : ""}`} name="address" value={billing.address} onChange={handleBillingChange} required />
+                  {errors.billing.address && <div className="invalid-feedback">{errors.billing.address}</div>}
                 </div>
               </div>
             )}
@@ -246,7 +284,12 @@ export default function CheckoutPage() {
               <span>Total</span>
               <span>৳2,405.00</span>
             </div>
-            <button className="btn btn-primary w-100 mb-2">Proceed to Payment</button>
+            <button
+              className="btn btn-primary w-100 mb-2"
+              onClick={handleProceedToPayment}
+            >
+              Proceed to Payment
+            </button>
             <button className="btn btn-link w-100"> &lt; Continue Shopping</button>
           </div>
         </div>

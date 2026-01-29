@@ -83,4 +83,7 @@ export const ENDPOINTS = {
 
   // offline payment methods
   OFFLINE_PAYMENT_METHOD_LIST: `${PREFIX}/customer/order/offline-payment-method-list`,
+  
+  // order place endpoint
+  ORDER_PLACE: `${PREFIX}/customer/order/place`,
 };
