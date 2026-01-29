@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getOfflinePaymentMethods, placeOrder } from "@/lib/api/global.service";
+import { toast } from "react-toastify";
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -65,6 +66,8 @@ export default function PaymentPage() {
         payment_method: paymentMethod,
         offline_fields: offlineFields,
       });
+      // Clear cart count in header
+      window.dispatchEvent(new Event("snapcart-auth-change"));
       // Show success modal
       if (typeof window !== "undefined" && window.Swal) {
         window.Swal.fire({
@@ -73,14 +76,14 @@ export default function PaymentPage() {
           html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
           confirmButtonText: "Continue Shopping",
         }).then(() => {
-          router.push("/");
+          window.location.href = "/";
         });
       } else {
-        alert(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
-        router.push("/");
+        toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
+        setTimeout(() => { window.location.href = "/"; }, 1200);
       }
     } catch (e) {
-      alert("Failed to place order. Please try again.");
+      toast.error("Failed to place order. Please try again.");
     }
   };
 
