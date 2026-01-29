@@ -19,24 +19,18 @@
   background-color: var(--primary-color) !important;
   color: #fff !important;
 }
-.btn.disabled, .btn:disabled, fieldset:disabled .btn, .btn-outline-warning {
+.btn.disabled, .btn:disabled, fieldset:disabled .btn, .btn-outline-warning, .btn.text-danger:active {
   color: var(--primary-color);
 }
 .fs-12{
   font-size: 12px !important;
 }
 
-.bg-primary, .btn-primary, .btn-primary:focus, .btn-primary:hover {
-  background-color: var(--primary-color) !important;
+.btn.text-danger:hover, .btn.text-danger:focus {
   color: #fff !important;
-} 
-
-.btn-primary:focus, .btn-primary:hover {
-  background-color: var(--primary-hover-color) !important;
 }
-
-.btn-primary {
-  border-color: var(--primary-color) !important;
+.btn-primary:focus, .btn-primary:hover {
+  color: #fff !important;
 }
 
 .btn i{
