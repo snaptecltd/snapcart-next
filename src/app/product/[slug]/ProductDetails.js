@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import Breadcrumb from "@/components/html/Breadcrumb";
 import ProductCardType2 from "@/components/product/ProductCardType2";
 import ProductCard from "@/components/product/ProductCard";
+import { useGlobalConfig } from "@/context/GlobalConfigContext";
 
 function moneyBDT(value) {
   const n = Number(value || 0);
@@ -49,6 +50,10 @@ export default function ProductDetails() {
   const [restockLoading, setRestockLoading] = useState(false);
   const [isAuth, setIsAuth] = useState(false);
   const carouselRef = useRef(null);
+  const { data: config } = useGlobalConfig();
+  const companyWhatsapp = config?.company_whatsapp;
+  const whatsappActive = companyWhatsapp?.status === "1";
+  const whatsappPhone = (companyWhatsapp?.phone || "").replace(/^\+/, "");
 
   let stock = 0;
   if (product) {
@@ -643,9 +648,16 @@ export default function ProductDetails() {
               <span className="badge bg-light text-dark border px-3 py-2">
                 <i className="fas fa-credit-card me-2"></i>EMI Available <a href="#" className="text-primary ms-1">View Plans</a>
               </span>
-              <a href="https://wa.me/8801000000000" target="_blank" rel="noopener noreferrer" className="badge bg-success-subtle text-success border px-3 py-2">
-                <i className="fab fa-whatsapp me-2"></i>Whatsapp
-              </a>
+              {whatsappActive && whatsappPhone && (
+                <a
+                  href={`https://wa.me/${whatsappPhone.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="badge bg-success-subtle text-success border px-3 py-2"
+                >
+                  <i className="fab fa-whatsapp me-2"></i>Whatsapp
+                </a>
+              )}
             </div>
           </div>
         </div>
