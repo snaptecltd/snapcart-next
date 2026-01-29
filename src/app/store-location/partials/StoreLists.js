@@ -21,20 +21,20 @@ export default function StoreLists() {
 
   return (
     <div className="row mt-4">
-      <div className="col-12 col-md-3">
         {locations.map((location) => (
-          <CardType1
-            key={location.id}
-            title={location.store_name}
-            location={location.address}
-            offDay={location.off_day}
-            phone={location.contact_number}
-            image={location.full_url?.path || "/placeholder/image.jpg"}
-            mapUrl="#"
-            slug={location.slug}
-          />
+        <div className="col-12 col-md-3">
+            <CardType1
+              key={location.id}
+              title={location.store_name}
+              location={location.address}
+              offDay={location.off_day}
+              phone={location.contact_number}
+              image={location.full_url?.path || "/placeholder/image.jpg"}
+              mapUrl="#"
+              slug={location.slug}
+            />
+        </div>
         ))}
-      </div>
     </div>
   );
 }
