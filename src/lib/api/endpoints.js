@@ -75,6 +75,7 @@ export const ENDPOINTS = {
 
   // coupon endpoints
   COUPON_LIST: `${PREFIX}/coupon/list`,
+  COUPON_APPLY: `${PREFIX}/coupon/apply`,
   
   // shipping methods endpoint
   SHIPPING_METHODS: `${PREFIX}/products/shipping-methods`,

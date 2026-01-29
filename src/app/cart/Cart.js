@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getCart, updateCartItem, removeCartItem, getShippingMethods } from "@/lib/api/global.service";
+import { getCart, updateCartItem, removeCartItem, getShippingMethods, applyCoupon } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import axios from "axios";
@@ -53,9 +53,14 @@ export default function Cart() {
     if (!coupon) return;
     setCouponLoading(true);
     try {
-      const res = await axios.get(`/api/v1/coupon/apply?code=${encodeURIComponent(coupon)}`);
-      setCouponApplied(res.data);
-      toast.success("Coupon applied!");
+      const data = await applyCoupon(coupon);
+      if (data && data.coupon_discount > 0) {
+        setCouponApplied(data);
+        toast.success("Coupon applied!");
+      } else {
+        setCouponApplied(null);
+        toast.error("Invalid or expired coupon.");
+      }
     } catch {
       setCouponApplied(null);
       toast.error("Invalid or expired coupon.");
@@ -208,7 +213,7 @@ export default function Cart() {
                   {couponLoading ? "Applying..." : "APPLY"}
                 </button>
               </div>
-              {couponApplied && (
+              {couponApplied && couponApplied.coupon_discount > 0 && (
                 <div className="text-success small mb-2">
                   Coupon applied: <b>{coupon}</b> ({couponApplied.coupon_type}), Discount: <b>{couponDiscount} BDT</b>
                 </div>

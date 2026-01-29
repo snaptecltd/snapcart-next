@@ -457,3 +457,13 @@ export async function getShippingMethods() {
   const res = await api.get(ENDPOINTS.SHIPPING_METHODS);
   return res.data;
 }
+
+export async function applyCoupon(code) {
+  let headers = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+  const res = await api.get(`${ENDPOINTS.COUPON_APPLY}?code=${encodeURIComponent(code)}`, { headers });
+  return res.data;
+}
