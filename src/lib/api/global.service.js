@@ -445,3 +445,19 @@ export async function getCouponList() {
   });
   return res.data;
 }
+
+export async function checkRestockRequest(product_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.CART_CHECK_RESTOCK}?product_id=${product_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function requestProductRestock(product_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.post(`${ENDPOINTS.CART_PRODUCT_RESTOCK}?id=${product_id}`, {}, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
