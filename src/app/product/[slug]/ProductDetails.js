@@ -256,8 +256,8 @@ export default function ProductDetails() {
           await addToCart({
             id: addon.id,
             quantity: qty,
-            addons_price: addon.addons_price,
-            addons_stock: addon.addons_stock,
+            addons_price: Number(addon.addons_price), // ensure number
+            addons_stock: Number(addon.addons_stock),
             addons_parent: product.id,
             // If addon has variations/choices, you may need to handle here
           });
