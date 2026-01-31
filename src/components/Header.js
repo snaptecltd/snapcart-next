@@ -133,6 +133,9 @@ export default function Header() {
     return () => window.removeEventListener("snapcart-auth-change", fetchCart);
   }, []);
 
+  // Mobile category sidebar state
+  const [mobileCatOpen, setMobileCatOpen] = useState(false);
+
   return (
     <header className={styles.snapheader}>
       {/* ================= TOP BAR ================= */}
@@ -140,17 +143,26 @@ export default function Header() {
         <div className="container">
           <div className="row align-items-center">
             {/* Logo */}
-                <div className="col-6 col-lg-2">
-                  <Link href="/" className="navbar-brand text-white fw-bold">
-                  <img
-                    src={logo}
-                    alt={config?.company_name || "Logo"}
-                    width={140}
-                    height={40}
-                    style={{ objectFit: "contain" }}
-                  />
-                  </Link>
-                </div>
+            <div className="col-6 col-lg-2 d-flex align-items-center justify-content-start">
+            {/* Mobile Category Toggler */}
+              <button
+                className="btn btn-dark border-0 d-lg-none"
+                style={{ background: "transparent", fontSize: 24 }}
+                onClick={() => setMobileCatOpen(true)}
+                aria-label="Open categories"
+              >
+                <i className="fas fa-bars"></i>
+              </button>
+              <Link href="/" className="navbar-brand text-white fw-bold">
+                <img
+                  src={logo}
+                  alt={config?.company_name || "Logo"}
+                  width={140}
+                  height={40}
+                  style={{ objectFit: "contain" }}
+                />
+              </Link>
+            </div>
 
               {/* Search */}
             <div className="col-12 col-lg-4 order-3 order-lg-2 mt-2 mt-lg-0 position-relative">
@@ -322,7 +334,7 @@ export default function Header() {
               <div className="d-flex justify-content-end align-items-center gap-4 small">
                 <Link
                   href="/store-location"
-                  className={`text-white text-decoration-none ${styles.nav_link}`}
+                  className={`d-none d-md-flex ext-white text-decoration-none ${styles.nav_link}`}
                 >
                   Store
                 </Link>
@@ -336,7 +348,7 @@ export default function Header() {
 
                 <Link
                   href="#"
-                  className={`d-none d-md-flex text-decoration-none ${styles.nav_link} ${styles.nav_link_offers}`}
+                  className={`d-flex text-decoration-none ${styles.nav_link} ${styles.nav_link_offers}`}
                 >
                   🎁 Offers
                 </Link>
@@ -406,7 +418,7 @@ export default function Header() {
       </div>
 
       {/* ================= MENU BAR ================= */}
-      <nav className="navbar navbar-expand-lg navbar-light shadow-sm border-top pt-2">
+      <nav className="navbar navbar-expand-lg navbar-light shadow-sm border-top pt-2 d-none d-lg-block">
         <div className="container">
           <ul className="navbar-nav gap-lg-2 flex-wrap">
             {/* Loading state */}
@@ -496,6 +508,131 @@ export default function Header() {
           </ul>
         </div>
       </nav>
+
+      {/* Mobile Category Sidebar */}
+      {mobileCatOpen && (
+        <div>
+          <div
+            className="mobile-cat-overlay"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              background: "rgba(0,0,0,0.35)",
+              zIndex: 1200,
+            }}
+            onClick={() => setMobileCatOpen(false)}
+          />
+          <div
+            className="mobile-cat-sidebar"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "80vw",
+              maxWidth: 320,
+              height: "100vh",
+              background: "#fff",
+              zIndex: 1201,
+              boxShadow: "2px 0 16px rgba(0,0,0,0.08)",
+              overflowY: "auto",
+              transition: "left 0.2s",
+              padding: 0,
+            }}
+          >
+            <div className="d-flex justify-content-between align-items-center border-bottom px-3 py-2">
+              <div className="fw-bold">Categories & Menu</div>
+              <button
+                className="btn btn-link text-dark fs-4 p-0"
+                style={{ lineHeight: 1 }}
+                onClick={() => setMobileCatOpen(false)}
+                aria-label="Close"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="p-3">
+              <ul className="list-unstyled mb-4">
+                {categories.map((category) => (
+                  <li key={category.id} className="mb-2">
+                    <Link
+                      href={`/${category.slug}`}
+                      className="fw-semibold text-dark text-decoration-none"
+                      onClick={() => setMobileCatOpen(false)}
+                    >
+                      {category.name}
+                    </Link>
+                    {/* Children */}
+                    {category.childes?.length > 0 && (
+                      <ul className="list-unstyled ms-3 mt-1">
+                        {category.childes.map((child) => (
+                          <li key={child.id}>
+                            <Link
+                              href={`/${category.slug}/${child.slug}`}
+                              className="text-secondary text-decoration-none"
+                              onClick={() => setMobileCatOpen(false)}
+                            >
+                              {child.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <hr />
+              {/* Show hidden menu links on mobile */}
+              <div className="mb-3">
+                <Link href="/store-location" className="d-block mb-2 text-dark text-decoration-none fw-semibold" onClick={() => setMobileCatOpen(false)}><i className="fas fa-map-marker-alt me-2"></i>Store</Link>
+                <Link href="/order/preorder" className="d-block mb-2 text-dark text-decoration-none fw-semibold" onClick={() => setMobileCatOpen(false)}> <i className="fas fa-shopping-cart me-2"></i>Pre-order</Link>
+                <Link href="/compare" className="d-block mb-2 text-dark text-decoration-none fw-semibold" onClick={() => setMobileCatOpen(false)}> <i className="fas fa-exchange-alt me-2"></i>Compare</Link>
+                <Link href="/cart" className="d-block mb-2 text-dark text-decoration-none fw-semibold" onClick={() => setMobileCatOpen(false)}> <i className="fas fa-shopping-cart me-2"></i>Cart</Link>
+                
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    href="/customer"
+                    className="d-block mb-2 text-dark text-decoration-none fw-semibold"
+                    onClick={() => setMobileCatOpen(false)}
+                  >
+                    <i className="fas fa-user-circle me-2"></i>Profile
+                  </Link>
+                  <button
+                    className="d-block mb-2 text-dark text-decoration-none fw-semibold btn btn-link p-0"
+                    style={{ textAlign: "left" }}
+                    onClick={() => {
+                      setMobileCatOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <i className="fas fa-sign-out-alt me-2"></i>Logout
+                  </button>
+                </>
+              ) : <Link href="/auth/login" className="d-block mb-2 text-dark text-decoration-none fw-semibold" onClick={() => setMobileCatOpen(false)}><i className="fas fa-user me-2"></i> Login</Link>}
+              </div>
+            </div>
+          </div>
+          <style>{`
+            .mobile-cat-overlay {
+              animation: fadeInBg 0.2s;
+            }
+            .mobile-cat-sidebar {
+              animation: slideInLeft 0.2s;
+            }
+            @keyframes fadeInBg {
+              from { background: rgba(0,0,0,0); }
+              to { background: rgba(0,0,0,0.35); }
+            }
+            @keyframes slideInLeft {
+              from { left: -100vw; }
+              to { left: 0; }
+            }
+          `}</style>
+        </div>
+      )}
       <style>{`
         .search-btn:focus {
           outline: none;

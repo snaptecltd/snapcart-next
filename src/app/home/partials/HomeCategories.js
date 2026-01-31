@@ -41,7 +41,7 @@ export default function HomeCategories() {
   return (
     <section className="py-3">
       <div className="container">
-        <SectionTitle first="Feature" highlight="Categories" />
+        <SectionTitle first="Featured" highlight="Categories" />
 
         {/* Grid */}
         <div className="row g-4 g-md-5 row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8">

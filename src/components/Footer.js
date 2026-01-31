@@ -2,8 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useGlobalConfig } from "@/context/GlobalConfigContext";
 
 export default function Footer() {
+  const { data: config } = useGlobalConfig();
+  const socialMedias = Array.isArray(config?.social_media)
+    ? config.social_media.filter((s) => s.active_status === 1)
+    : [];
+
   return (
     <footer className="bg-black text-light pt-5 mt-5">
       <div className="container">
@@ -83,26 +89,41 @@ export default function Footer() {
               ✉ rsminternationalbd@gmail.com
             </p>
             <p className="small text-secondary mb-0">
-              🎫 Support Ticket
+              <Link href="/customer/support" className="text-light text-decoration-none me-2" title="Support Ticket">
+                <i className="fab fa-rocketchat me-1"></i> Support Ticket
+              </Link>
             </p>
           </div>
 
           {/* Address + Social */}
-          <div className="col-12 col-md-6 text-md-end">
-            <p className="small text-secondary mb-2">
-              📍 Shop #4A-27D, Level# 4, Block# A, Jamuna Future Park
-            </p>
+                <div className="col-12 col-md-6 text-md-end">
+                <p className="small text-secondary mb-2">
+                  📍 Shop #4A-27D, Level# 4, Block# A, Jamuna Future Park
+                </p>
 
-            <div className="d-flex justify-content-md-end gap-3">
-              <a href="#" className="text-light"><i className="fab fa-facebook-f"></i></a>
-              <a href="#" className="text-light"><i className="fab fa-instagram"></i></a>
-              <a href="#" className="text-light"><i className="fab fa-linkedin-in"></i></a>
-              <a href="#" className="text-light"><i className="fab fa-twitter"></i></a>
-            </div>
-          </div>
-        </div>
+                <div className="d-flex justify-content-md-end gap-3" id="footer-social-medias">
+                  {socialMedias.map((s) => {
+                  // Convert any 'fa fa-' to 'fab fa-' in the icon class
+                  let iconClass = s.icon || "fa-globe";
+                  iconClass = iconClass.replace(/^fa fa-/, "fab fa-");
+                  return (
+                    <a
+                    key={s.id}
+                    href={s.link || "#"}
+                    className="text-light"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={s.name}
+                    >
+                    <i className={iconClass}></i>
+                    </a>
+                  );
+                  })}
+                </div>
+                </div>
+              </div>
 
-        {/* Bottom */}
+              {/* Bottom */}
         <hr className="border-secondary my-4" />
         <div className="text-center pb-4">
           <small className="text-secondary">

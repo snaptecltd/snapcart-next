@@ -20,7 +20,7 @@ export default function StoreLists() {
   }, [data]);
 
   return (
-    <div className="row mt-4">
+    <div className="row mt-4 g-4">
         {locations.map((location) => (
         <div className="col-12 col-md-3" key={location.id}>
             <CardType1
