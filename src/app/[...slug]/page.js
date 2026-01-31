@@ -121,15 +121,21 @@ export default function ListingPage() {
             image: b.image?.path
           })),
           colors: [], // Extract from attributes if needed
-          attributes: (data.facets.attributes || []).map(attr => ({
-            key: attr.key,
-            title: attr.label,
-            options: (attr.options || []).map(opt => ({
-              value: opt.value,
-              label: opt.value,
-              count: opt.count
-            }))
-          })),
+          attributes: (data.facets.attributes || [])
+            // Only show attribute groups that have at least one option with count > 0 (i.e., present in current result)
+            .filter(attr =>
+              Array.isArray(attr.options) &&
+              attr.options.some(opt => opt.count > 0)
+            )
+            .map(attr => ({
+              key: attr.key,
+              title: attr.label,
+              options: (attr.options || []).filter(opt => opt.count > 0).map(opt => ({
+                value: opt.value,
+                label: opt.value,
+                count: opt.count
+              }))
+            })),
           categories: data.facets.categories || [],
           price: data.facets.price || { min: 0, max: 0 }
         };

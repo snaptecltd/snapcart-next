@@ -30,9 +30,9 @@ export default function BottomTextCard() {
     <section className="py-4">
       <div className="container">
         {/* Row for the bottom text cards */}
-        <div className="row g-4 d-flex align-items-stretch">
+        <div className="row g-4 d-flex align-items-stretch mb-3">
           {/* First Row */}
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-4 mb-2">
             <div
               className="p-4 rounded-3"
               style={{ backgroundColor: cards[0]?.background || "#FFEBD5", height: "100%" }}
@@ -42,7 +42,7 @@ export default function BottomTextCard() {
             </div>
           </div>
 
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-4 mb-2">
             {/* Banner in the middle */}
             <div className="position-relative overflow-hidden rounded-3" style={{ height: "100%" }}>
               {banner ? (
@@ -66,7 +66,7 @@ export default function BottomTextCard() {
             </div>
           </div>
 
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-4 mb-2">
             <div
               className="p-4 rounded-3"
               style={{ backgroundColor: cards[1]?.background || "#FFE9F0", height: "100%" }}
@@ -79,7 +79,7 @@ export default function BottomTextCard() {
 
         {/* Second Row */}
         <div className="row g-4 d-flex align-items-stretch">
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-4 mb-2">
             <div
               className="p-4 rounded-3"
               style={{ backgroundColor: cards[2]?.background || "#FFF6D5", height: "100%" }}
@@ -89,7 +89,7 @@ export default function BottomTextCard() {
             </div>
           </div>
 
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-4 mb-2">
             <div
               className="p-4 rounded-3"
               style={{ backgroundColor: cards[3]?.background || "#FFE6E5", height: "100%" }}
@@ -99,7 +99,7 @@ export default function BottomTextCard() {
             </div>
           </div>
 
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-4 mb-2">
             <div
               className="p-4 rounded-3"
               style={{ backgroundColor: cards[4]?.background || "#E7FFE7", height: "100%" }}

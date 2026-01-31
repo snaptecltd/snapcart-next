@@ -28,8 +28,10 @@ if (error || !page) {
     return (
         <div className="container py-5 d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
             <div className="text-center">
-                <h1 className="display-4 mb-3">404</h1>
-                <p className="lead mb-4">Page Not Found</p>
+                <div className="spinner-border text-primary mb-3" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <div>Loading...</div>
             </div>
         </div>
     );
