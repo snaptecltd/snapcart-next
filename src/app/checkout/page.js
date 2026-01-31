@@ -121,6 +121,15 @@ export default function CheckoutPage() {
     router.push("/checkout/payment");
   };
 
+  // Suppose you have:
+  const subtotal = cartSummary.subtotal; // sum of cart items
+  const shippingCharge = cartSummary.shipping; // selected shipping method cost
+  const discount = cartSummary.discount; // any discount
+  const tax = 0; // any tax, set to 0 if not applicable
+
+  // Calculate total
+  const total = subtotal + shippingCharge + tax - discount;
+
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
@@ -300,7 +309,7 @@ export default function CheckoutPage() {
             </div>
             <div className="mb-3 d-flex justify-content-between fw-bold fs-5">
               <span>Total</span>
-              <span>৳{cartSummary.total.toLocaleString()}</span>
+              <span>৳{total.toLocaleString()}</span>
             </div>
             <button
               className="btn btn-primary w-100 mb-2"

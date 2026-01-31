@@ -17,8 +17,6 @@ export default function PaymentPage() {
   const [subtotal, setSubtotal] = useState(0);
   const [shipping, setShipping] = useState(0);
   const [discount, setDiscount] = useState(0);
-  const [coupon, setCoupon] = useState("");
-  const [couponApplied, setCouponApplied] = useState(null);
   const [shippingMethodId, setShippingMethodId] = useState(null);
 
   // Load cart summary from localStorage
@@ -30,8 +28,6 @@ export default function PaymentPage() {
       if (stored) {
         const c = JSON.parse(stored);
         setDiscount(Number(c.coupon_discount || 0));
-        setCouponApplied(c);
-        setCoupon(c.code || c.coupon_code || "");
       }
     } catch {}
     setShippingMethodId(localStorage.getItem("snapcart_shipping_method_id") || "");
@@ -51,17 +47,11 @@ export default function PaymentPage() {
     setOfflineFields((prev) => ({ ...prev, [input]: value }));
   };
 
-  // Handle coupon apply (dummy, real logic should call API)
-  const handleApplyCoupon = () => {
-    // ...implement as needed...
-  };
-
   // Proceed to checkout
   const handleProceed = async () => {
     if (!agreed || !paymentMethod) return;
     try {
       const res = await placeOrder({
-        coupon_code: coupon,
         shipping_method_id: shippingMethodId,
         payment_method: paymentMethod,
         offline_fields: offlineFields,
@@ -212,17 +202,6 @@ export default function PaymentPage() {
             <div className="mb-3 d-flex justify-content-between">
               <span>Discount on product</span>
               <span>- ৳{discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div className="input-group mb-3">
-              <span className="input-group-text"><i className="fas fa-ticket-alt"></i></span>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Coupon code"
-                value={coupon}
-                onChange={e => setCoupon(e.target.value)}
-              />
-              <button className="btn btn-outline-secondary" type="button" onClick={handleApplyCoupon}>APPLY</button>
             </div>
             <div className="mb-3 d-flex justify-content-between fw-bold fs-5">
               <span>Total</span>
