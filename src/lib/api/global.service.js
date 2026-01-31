@@ -400,7 +400,8 @@ export async function addCustomerAddress(data) {
 
 export async function deleteCustomerAddress(address_id) {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
-  const res = await api.post(`${ENDPOINTS.CUSTOMER_ADDRESS_DELETE}?address_id=${address_id}`, {
+  // Pass {} as body, headers as 3rd arg
+  const res = await api.post(`${ENDPOINTS.CUSTOMER_ADDRESS_DELETE}?address_id=${address_id}`, {}, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   return res.data;
@@ -519,9 +520,10 @@ export async function placeOrder({
     }
   }
   
-  // Debugging জন্য console.log যোগ করুন
-  console.log("Order placing with params:", params);
+  console.log("Order API call params:", params);
   
+  //stop placing order to see the prams
+
   Object.keys(params).forEach(
     (k) => (params[k] === undefined || params[k] === null || params[k] === "") && delete params[k]
   );

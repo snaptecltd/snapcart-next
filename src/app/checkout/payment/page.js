@@ -70,162 +70,142 @@ export default function PaymentPage() {
   };
 
   // Proceed to checkout
-  const handleProceed = async () => {
-    if (!agreed || !paymentMethod) return;
+// Payment page-এ handleProceed function update করুন
+const handleProceed = async () => {
+  if (!agreed || !paymentMethod) return;
+  
+  try {
+    // LocalStorage থেকে সকল প্রয়োজনীয় ডেটা নিন
+    const shipping_method_id = localStorage.getItem("snapcart_shipping_method_id") || "";
+    const address_id = localStorage.getItem("snapcart_checkout_shipping_id") || "";
+    const billing_address_id = localStorage.getItem("snapcart_checkout_billing_id") || address_id;
+    const order_note = localStorage.getItem("snapcart_order_note") || "";
+    const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
     
+    // Coupon ডেটা
+    let coupon_code = "";
     try {
-      // LocalStorage থেকে সকল প্রয়োজনীয় ডেটা নিন
-      const shipping_method_id = localStorage.getItem("snapcart_shipping_method_id") || "";
-      const order_note = localStorage.getItem("snapcart_order_note") || "";
-      
-      // Get address data from localStorage
-      const shippingAddressStr = localStorage.getItem("snapcart_checkout_shipping_address");
-      const billingAddressStr = localStorage.getItem("snapcart_checkout_billing_address");
-      const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
-      
-      if (!shippingAddressStr) {
-        toast.error("Shipping address not found!");
-        return;
+      const stored = localStorage.getItem("snapcart_coupon_applied");
+      if (stored) {
+        const c = JSON.parse(stored);
+        coupon_code = c.code || c.coupon_code || "";
       }
-      
-      const shippingAddress = JSON.parse(shippingAddressStr);
-      let billingAddress = sameAsShipping ? shippingAddress : JSON.parse(billingAddressStr || "{}");
-      
-      // Save shipping address to API এবং ID নিন
-      const shippingId = await saveAddressToAPI(shippingAddress, false);
-      if (!shippingId) {
-        toast.error("Failed to save shipping address");
-        return;
-      }
-      
-      let billingId = shippingId;
-      if (!sameAsShipping && billingAddress) {
-        billingId = await saveAddressToAPI(billingAddress, true);
-        if (!billingId) {
-          toast.error("Failed to save billing address");
-          return;
-        }
-      }
-      
-      // Coupon ডেটা
-      let coupon_code = "";
-      try {
-        const stored = localStorage.getItem("snapcart_coupon_applied");
-        if (stored) {
-          const c = JSON.parse(stored);
-          coupon_code = c.code || c.coupon_code || "";
-        }
-      } catch {}
-      
-      // Validation চেক
-      if (!shipping_method_id) {
-        toast.error("Shipping method is missing!");
-        return;
-      }
-      
-      console.log("Order placing with:", {
+    } catch {}
+    
+    // Validation চেক
+    if (!shipping_method_id) {
+      toast.error("Shipping method is missing!");
+      return;
+    }
+    
+    if (!address_id) {
+      toast.error("Shipping address is missing! Please go back and add address.");
+      return;
+    }
+    
+    console.log("Order placing with:", {
+      coupon_code,
+      order_note,
+      shipping_method_id,
+      address_id,
+      billing_address_id: sameAsShipping ? undefined : billing_address_id,
+    });
+    
+    if (paymentMethod === "cod") {
+      // Cash on delivery order
+      const res = await placeOrder({
         coupon_code,
         order_note,
         shipping_method_id,
-        address_id: shippingId,
-        billing_address_id: billingId,
+        address_id,
+        billing_address_id: sameAsShipping ? undefined : billing_address_id,
       });
       
-      if (paymentMethod === "cod") {
-        // Cash on delivery order
-        const res = await placeOrder({
-          coupon_code,
-          order_note,
-          shipping_method_id,
-          address_id: shippingId,
-          billing_address_id: billingId || undefined,
-        });
-        
-        // Success handling
-        window.dispatchEvent(new Event("snapcart-auth-change"));
-        
-        // LocalStorage ক্লিয়ার করুন
-        localStorage.removeItem("snapcart_shipping_method_id");
-        localStorage.removeItem("snapcart_checkout_shipping_address");
-        localStorage.removeItem("snapcart_checkout_billing_address");
-        localStorage.removeItem("snapcart_same_as_shipping");
-        localStorage.removeItem("snapcart_order_note");
-        localStorage.removeItem("snapcart_coupon_applied");
-        localStorage.removeItem("snapcart_cart_subtotal");
-        localStorage.removeItem("snapcart_cart_shipping");
-        localStorage.removeItem("snapcart_cart_discount");
-        localStorage.removeItem("snapcart_cart_total");
-        
-        if (typeof window !== "undefined" && window.Swal) {
-          window.Swal.fire({
-            icon: "success",
-            title: "Order Placed!",
-            html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
-            confirmButtonText: "Continue Shopping",
-          }).then(() => {
-            window.location.href = "/";
-          });
-        } else {
-          toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
-          setTimeout(() => { window.location.href = "/"; }, 1200);
-        }
-      } else {
-        // Offline payment order
-        const method_id = paymentMethod;
-        const method_informations = btoa(JSON.stringify(offlineFields));
-        
-        const res = await placeOrderByOfflinePayment({
-          coupon_code,
-          order_note,
-          payment_note: undefined,
-          shipping_method_id,
-          address_id: shippingId,
-          billing_address_id: billingId || undefined,
-          method_id,
-          method_informations,
-        });
-        
-        // Same cleanup as above
-        window.dispatchEvent(new Event("snapcart-auth-change"));
-        
-        localStorage.removeItem("snapcart_shipping_method_id");
-        localStorage.removeItem("snapcart_checkout_shipping_address");
-        localStorage.removeItem("snapcart_checkout_billing_address");
-        localStorage.removeItem("snapcart_same_as_shipping");
-        localStorage.removeItem("snapcart_order_note");
-        localStorage.removeItem("snapcart_coupon_applied");
-        localStorage.removeItem("snapcart_cart_subtotal");
-        localStorage.removeItem("snapcart_cart_shipping");
-        localStorage.removeItem("snapcart_cart_discount");
-        localStorage.removeItem("snapcart_cart_total");
-        
-        if (typeof window !== "undefined" && window.Swal) {
-          window.Swal.fire({
-            icon: "success",
-            title: "Order Placed!",
-            html: `<div>Your order has been placed successfully.</div>`,
-            confirmButtonText: "Continue Shopping",
-          }).then(() => {
-            window.location.href = "/";
-          });
-        } else {
-          toast.success(`Order Placed!`);
-          setTimeout(() => { window.location.href = "/"; }, 1200);
-        }
-      }
-    } catch (e) {
-      console.error("Order placement error:", e);
+      // Success handling এবং cleanup
+      handleOrderSuccess(res);
       
-      // Show specific error message
-      if (e.response?.data?.errors) {
-        e.response.data.errors.forEach(err => {
-          toast.error(`${err.code}: ${err.message}`);
-        });
-      } else {
-        toast.error("Failed to place order. Please try again.");
-      }
+    } else {
+      // Offline payment order
+      const method_id = paymentMethod;
+      const method_informations = btoa(JSON.stringify(offlineFields));
+      
+      const res = await placeOrderByOfflinePayment({
+        coupon_code,
+        order_note,
+        payment_note: undefined,
+        shipping_method_id,
+        address_id,
+        billing_address_id: sameAsShipping ? undefined : billing_address_id,
+        method_id,
+        method_informations,
+      });
+      
+      // Success handling এবং cleanup
+      handleOrderSuccess(res);
     }
-  };
+  } catch (e) {
+    console.error("Order placement error:", e);
+    handleOrderError(e);
+  }
+};
+
+// Success handler function
+const handleOrderSuccess = (res) => {
+  window.dispatchEvent(new Event("snapcart-auth-change"));
+  
+  // LocalStorage ক্লিয়ার করুন
+  localStorage.removeItem("snapcart_shipping_method_id");
+  localStorage.removeItem("snapcart_checkout_shipping_id");
+  localStorage.removeItem("snapcart_checkout_billing_id");
+  localStorage.removeItem("snapcart_same_as_shipping");
+  localStorage.removeItem("snapcart_order_note");
+  localStorage.removeItem("snapcart_coupon_applied");
+  localStorage.removeItem("snapcart_cart_subtotal");
+  localStorage.removeItem("snapcart_cart_shipping");
+  localStorage.removeItem("snapcart_cart_discount");
+  localStorage.removeItem("snapcart_cart_total");
+  
+  if (typeof window !== "undefined" && window.Swal) {
+    window.Swal.fire({
+      icon: "success",
+      title: "Order Placed!",
+      html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
+      confirmButtonText: "Continue Shopping",
+    }).then(() => {
+      window.location.href = "/";
+    });
+  } else {
+    toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
+    setTimeout(() => { window.location.href = "/"; }, 1200);
+  }
+};
+
+// Error handler function
+const handleOrderError = (e) => {
+  if (e.response?.data?.errors) {
+    e.response.data.errors.forEach(err => {
+      toast.error(`${err.code}: ${err.message}`);
+    });
+  } else if (e.message) {
+    toast.error(`Error: ${e.message}`);
+  } else {
+    toast.error("Failed to place order. Please try again.");
+  }
+};
+
+// Helper function to clear localStorage
+const clearCheckoutLocalStorage = () => {
+  localStorage.removeItem("snapcart_shipping_method_id");
+  localStorage.removeItem("snapcart_checkout_shipping_address");
+  localStorage.removeItem("snapcart_checkout_billing_address");
+  localStorage.removeItem("snapcart_same_as_shipping");
+  localStorage.removeItem("snapcart_order_note");
+  localStorage.removeItem("snapcart_coupon_applied");
+  localStorage.removeItem("snapcart_cart_subtotal");
+  localStorage.removeItem("snapcart_cart_shipping");
+  localStorage.removeItem("snapcart_cart_discount");
+  localStorage.removeItem("snapcart_cart_total");
+};
 
   return (
     <div className="container py-5">

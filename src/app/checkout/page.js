@@ -99,44 +99,122 @@ export default function CheckoutPage() {
     return errs;
   };
 
-  // New address save function
-  const handleSaveAddress = async (addressData, isBilling = false) => {
-    try {
-      const response = await addCustomerAddress(addressData);
-      
-      if (response && response.id) {
-        toast.success("Address saved successfully!");
-        return response.id;
-      }
-    } catch (error) {
-      toast.error("Failed to save address");
-      console.error("Address save error:", error);
+// Checkout page-এর handleSaveAddress function update করুন
+const handleSaveAddress = async (addressData, isBilling = false) => {
+  try {
+    // is_billing field যোগ করুন
+    const addressToSave = {
+      ...addressData,
+      is_billing: isBilling ? 1 : 0
+    };
+    
+    console.log("Saving address with data:", addressToSave);
+    
+    const response = await addCustomerAddress(addressToSave);
+    console.log("Address save API response:", response, response.id);
+    
+    if (response && response.id) {
+      toast.success("Address saved successfully!" + response.id);
+      return response.id; // Return address ID
+    } else if (response && response.errors) {
+      response.errors.forEach(err => {
+        toast.error(`${err.code}: ${err.message}`);
+      });
+      return null;
     }
-    return null;
-  };
+  } catch (error) {
+    console.error("Full address save error:", error);
+    
+    if (error.response?.data?.errors) {
+      error.response.data.errors.forEach(err => {
+        toast.error(`${err.code}: ${err.message}`);
+      });
+    } else {
+      toast.error("Failed to save address. Please check all fields.");
+    }
+  }
+  return null;
+};
 
-  const handleProceedToPayment = async (e) => {
-    e.preventDefault();
+// handleProceedToPayment function update করুন
+const handleProceedToPayment = async (e) => {
+  e.preventDefault();
+  
+  // Address validation
+  const shippingErrs = validateAddress(shipping);
+  const billingErrs = sameAsShipping ? {} : validateAddress(billing);
+  
+  setErrors({ shipping: shippingErrs, billing: billingErrs });
+  
+  if (Object.keys(shippingErrs).length || Object.keys(billingErrs).length) {
+    toast.error("Please fill all required address fields.");
+    return;
+  }
+  
+  try {
+    let shippingId = null;
+    let billingId = null; // Only declare once here
     
-    // Address validation
-    const shippingErrs = validateAddress(shipping);
-    const billingErrs = sameAsShipping ? {} : validateAddress(billing);
+    // Check if selected from saved addresses
+    const selectedAddress = addresses.find(addr => 
+      addr.contact_person_name === shipping.contact_person_name &&
+      addr.phone === shipping.phone &&
+      addr.address === shipping.address
+    );
     
-    setErrors({ shipping: shippingErrs, billing: billingErrs });
-    
-    if (Object.keys(shippingErrs).length || Object.keys(billingErrs).length) {
-      toast.error("Please fill all required address fields.");
-      return;
+    if (selectedAddress && !updateAddress) {
+      // Use existing address ID
+      shippingId = selectedAddress.id;
+      console.log("Using existing shipping address ID:", shippingId);
+    } else {
+      // Save new shipping address
+      shippingId = await handleSaveAddress(shipping, false);
+      if (!shippingId) {
+        toast.error("Failed to save shipping address");
+        return;
+      }
     }
     
-    // Save addresses to localStorage
-    localStorage.setItem("snapcart_checkout_shipping_address", JSON.stringify(shipping));
-    localStorage.setItem("snapcart_checkout_billing_address", JSON.stringify(sameAsShipping ? shipping : billing));
+    billingId = shippingId; // Just assign, do not redeclare
+    if (!sameAsShipping) {
+      // Check if billing address is from saved addresses
+      const selectedBillingAddress = addresses.find(addr => 
+        addr.contact_person_name === billing.contact_person_name &&
+        addr.phone === billing.phone &&
+        addr.address === billing.address
+      );
+      
+      if (selectedBillingAddress && !updateAddress) {
+        // Use existing billing address ID
+        billingId = selectedBillingAddress.id;
+        console.log("Using existing billing address ID:", billingId);
+      } else {
+        // Save new billing address
+        billingId = await handleSaveAddress(billing, true);
+        if (!billingId) {
+          toast.error("Failed to save billing address");
+          return;
+        }
+      }
+    }
+    
+    // Save IDs to localStorage
+    localStorage.setItem("snapcart_checkout_shipping_id", shippingId);
+    localStorage.setItem("snapcart_checkout_billing_id", billingId);
     localStorage.setItem("snapcart_same_as_shipping", sameAsShipping.toString());
     
+    // Also save address objects for reference
+    localStorage.setItem("snapcart_checkout_shipping_address", JSON.stringify(shipping));
+    localStorage.setItem("snapcart_checkout_billing_address", JSON.stringify(sameAsShipping ? shipping : billing));
+    
+    toast.success("Address saved successfully! Proceeding to payment...");
     router.push("/checkout/payment");
-  };
-
+    
+  } catch (error) {
+    console.error("Error in checkout:", error);
+    toast.error("Failed to proceed. Please try again.");
+  }
+};
   // Calculate total
   const subtotal = cartSummary.subtotal;
   const shippingCharge = cartSummary.shipping;
