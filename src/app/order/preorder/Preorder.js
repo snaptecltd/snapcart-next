@@ -147,7 +147,7 @@ export default function Preorder() {
   return (
     <div className="container py-5">
       <h2 className="fw-bold text-center mb-4" style={{ fontSize: "2.5rem" }}>
-        Looking for Somethings Different?
+        Looking for Something Different?
       </h2>
       <form onSubmit={handleSubmit} className="mx-auto" style={{ maxWidth: 600 }}>
         <div className="mb-3">
