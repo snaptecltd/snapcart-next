@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -173,11 +173,44 @@ export default function ProductDetails() {
     carouselRef.current.scrollTo({ left: target, behavior: "smooth" });
   };
 
-  // Add to Cart handler
+  // --- Addons State ---
+  const [addons, setAddons] = useState([]);
+  const [selectedAddons, setSelectedAddons] = useState([]);
+
+  // Parse Addons when product loads
+  useEffect(() => {
+    if (!product?.addons) {
+      setAddons([]);
+      setSelectedAddons([]);
+      return;
+    }
+    let parsed = [];
+    try {
+      parsed = typeof product.addons === "string" ? JSON.parse(product.addons) : product.addons;
+      // Only show addons with stock > 0
+      parsed = parsed.filter(a => Number(a.addons_stock) > 0);
+    } catch {
+      parsed = [];
+    }
+    setAddons(parsed);
+
+    // Default checked: free addons (addons_price == 0)
+    setSelectedAddons(parsed.filter(a => Number(a.addons_price) === 0).map(a => a.id));
+  }, [product]);
+
+  // Handle Addon Checkbox Change
+  const handleAddonCheck = (id) => {
+    setSelectedAddons((prev) =>
+      prev.includes(id) ? prev.filter((aid) => aid !== id) : [...prev, id]
+    );
+  };
+
+  // Add to Cart handler (with Addons)
   const handleAddToCart = async (redirectToCart = false) => {
     if (adding || stock < 1) return;
     setAdding(true);
     try {
+      // Main product payload
       const payload = {
         id: product.id,
         quantity: qty,
@@ -215,6 +248,22 @@ export default function ProductDetails() {
       );
 
       await addToCart(payload);
+
+      // Add checked addons
+      for (const addon of addons) {
+        if (selectedAddons.includes(addon.id)) {
+          // For each checked addon, add to cart as a separate product with parent reference
+          await addToCart({
+            id: addon.id,
+            quantity: qty,
+            addons_price: addon.addons_price,
+            addons_stock: addon.addons_stock,
+            addons_parent: product.id,
+            // If addon has variations/choices, you may need to handle here
+          });
+        }
+      }
+
       toast.success("Added to cart!");
       window.dispatchEvent(new Event("snapcart-auth-change"));
       if (redirectToCart) router.push("/cart");
@@ -592,6 +641,61 @@ export default function ProductDetails() {
                 </div>
               </div>
             </div>  
+            {/* --- Product Add-ons Section --- */}
+            {addons.length > 0 && (
+              <div className="bg-white rounded-4 p-4 my-3 shadow-sm border">
+                <div className="fw-bold mb-3">Product Add-ons</div>
+                <div className="d-flex flex-column gap-3">
+                  {addons.map((addon) => {
+                    const isFree = Number(addon.addons_price) === 0;
+                    const hasDiscount = Number(addon.unit_price) > Number(addon.addons_price);
+                    const checked = selectedAddons.includes(addon.id);
+                    return (
+                      <label
+                        key={addon.id}
+                        className={`d-flex align-items-center gap-3 p-3 rounded-3 border ${checked ? "border-warning" : "border-light"} bg-light`}
+                        style={{ cursor: addon.addons_stock > 0 ? "pointer" : "not-allowed", opacity: addon.addons_stock > 0 ? 1 : 0.6 }}
+                      >
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          checked={checked}
+                          disabled={addon.addons_stock <= 0}
+                          onChange={() => handleAddonCheck(addon.id)}
+                          style={{ marginRight: 12, width: 20, height: 20 }}
+                        />
+                        <img
+                          src={addon.thumbnail_full_url?.path}
+                          alt={addon.name}
+                          style={{ width: 48, height: 48, objectFit: "contain", borderRadius: 8, background: "#fff" }}
+                        />
+                        <div className="flex-grow-1">
+                          <div className="fw-semibold">{addon.name}</div>
+                          <div className="d-flex gap-2 mt-1">
+                            {hasDiscount && (
+                              <span className="badge bg-success-subtle text-success">Addons Discount</span>
+                            )}
+                            {isFree && (
+                              <span className="badge bg-info-subtle text-info">Free</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-end">
+                          <div className="fw-bold" style={{ fontSize: 16 }}>
+                            ৳{Number(addon.addons_price).toLocaleString("en-BD")}
+                          </div>
+                          {hasDiscount && (
+                            <div className="text-muted text-decoration-line-through" style={{ fontSize: 14 }}>
+                              ৳{Number(addon.unit_price).toLocaleString("en-BD")}
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="bg-white rounded-4 p-4 shadow-sm border h-100 d-flex flex-column">
               {/* Actions */}
               <div className="d-flex gap-3 mb-3 flex-wrap">
@@ -890,6 +994,14 @@ export default function ProductDetails() {
         
         .related-product-carousel::-webkit-scrollbar {
           display: none;
+        }
+
+        .product-addon-badge {
+          font-size: 12px;
+          font-weight: 600;
+          padding: 2px 8px;
+          border-radius: 6px;
+          margin-left: 6px;
         }
       `}</style>
     </div>
