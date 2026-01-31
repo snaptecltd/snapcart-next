@@ -139,81 +139,82 @@ export default function ProductCard({ p }) {
       </button>
 
       {/* Stock Out Ribbon */}
-      {currentStock < 1 && (
-        <div
-          className="shadow"
-          style={{
-            position: "absolute",
-            top: 25,
-            right: -32,
-            width: 140,
-            background: "#EF4444",
-            color: "#fff",
-            textAlign: "center",
-            fontWeight: 700,
-            transform: "rotate(45deg)",
-            zIndex: 2,
-            fontSize: 11,
-            padding: "4px 0",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            letterSpacing: 1,
-          }}
-        >
-          <i className="fas fa-box-open me-1"></i>
-          STOCK OUT
-        </div>
-      )}
+        {currentStock < 1 && (
+          <div
+            className="shadow"
+            style={{
+          position: "absolute",
+          top: 25,
+          right: -32,
+          width: 140,
+          background: "#EF4444",
+          color: "#fff",
+          textAlign: "center",
+          fontWeight: 700,
+          transform: "rotate(45deg)",
+          zIndex: 2,
+          fontSize: 11,
+          padding: "4px 0",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          letterSpacing: 1,
+            }}
+          >
+            <i className="fas fa-box-open me-1"></i>
+            STOCK OUT
+          </div>
+        )}
 
-      <Link href={`/product/${p.slug}`} className="text-decoration-none text-dark">
-        <div className="p-3">
-          <div className="bg-white rounded-4 d-flex align-items-center justify-content-center">
-            <img
-              src={img}
-              alt={name}
-              style={{
-                maxWidth: "100%",
-                maxHeight: "100%",
-                objectFit: "contain",
-                width: "90%",
-              }}
-              loading="lazy"
-            />
+        <Link href={`/product/${p.slug}`} className="text-decoration-none text-dark">
+          <div className="p-3">
+            <div className="bg-white rounded-4 d-flex align-items-center justify-content-center">
+          <img
+            src={img}
+            alt={name}
+            style={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+              width: "80%",
+            }}
+            loading="lazy"
+          />
+            </div>
+
+            <div className="mt-3 mb-5">
+          <div
+            className="fw-semibold"
+            style={{
+              wordBreak: "break-word",
+              fontSize: 15,
+              lineHeight: "1.2",
+            }}
+            title={name.length > 36 ? name : undefined}
+          >
+            {name.length > 36 ? name.slice(0, 36) + "..." : name}
           </div>
 
-          <div className="mt-3">
-            <div
-              className="fw-semibold"
-              style={{
-                wordBreak: "break-word",
-                fontSize: 16,
-                lineHeight: "1.2",
-              }}
-            >
-              {name}
-            </div>
+          <div className="mt-2 fw-bold" style={{ fontSize: 15 }}>
+            {moneyBDT(price)}
+          </div>
 
-            <div className="mt-2 fw-bold" style={{ fontSize: 16 }}>
-              {moneyBDT(price)}
-            </div>
+          <div className="d-flex align-items-center gap-1 mt-2">
+            {oldPrice ? (
+              <div className="text-muted text-decoration-line-through small">
+            {moneyBDT(oldPrice)}
+              </div>
+            ) : null}
 
-            <div className="d-flex align-items-center gap-1 mt-2">
-              {oldPrice ? (
-                <div className="text-muted text-decoration-line-through small">
-                  {moneyBDT(oldPrice)}
-                </div>
-              ) : null}
-
-              {saveText ? (
-                <span className="badge rounded-pill text-success px-3 py-2" style={{ background: "#DCFCE7" }}>
-                  {saveText}
-                </span>
-              ) : null}
+            {saveText ? (
+              <span className="badge rounded-pill text-success px-3 py-2" style={{ background: "#DCFCE7" }}>
+            {saveText}
+              </span>
+            ) : null}
+          </div>
             </div>
           </div>
-        </div>
-      </Link>
+        </Link>
 
-      {/* Action Buttons - Show only if no variations/colors and in stock */}
+        {/* Action Buttons - Show only if no variations/colors and in stock */}
       {showActionButtons && (
         <div className="position-absolute bottom-0 start-0 end-0 p-2 bg-white border-top d-flex gap-2">
           <button
