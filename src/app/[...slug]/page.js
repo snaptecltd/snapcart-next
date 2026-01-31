@@ -80,13 +80,18 @@ export default function ListingPage() {
   }, [searchParams.toString()]);
 
   const apiFilters = useMemo(() => {
+    // Convert attrs object to { ram: "8GB,12GB", ... }
+    const attr = {};
+    Object.entries(ui.attrs || {}).forEach(([k, vals]) => {
+      if (vals?.length) attr[k] = vals.join(",");
+    });
     return cleanObject({
       keyword: ui.q || "",
       min_price: ui.min_price,
       max_price: ui.max_price,
       brand_ids: toCSV(ui.brands),
       colors: toCSV(ui.colors),
-      attrs: attrsToQuery(ui.attrs),
+      attr, // <-- send as object, not string
       offset: ui.page,
       limit: ui.limit,
       sort: ui.sort,
