@@ -18,6 +18,8 @@ export default function Register() {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Validation logic
   const validate = () => {
@@ -174,29 +176,51 @@ export default function Register() {
             <label className="form-label">
               Password <span className="text-danger">*</span>
             </label>
-            <input
-              type="password"
-              name="password"
-              className={`form-control${errors.password ? " is-invalid" : ""}`}
-              placeholder="Minimum 8 characters long"
-              value={form.password}
-              onChange={handleChange}
-            />
+            <div className="input-group">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                className={`form-control${errors.password ? " is-invalid" : ""}`}
+                placeholder="Minimum 8 characters long"
+                value={form.password}
+                onChange={handleChange}
+              />
+              <button
+                type="button"
+                className="btn btn-outline-secondary password-toggle-btn"
+                tabIndex={-1}
+                onClick={() => setShowPassword((v) => !v)}
+                style={{ borderLeft: 0 }}
+              >
+                <i className={`fas ${showPassword ? "fa-eye" : "fa-eye-slash"}`}></i>
+              </button>
+            </div>
             {errors.password && <div className="invalid-feedback">{errors.password}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">
               Confirm Password <span className="text-danger">*</span>
             </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              className={`form-control${errors.confirmPassword ? " is-invalid" : ""}`}
-              placeholder="Minimum 8 characters long"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              onBlur={handleConfirmPasswordBlur}
-            />
+            <div className="input-group">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                className={`form-control${errors.confirmPassword ? " is-invalid" : ""}`}
+                placeholder="Minimum 8 characters long"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                onBlur={handleConfirmPasswordBlur}
+              />
+              <button
+                type="button"
+                className="btn btn-outline-secondary password-toggle-btn"
+                tabIndex={-1}
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                style={{ borderLeft: 0 }}
+              >
+                <i className={`fas ${showConfirmPassword ? "fa-eye" : "fa-eye-slash"}`}></i>
+              </button>
+            </div>
             {form.confirmPassword && form.password !== form.confirmPassword && (
               <div className="text-danger small">Passwords do not match.</div>
             )}
@@ -242,6 +266,24 @@ export default function Register() {
           </small>
         </div>
       </form>
+      <style scoped>{`
+        .input-group .form-control, label {
+          font-size: 14px;
+        }
+        .text-secondary{
+          font-size: 14px;
+        }
+        /* Change input placeholder color */
+        input::placeholder {
+          color: #adb5bd7e !important;
+          opacity: 1;
+        }
+        .password-toggle-btn {
+          border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
+          border-color: #ced4da;
+        }
+      `}</style>
     </div>
   );
 }

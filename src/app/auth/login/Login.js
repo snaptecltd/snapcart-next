@@ -142,7 +142,7 @@ return (
                                         onClick={() => setShowPassword((v) => !v)}
                                         style={{ borderLeft: 0 }}
                                     >
-                                        <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
+                                        <i className={`fas ${showPassword ? "fa-eye" : "fa-eye-slash"}`}></i>
                                     </button>
                                 </div>
                                 {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
