@@ -585,7 +585,8 @@ export default function ProductDetails() {
                     type="button"
                     onClick={() => setQty((q) => Math.min(stock, q + 1))}
                     disabled={qty >= stock}
-                  >+</button>
+                    title = {qty >= stock ? "Maximum quantity reached" : ""}
+                  >{qty >= stock ? "Max" : "+"}</button>
                 </div>
               </div>
             </div>  

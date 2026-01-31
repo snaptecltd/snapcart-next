@@ -191,9 +191,9 @@ export default function Cart() {
                       className="btn btn-outline-secondary"
                       type="button"
                       onClick={() => handleUpdateQty(item, item.quantity + 1)}
-                      disabled={updating[item.id]}
+                      disabled={updating[item.id] || (typeof item.product?.current_stock === "number" && item.quantity >= item.product.current_stock)}
                     >
-                      <i className="fas fa-plus"></i>
+                      {typeof item.product?.current_stock === "number" && item.quantity >= item.product.current_stock ? "Max" : <i className="fas fa-plus"></i>}
                     </button>
                   </div>
                 </td>
