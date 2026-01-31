@@ -129,23 +129,10 @@ export default function CheckoutPage() {
       return;
     }
     
-    // Save shipping address and get ID
-    const shippingId = await handleSaveAddress(shipping);
-    if (!shippingId) return;
-    
-    let billingId = shippingId;
-    if (!sameAsShipping) {
-      billingId = await handleSaveAddress(billing, true);
-      if (!billingId) return;
-    }
-    
-    // Save IDs to localStorage
-    localStorage.setItem("snapcart_checkout_shipping_id", shippingId);
-    localStorage.setItem("snapcart_checkout_billing_id", billingId);
-    
-    // Also save address objects (if needed later)
+    // Save addresses to localStorage
     localStorage.setItem("snapcart_checkout_shipping_address", JSON.stringify(shipping));
     localStorage.setItem("snapcart_checkout_billing_address", JSON.stringify(sameAsShipping ? shipping : billing));
+    localStorage.setItem("snapcart_same_as_shipping", sameAsShipping.toString());
     
     router.push("/checkout/payment");
   };

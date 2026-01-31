@@ -1,24 +1,111 @@
-
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getOfflinePaymentMethods, placeOrder, placeOrderByOfflinePayment } from "@/lib/api/global.service";
+import { 
+  getOfflinePaymentMethods, 
+  placeOrder, 
+  placeOrderByOfflinePayment,
+  addCustomerAddress 
+} from "@/lib/api/global.service"; // addCustomerAddress import করুন
 import { toast } from "react-toastify";
 
 export default function PaymentPage() {
   const router = useRouter();
-  // ... অন্যান্য state
+  const [offlineMethods, setOfflineMethods] = useState([]);
+  const [showMore, setShowMore] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [offlineFields, setOfflineFields] = useState({});
+  const [agreed, setAgreed] = useState(false);
   
-  // Proceed to checkout function update করুন
+  // Cart summary states
+  const [subtotal, setSubtotal] = useState(0);
+  const [shipping, setShipping] = useState(0);
+  const [discount, setDiscount] = useState(0);
+  const [shippingMethodId, setShippingMethodId] = useState(null);
+
+  // Load cart summary from localStorage
+  useEffect(() => {
+    setSubtotal(Number(localStorage.getItem("snapcart_cart_subtotal") || 0));
+    setShipping(Number(localStorage.getItem("snapcart_cart_shipping") || 0));
+    
+    try {
+      const stored = localStorage.getItem("snapcart_coupon_applied");
+      if (stored) {
+        const c = JSON.parse(stored);
+        setDiscount(Number(c.coupon_discount || 0));
+      }
+    } catch {}
+    
+    setShippingMethodId(localStorage.getItem("snapcart_shipping_method_id") || "");
+  }, []);
+
+  // Load offline payment methods
+  useEffect(() => {
+    getOfflinePaymentMethods()
+      .then(res => setOfflineMethods(res?.offline_methods || []))
+      .catch(() => setOfflineMethods([]));
+  }, []);
+
+  const total = Math.max(0, subtotal + shipping - discount);
+
+  // Handle offline payment field change
+  const handleOfflineFieldChange = (input, value) => {
+    setOfflineFields((prev) => ({ ...prev, [input]: value }));
+  };
+
+  // Function to save address with is_billing field
+  const saveAddressToAPI = async (addressData, isBilling = false) => {
+    try {
+      const addressToSave = {
+        ...addressData,
+        is_billing: isBilling ? 1 : 0
+      };
+      
+      const response = await addCustomerAddress(addressToSave);
+      return response?.id || null;
+    } catch (error) {
+      console.error("Address save error in payment page:", error);
+      return null;
+    }
+  };
+
+  // Proceed to checkout
   const handleProceed = async () => {
     if (!agreed || !paymentMethod) return;
     
     try {
       // LocalStorage থেকে সকল প্রয়োজনীয় ডেটা নিন
       const shipping_method_id = localStorage.getItem("snapcart_shipping_method_id") || "";
-      const address_id = localStorage.getItem("snapcart_checkout_shipping_id") || "";
-      const billing_address_id = localStorage.getItem("snapcart_checkout_billing_id") || "";
       const order_note = localStorage.getItem("snapcart_order_note") || "";
+      
+      // Get address data from localStorage
+      const shippingAddressStr = localStorage.getItem("snapcart_checkout_shipping_address");
+      const billingAddressStr = localStorage.getItem("snapcart_checkout_billing_address");
+      const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
+      
+      if (!shippingAddressStr) {
+        toast.error("Shipping address not found!");
+        return;
+      }
+      
+      const shippingAddress = JSON.parse(shippingAddressStr);
+      let billingAddress = sameAsShipping ? shippingAddress : JSON.parse(billingAddressStr || "{}");
+      
+      // Save shipping address to API এবং ID নিন
+      const shippingId = await saveAddressToAPI(shippingAddress, false);
+      if (!shippingId) {
+        toast.error("Failed to save shipping address");
+        return;
+      }
+      
+      let billingId = shippingId;
+      if (!sameAsShipping && billingAddress) {
+        billingId = await saveAddressToAPI(billingAddress, true);
+        if (!billingId) {
+          toast.error("Failed to save billing address");
+          return;
+        }
+      }
       
       // Coupon ডেটা
       let coupon_code = "";
@@ -31,10 +118,18 @@ export default function PaymentPage() {
       } catch {}
       
       // Validation চেক
-      if (!shipping_method_id || !address_id) {
-        toast.error("Shipping method or address is missing!");
+      if (!shipping_method_id) {
+        toast.error("Shipping method is missing!");
         return;
       }
+      
+      console.log("Order placing with:", {
+        coupon_code,
+        order_note,
+        shipping_method_id,
+        address_id: shippingId,
+        billing_address_id: billingId,
+      });
       
       if (paymentMethod === "cod") {
         // Cash on delivery order
@@ -42,8 +137,8 @@ export default function PaymentPage() {
           coupon_code,
           order_note,
           shipping_method_id,
-          address_id,
-          billing_address_id: billing_address_id || undefined,
+          address_id: shippingId,
+          billing_address_id: billingId || undefined,
         });
         
         // Success handling
@@ -51,8 +146,9 @@ export default function PaymentPage() {
         
         // LocalStorage ক্লিয়ার করুন
         localStorage.removeItem("snapcart_shipping_method_id");
-        localStorage.removeItem("snapcart_checkout_shipping_id");
-        localStorage.removeItem("snapcart_checkout_billing_id");
+        localStorage.removeItem("snapcart_checkout_shipping_address");
+        localStorage.removeItem("snapcart_checkout_billing_address");
+        localStorage.removeItem("snapcart_same_as_shipping");
         localStorage.removeItem("snapcart_order_note");
         localStorage.removeItem("snapcart_coupon_applied");
         localStorage.removeItem("snapcart_cart_subtotal");
@@ -83,8 +179,8 @@ export default function PaymentPage() {
           order_note,
           payment_note: undefined,
           shipping_method_id,
-          address_id,
-          billing_address_id: billing_address_id || undefined,
+          address_id: shippingId,
+          billing_address_id: billingId || undefined,
           method_id,
           method_informations,
         });
@@ -93,8 +189,9 @@ export default function PaymentPage() {
         window.dispatchEvent(new Event("snapcart-auth-change"));
         
         localStorage.removeItem("snapcart_shipping_method_id");
-        localStorage.removeItem("snapcart_checkout_shipping_id");
-        localStorage.removeItem("snapcart_checkout_billing_id");
+        localStorage.removeItem("snapcart_checkout_shipping_address");
+        localStorage.removeItem("snapcart_checkout_billing_address");
+        localStorage.removeItem("snapcart_same_as_shipping");
         localStorage.removeItem("snapcart_order_note");
         localStorage.removeItem("snapcart_coupon_applied");
         localStorage.removeItem("snapcart_cart_subtotal");
@@ -118,7 +215,15 @@ export default function PaymentPage() {
       }
     } catch (e) {
       console.error("Order placement error:", e);
-      toast.error("Failed to place order. Please try again.");
+      
+      // Show specific error message
+      if (e.response?.data?.errors) {
+        e.response.data.errors.forEach(err => {
+          toast.error(`${err.code}: ${err.message}`);
+        });
+      } else {
+        toast.error("Failed to place order. Please try again.");
+      }
     }
   };
 
