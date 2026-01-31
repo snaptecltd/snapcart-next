@@ -224,7 +224,8 @@ export async function removeCartItem(data) {
       if (guestId) payload.guest_id = guestId;
     }
   }
-  const res = await api.post(ENDPOINTS.REMOVE_CART_ITEM, { data: payload, headers });
+  // Correct usage: payload as 2nd arg, headers as 3rd arg
+  const res = await api.post(ENDPOINTS.REMOVE_CART_ITEM, payload, { headers });
   return res.data;
 }
 
@@ -240,7 +241,7 @@ export async function removeAllCartItems() {
       if (guestId) payload.guest_id = guestId;
     }
   }
-  const res = await api.post(ENDPOINTS.REMOVE_CART_ALL_ITEMS, { data: payload, headers });
+  const res = await api.post(ENDPOINTS.REMOVE_CART_ALL_ITEMS, payload, { headers });
   return res.data;
 }
 
