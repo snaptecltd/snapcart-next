@@ -5,6 +5,7 @@ import { moneyBDT } from "@/lib/utils/money";
 import { addToCart, addToWishlist, removeFromWishlist } from "@/lib/api/global.service";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 export default function ProductCard({ p }) {
   if (!p) return null;
@@ -37,6 +38,7 @@ export default function ProductCard({ p }) {
   const showActionButtons = !hasVariations && !hasColors && currentStock > 0;
 
   const [adding, setAdding] = useState(false);
+  const router = useRouter();
 
   const handleAddToCart = async (e) => {
     e.preventDefault();
@@ -46,6 +48,21 @@ export default function ProductCard({ p }) {
       await addToCart({ id: p.id, quantity: 1 });
       toast.success("Added to cart!");
       window.dispatchEvent(new Event("snapcart-auth-change")); // update header cart count
+    } catch {
+      toast.error("Failed to add to cart.");
+    }
+    setAdding(false);
+  };
+
+  const handleBuyNow = async (e) => {
+    e.preventDefault();
+    if (adding) return;
+    setAdding(true);
+    try {
+      await addToCart({ id: p.id, quantity: 1 });
+      toast.success("Added to cart!");
+      window.dispatchEvent(new Event("snapcart-auth-change"));
+      router.push("/cart");
     } catch {
       toast.error("Failed to add to cart.");
     }
@@ -220,7 +237,7 @@ export default function ProductCard({ p }) {
           <button
             className="btn btn-sm fw-bold flex-grow-1 rounded-pill text-white"
             style={{ background: "#F67535" }}
-            onClick={handleAddToCart}
+            onClick={handleBuyNow}
             disabled={adding}
           >
             {adding ? "Adding..." : "Shop Now"}
@@ -228,7 +245,7 @@ export default function ProductCard({ p }) {
           <button
             className="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center justify-content-center"
             style={{ width: 40, minWidth: 40 }}
-            onClick={handleAddToCart}
+            onClick={handleBuyNow}
             disabled={adding}
           >
             <i className="fas fa-shopping-cart"></i>

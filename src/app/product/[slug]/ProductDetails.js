@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getProductDetails, getRelatedProducts, addToCart, checkRestockRequest, requestProductRestock } from "@/lib/api/global.service";
@@ -33,6 +33,7 @@ function parseFaqs(faqs) {
 
 export default function ProductDetails() {
   const { slug } = useParams();
+  const router = useRouter();
   const [product, setProduct] = useState(null);
   const [mainImg, setMainImg] = useState("");
   const [selectedColor, setSelectedColor] = useState(null);
@@ -173,7 +174,7 @@ export default function ProductDetails() {
   };
 
   // Add to Cart handler
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (redirectToCart = false) => {
     if (adding || stock < 1) return;
     setAdding(true);
     try {
@@ -216,6 +217,7 @@ export default function ProductDetails() {
       await addToCart(payload);
       toast.success("Added to cart!");
       window.dispatchEvent(new Event("snapcart-auth-change"));
+      if (redirectToCart) router.push("/cart");
     } catch {
       toast.error("Failed to add to cart.");
     }
@@ -593,17 +595,26 @@ export default function ProductDetails() {
             <div className="bg-white rounded-4 p-4 shadow-sm border h-100 d-flex flex-column">
               {/* Actions */}
               <div className="d-flex gap-3 mb-3 flex-wrap">
-                {/* If in stock, show Add to Cart */}
+                {/* If in stock, show Add to Cart and Shop Now */}
                 {stock > 0 ? (
-                  <button
-                    className="btn btn-warning fw-bold px-4 rounded-pill"
-                    style={{ background: "#F67535", color: "#fff" }}
-                    onClick={handleAddToCart}
-                    disabled={adding || stock < 1}
-                  >
-                    <i className="fas fa-cart-plus me-2"></i>
-                    {adding ? "Adding..." : "Add To Cart"}
-                  </button>
+                  <>
+                    <button
+                      className="btn btn-warning fw-bold px-4 rounded-pill"
+                      style={{ background: "#F67535", color: "#fff" }}
+                      onClick={() => handleAddToCart(false)}
+                      disabled={adding || stock < 1}
+                    >
+                      <i className="fas fa-cart-plus me-2"></i>
+                      {adding ? "Adding..." : "Add To Cart"}
+                    </button>
+                    <button
+                      className="btn btn-outline-dark fw-bold px-4 rounded-pill"
+                      onClick={() => handleAddToCart(true)}
+                      disabled={adding || stock < 1}
+                    >
+                      <i className="fas fa-shopping-cart me-2"></i>Shop Now
+                    </button>
+                  </>
                 ) : isAuth ? (
                   // If out of stock and authenticated, show restock request
                   restockStatus === "requested" ? (
@@ -636,12 +647,6 @@ export default function ProductDetails() {
                     Request Restock
                     </button>
                   )}
-                  <button
-                    className="btn btn-outline-dark fw-bold px-4 rounded-pill"
-                    disabled
-                  >
-                    <i className="fas fa-shopping-cart me-2"></i>Shop Now
-                  </button>
                   </div>
                 </div>
                 {/* EMI, Whatsapp, etc. */}
