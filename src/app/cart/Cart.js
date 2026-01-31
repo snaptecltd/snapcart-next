@@ -213,7 +213,7 @@ export default function Cart() {
                       className="btn btn-outline-secondary"
                       type="button"
                       onClick={() => handleUpdateQty(item, item.quantity - 1)}
-                      disabled={item.quantity <= 1 || updating[item.id]}
+                      disabled={item.quantity <= 1 || updating[item.id] || item.addons_parent != 0}
                     >
                       <i className="fas fa-minus"></i>
                     </button>
@@ -228,7 +228,11 @@ export default function Cart() {
                       className="btn btn-outline-secondary"
                       type="button"
                       onClick={() => handleUpdateQty(item, item.quantity + 1)}
-                      disabled={updating[item.id] || (typeof item.product?.current_stock === "number" && item.quantity >= item.product.current_stock)}
+                      disabled={
+                        updating[item.id] ||
+                        (typeof item.product?.current_stock === "number" && item.quantity >= item.product.current_stock) ||
+                        item.addons_parent != 0
+                      }
                     >
                       {typeof item.product?.current_stock === "number" && item.quantity >= item.product.current_stock ? "Max" : <i className="fas fa-plus"></i>}
                     </button>
@@ -305,7 +309,7 @@ export default function Cart() {
                     className="btn btn-outline-secondary"
                     type="button"
                     onClick={() => handleUpdateQty(item, item.quantity - 1)}
-                    disabled={item.quantity <= 1 || updating[item.id]}
+                    disabled={item.quantity <= 1 || updating[item.id] || item.addons_parent != null}
                   >
                     <i className="fas fa-minus"></i>
                   </button>
@@ -320,7 +324,11 @@ export default function Cart() {
                     className="btn btn-outline-secondary"
                     type="button"
                     onClick={() => handleUpdateQty(item, item.quantity + 1)}
-                    disabled={updating[item.id] || (typeof item.product?.current_stock === "number" && item.quantity >= item.product.current_stock)}
+                    disabled={
+                      updating[item.id] ||
+                      (typeof item.product?.current_stock === "number" && item.quantity >= item.product.current_stock) ||
+                      item.addons_parent != null
+                    }
                   >
                     {typeof item.product?.current_stock === "number" && item.quantity >= item.product.current_stock ? "Max" : <i className="fas fa-plus"></i>}
                   </button>
