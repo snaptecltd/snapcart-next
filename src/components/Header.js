@@ -266,26 +266,36 @@ export default function Header() {
                             `}
                             </style>
                           /* Searched products row */
-                          {searchValue && searched.length > 0 && (
+                          {searchValue && searched.length > 0 ? (
                             <>
                               <div className="col-12">
-                                <div
-                                  className="fw-semibold mb-3 text-dark"
-                                  style={{ fontSize: 15 }}
-                                >
+                                <div className="fw-semibold mb-3 text-dark" style={{ fontSize: 15 }}>
                                   Search Results: {searched.length}
                                 </div>
+
                                 <div className="row fw-semibold m-auto">
                                   {searched.map((product) => (
-                                    <div className="col-6 col-md-3 col-lg-3 p-1" key={product.id}>
+                                    <div
+                                      className="col-6 col-md-3 col-lg-3 p-1"
+                                      key={product.id}
+                                    >
                                       <ProductCard product={product} />
                                     </div>
                                   ))}
                                 </div>
+
                                 <hr />
                               </div>
                             </>
+                          ) : (
+                            searchValue &&
+                            !searchLoading && (
+                              <div className="col-12 text-center text-muted py-4">
+                                No product found.
+                              </div>
+                            )
                           )}
+
                         <div className="col-12">
                          <div className="fw-bold mb-3 text-dark">Trending Products</div>
                             <div className="row fw-semibold m-auto">
