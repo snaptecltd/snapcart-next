@@ -501,7 +501,13 @@ export async function placeOrder({
   billing_address_id,
 }) {
   let headers = {};
-  let params = {};
+  let params = {
+    coupon_code,
+    order_note,
+    shipping_method_id,
+    address_id,
+    billing_address_id,
+  };
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
@@ -511,18 +517,12 @@ export async function placeOrder({
       if (guestId) params.guest_id = guestId;
     }
   }
-  const payload = {
-    coupon_code,
-    order_note,
-    shipping_method_id,
-    address_id,
-    billing_address_id,
-  };
-  // Remove undefined/null fields
-  Object.keys(payload).forEach(
-    (k) => (payload[k] === undefined || payload[k] === null) && delete payload[k]
+  // Remove undefined/null/empty fields
+  Object.keys(params).forEach(
+    (k) => (params[k] === undefined || params[k] === null || params[k] === "") && delete params[k]
   );
-  const res = await api.get(ENDPOINTS.ORDER_PLACE, { params: { ...params, ...payload }, headers });
+  // Use GET for this endpoint
+  const res = await api.get(ENDPOINTS.ORDER_PLACE, { params, headers });
   return res.data;
 }
 
@@ -537,18 +537,7 @@ export async function placeOrderByOfflinePayment({
   method_informations,
 }) {
   let headers = {};
-  let params = {};
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("snapcart_token");
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    } else {
-      const guestId = localStorage.getItem("guest_id");
-      if (guestId) params.guest_id = guestId;
-    }
-  }
-  // method_informations should be a base64-encoded JSON string of the offline fields
-  const payload = {
+  let payload = {
     coupon_code,
     order_note,
     payment_note,
@@ -558,9 +547,18 @@ export async function placeOrderByOfflinePayment({
     method_id,
     method_informations,
   };
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) payload.guest_id = guestId;
+    }
+  }
   Object.keys(payload).forEach(
-    (k) => (payload[k] === undefined || payload[k] === null) && delete payload[k]
+    (k) => (payload[k] === undefined || payload[k] === null || payload[k] === "") && delete payload[k]
   );
-  const res = await api.get(ENDPOINTS.ORDER_PLACE_OFFLINE_PAYMENT, { params: { ...params, ...payload }, headers });
+  const res = await api.post(ENDPOINTS.ORDER_PLACE_OFFLINE_PAYMENT, payload, { headers });
   return res.data;
 }

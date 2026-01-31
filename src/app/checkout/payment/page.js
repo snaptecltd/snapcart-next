@@ -52,16 +52,27 @@ export default function PaymentPage() {
   const handleProceed = async () => {
     if (!agreed || !paymentMethod) return;
     try {
-      // Load address_id and billing_address_id from localStorage if needed
+      // Always get address_id and billing_address_id from localStorage
       const address_id = localStorage.getItem("snapcart_checkout_shipping_id") || undefined;
       const billing_address_id = localStorage.getItem("snapcart_checkout_billing_id") || undefined;
+      const shipping_method_id = shippingMethodId || localStorage.getItem("snapcart_shipping_method_id") || undefined;
+      const coupon_code = (() => {
+        try {
+          const stored = localStorage.getItem("snapcart_coupon_applied");
+          if (stored) {
+            const c = JSON.parse(stored);
+            return c.code || c.coupon_code || undefined;
+          }
+        } catch {}
+        return undefined;
+      })();
 
       if (paymentMethod === "cod") {
-        // Place order for cash on delivery
+        // Place order for cash on delivery (now POST)
         const res = await placeOrder({
-          coupon_code: undefined, // set if you have coupon
+          coupon_code,
           order_note: orderNote,
-          shipping_method_id: shippingMethodId,
+          shipping_method_id,
           address_id,
           billing_address_id,
         });
@@ -80,14 +91,14 @@ export default function PaymentPage() {
           setTimeout(() => { window.location.href = "/"; }, 1200);
         }
       } else {
-        // Place order for offline payment
+        // Place order for offline payment (POST)
         const method_id = paymentMethod;
         const method_informations = btoa(JSON.stringify(offlineFields));
         const res = await placeOrderByOfflinePayment({
-          coupon_code: undefined, // set if you have coupon
+          coupon_code,
           order_note: orderNote,
-          payment_note: undefined, // set if you have payment note
-          shipping_method_id: shippingMethodId,
+          payment_note: undefined,
+          shipping_method_id,
           address_id,
           billing_address_id,
           method_id,
