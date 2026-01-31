@@ -129,7 +129,7 @@ export default function Cart() {
             <span className="visually-hidden">Loading...</span>
         </div>
     </div>
-);
+  );
   if (!Array.isArray(cart) || !cart.length)
     return (
       <div className="container py-5 text-center">
@@ -143,7 +143,8 @@ export default function Cart() {
         <i className="fas fa-shopping-cart" style={{ color: "#d2b48c", fontSize: 28 }}></i>
         <h3 className="mb-0 fw-bold" style={{ color: "#222" }}>Shopping Cart</h3>
       </div>
-      <div className="table-responsive mb-4">
+      {/* Desktop Table */}
+      <div className="table-responsive mb-4 d-none d-md-block">
         <table className="table align-middle mb-0" style={{ minWidth: 700 }}>
           <thead>
             <tr className="cart-table-header">
@@ -243,6 +244,84 @@ export default function Cart() {
             </tr>
           </tbody>
         </table>
+      </div>
+      {/* Mobile Cart List */}
+      <div className="d-block d-md-none">
+        {cart.filter(item => item && typeof item.price === "number" && typeof item.quantity === "number").map((item) => (
+          <div key={item.id} className="card mb-3 shadow-sm">
+            <div className="card-body d-flex gap-3 align-items-center">
+              <img
+                src={item.product?.thumbnail_full_url?.path}
+                alt={item.name}
+                className="rounded"
+                style={{ width: 70, height: 70, objectFit: "cover", background: "#f8f9fa" }}
+              />
+              <div className="flex-grow-1">
+                <div className="fw-semibold">{item.name}</div>
+                <div className="text-muted small">{item.variant}</div>
+                <div className="d-flex align-items-center gap-2 mt-2">
+                  <span className="fw-bold">{item.price.toLocaleString()} BDT</span>
+                  <span className="text-muted small">x {item.quantity}</span>
+                  <span className="fw-bold ms-2">{(item.price * item.quantity).toLocaleString()} BDT</span>
+                </div>
+                <div className="input-group input-group-sm mt-2" style={{ maxWidth: 180 }}>
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={() => handleUpdateQty(item, item.quantity - 1)}
+                    disabled={item.quantity <= 1 || updating[item.id]}
+                  >
+                    <i className="fas fa-minus"></i>
+                  </button>
+                  <input
+                    type="text"
+                    className="form-control text-center"
+                    value={item.quantity}
+                    style={{ maxWidth: 40 }}
+                    readOnly
+                  />
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={() => handleUpdateQty(item, item.quantity + 1)}
+                    disabled={updating[item.id] || (typeof item.product?.current_stock === "number" && item.quantity >= item.product.current_stock)}
+                  >
+                    {typeof item.product?.current_stock === "number" && item.quantity >= item.product.current_stock ? "Max" : <i className="fas fa-plus"></i>}
+                  </button>
+                  <button
+                    className="btn btn-link text-danger p-0 ms-2"
+                    title="Remove"
+                    onClick={() => handleRemove(item)}
+                    disabled={updating[item.id]}
+                  >
+                    <i className="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+        {/* Subtotal, Discount, Total */}
+        <div className="card mb-3">
+          <div className="card-body">
+            <div className="d-flex justify-content-between mb-2">
+              <span className="fw-bold">Subtotal:</span>
+              <span>{subtotal.toLocaleString()} BDT</span>
+            </div>
+            {couponApplied && couponApplied.coupon_discount > 0 && (
+              <div className="d-flex justify-content-between mb-2 text-success">
+                <span className="fw-bold">
+                  Discount ({couponApplied.code || couponApplied.coupon_code || "Coupon"}):
+                </span>
+                <span>- {couponApplied.coupon_discount.toLocaleString()} BDT</span>
+              </div>
+            )}
+            <div className="d-flex justify-content-between fw-bold fs-5">
+              <span>Total:</span>
+              <span>{total.toLocaleString()} BDT</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="row g-4">
