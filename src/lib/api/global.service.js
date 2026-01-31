@@ -208,7 +208,7 @@ export async function updateCartItem(data) {
       if (guestId) payload.guest_id = guestId;
     }
   }
-  const res = await api.put(ENDPOINTS.UPDATE_CART_ITEM, payload, { headers });
+  const res = await api.post(ENDPOINTS.UPDATE_CART_ITEM, payload, { headers });
   return res.data;
 }
 
@@ -224,7 +224,7 @@ export async function removeCartItem(data) {
       if (guestId) payload.guest_id = guestId;
     }
   }
-  const res = await api.delete(ENDPOINTS.REMOVE_CART_ITEM, { data: payload, headers });
+  const res = await api.post(ENDPOINTS.REMOVE_CART_ITEM, { data: payload, headers });
   return res.data;
 }
 
@@ -240,7 +240,7 @@ export async function removeAllCartItems() {
       if (guestId) payload.guest_id = guestId;
     }
   }
-  const res = await api.delete(ENDPOINTS.REMOVE_CART_ALL_ITEMS, { data: payload, headers });
+  const res = await api.post(ENDPOINTS.REMOVE_CART_ALL_ITEMS, { data: payload, headers });
   return res.data;
 }
 
@@ -300,7 +300,7 @@ export async function getCustomerWishlist() {
 
 export async function removeFromWishlist(product_id) {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
-  const res = await api.delete(`${ENDPOINTS.CUSTOMER_WISHLIST_REMOVE}?product_id=${product_id}`, {
+  const res = await api.post(`${ENDPOINTS.CUSTOMER_WISHLIST_REMOVE}?product_id=${product_id}`, {}, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   return res.data;
@@ -399,7 +399,7 @@ export async function addCustomerAddress(data) {
 
 export async function deleteCustomerAddress(address_id) {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
-  const res = await api.delete(`${ENDPOINTS.CUSTOMER_ADDRESS_DELETE}?address_id=${address_id}`, {
+  const res = await api.post(`${ENDPOINTS.CUSTOMER_ADDRESS_DELETE}?address_id=${address_id}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   return res.data;
