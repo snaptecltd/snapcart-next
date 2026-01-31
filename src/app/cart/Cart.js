@@ -3,28 +3,54 @@ import { useEffect, useState } from "react";
 import { getCart, updateCartItem, removeCartItem, getShippingMethods, applyCoupon } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 import Link from "next/link";
-import axios from "axios";
 
 export default function Cart() {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState({}); // { [cartId]: boolean }
+  const [updating, setUpdating] = useState({});
   const [coupon, setCoupon] = useState("");
-  const [couponApplied, setCouponApplied] = useState(null); // {coupon_discount, coupon_type}
+  const [couponApplied, setCouponApplied] = useState(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [shippingMethods, setShippingMethods] = useState([]);
   const [shippingMethodId, setShippingMethodId] = useState("");
   const [shippingLoading, setShippingLoading] = useState(true);
   const [orderNoteEnabled, setOrderNoteEnabled] = useState(false);
+  
+  // ==================== এখানে orderNote state যোগ করুন ====================
   const [orderNote, setOrderNote] = useState("");
+  
+  // ==================== useEffect for order note ====================
+  // Order note পরিবর্তন হলে localStorage-এ সংরক্ষণ করুন
+  useEffect(() => {
+    if (orderNote) {
+      localStorage.setItem("snapcart_order_note", orderNote);
+    }
+  }, [orderNote]);
+  
+  // Load order note from localStorage on component mount
+  useEffect(() => {
+    const savedOrderNote = localStorage.getItem("snapcart_order_note");
+    if (savedOrderNote) {
+      setOrderNote(savedOrderNote);
+      setOrderNoteEnabled(true);
+    }
+  }, []);
 
+  // ==================== fetchCart ফাংশন যোগ করুন ====================
   const fetchCart = () => {
     setLoading(true);
     getCart()
-      .then(setCart)
+      .then((data) => {
+        setCart(Array.isArray(data) ? data : []);
+      })
+      .catch((error) => {
+        console.error("Error fetching cart:", error);
+        setCart([]);
+      })
       .finally(() => setLoading(false));
   };
 
+  // ==================== useEffect for initial cart load ====================
   useEffect(() => {
     fetchCart();
     // Load coupon from localStorage
@@ -34,7 +60,7 @@ export default function Cart() {
     } catch {}
   }, []);
 
-  // Fetch shipping methods
+  // ==================== Fetch shipping methods ====================
   useEffect(() => {
     setShippingLoading(true);
     getShippingMethods()
@@ -43,41 +69,36 @@ export default function Cart() {
       .finally(() => setShippingLoading(false));
   }, []);
 
-  // Save shipping method and coupon to localStorage for checkout
+  // ==================== Save shipping method to localStorage ====================
   useEffect(() => {
     if (shippingMethodId) {
       localStorage.setItem("snapcart_shipping_method_id", shippingMethodId);
     }
   }, [shippingMethodId]);
-  useEffect(() => {
-    if (couponApplied && couponApplied.coupon_discount > 0) {
-      localStorage.setItem("snapcart_coupon_applied", JSON.stringify(couponApplied));
-    }
-  }, [couponApplied]);
 
-  // Calculate subtotal and total
+  // ==================== Calculate subtotal and total ====================
   const subtotal = Array.isArray(cart)
     ? cart.reduce((sum, item) => {
         if (!item || typeof item.price !== "number" || typeof item.quantity !== "number") return sum;
         return sum + (item.price * item.quantity);
       }, 0)
     : 0;
+
   const couponDiscount = couponApplied?.coupon_discount || 0;
   const total = Math.max(0, subtotal - couponDiscount);
 
-  // Save cart summary to localStorage for checkout page
+  // ==================== Save cart summary to localStorage ====================
   useEffect(() => {
-    // Save subtotal, discount, total, and shipping (if available)
     localStorage.setItem("snapcart_cart_subtotal", subtotal);
     localStorage.setItem("snapcart_cart_discount", couponDiscount);
     localStorage.setItem("snapcart_cart_total", total);
-    // Save shipping cost if available, otherwise 0
-    const shippingCost =
-      (shippingMethods.find((m) => String(m.id) === String(shippingMethodId))?.cost) || 0;
+    
+    // Save shipping cost if available
+    const shippingCost = shippingMethods.find((m) => String(m.id) === String(shippingMethodId))?.cost || 0;
     localStorage.setItem("snapcart_cart_shipping", shippingCost);
   }, [subtotal, couponDiscount, total, shippingMethods, shippingMethodId]);
 
-  // Coupon apply handler
+  // ==================== Coupon apply handler ====================
   const handleApplyCoupon = async () => {
     if (!coupon) return;
     setCouponLoading(true);
@@ -100,13 +121,14 @@ export default function Cart() {
     setCouponLoading(false);
   };
 
-  // Coupon clear handler
+  // ==================== Coupon clear handler ====================
   const handleClearCoupon = () => {
     setCouponApplied(null);
     localStorage.removeItem("snapcart_coupon_applied");
     setCoupon("");
   };
 
+  // ==================== Update quantity handler ====================
   const handleUpdateQty = async (item, newQty) => {
     if (newQty < 1 || updating[item.id]) return;
     setUpdating((u) => ({ ...u, [item.id]: true }));
@@ -121,6 +143,7 @@ export default function Cart() {
     setUpdating((u) => ({ ...u, [item.id]: false }));
   };
 
+  // ==================== Remove item handler ====================
   const handleRemove = async (item) => {
     if (updating[item.id]) return;
     setUpdating((u) => ({ ...u, [item.id]: true }));
@@ -142,13 +165,14 @@ export default function Cart() {
         </div>
     </div>
   );
+  
   if (!Array.isArray(cart) || !cart.length)
     return (
       <div className="container py-5 text-center">
         <h4>Your cart is empty.</h4>
       </div>
     );
-
+    
   return (
     <div className="container py-5">
       <div className="mb-4 d-flex align-items-center gap-2">
@@ -398,7 +422,7 @@ export default function Cart() {
                 </select>
               )}
             </div>
-            {/* Order Note */}
+            {/* Order Note Section */}
             <div className="mt-4">
               <div className="form-check">
                 <input
@@ -406,7 +430,13 @@ export default function Cart() {
                   type="checkbox"
                   id="orderNoteCheck"
                   checked={orderNoteEnabled}
-                  onChange={e => setOrderNoteEnabled(e.target.checked)}
+                  onChange={e => {
+                    setOrderNoteEnabled(e.target.checked);
+                    if (!e.target.checked) {
+                      setOrderNote("");
+                      localStorage.removeItem("snapcart_order_note");
+                    }
+                  }}
                 />
                 <label className="form-check-label" htmlFor="orderNoteCheck">
                   Add Order Note (Optional)
@@ -439,6 +469,7 @@ export default function Cart() {
             <span className="fw-bold fs-5 me-3">Total:</span>
             <span className="fw-bold fs-4">{total.toLocaleString()} BDT</span>
           </div>
+          {/* Checkout Button - এখানে onClick হ্যান্ডলার যোগ করুন */}
           <div className="d-flex gap-3 w-100 justify-content-end">
             <Link href="/" className="btn btn-outline-warning px-4 fw-semibold" style={{ minWidth: 180 }}>
               CONTINUE SHOPPING
@@ -452,6 +483,13 @@ export default function Cart() {
                 if (!shippingMethodId) {
                   e.preventDefault();
                   toast.error("Please select a shipping method.");
+                } else {
+                  // Shipping method ID সংরক্ষণ করুন
+                  localStorage.setItem("snapcart_shipping_method_id", shippingMethodId);
+                  // Order note সংরক্ষণ করুন (যদি থাকে)
+                  if (orderNote) {
+                    localStorage.setItem("snapcart_order_note", orderNote);
+                  }
                 }
               }}
             >

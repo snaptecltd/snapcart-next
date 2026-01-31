@@ -508,6 +508,7 @@ export async function placeOrder({
     address_id,
     billing_address_id,
   };
+  
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
@@ -517,11 +518,14 @@ export async function placeOrder({
       if (guestId) params.guest_id = guestId;
     }
   }
-  // Remove undefined/null/empty fields
+  
+  // Debugging জন্য console.log যোগ করুন
+  console.log("Order placing with params:", params);
+  
   Object.keys(params).forEach(
     (k) => (params[k] === undefined || params[k] === null || params[k] === "") && delete params[k]
   );
-  // Use GET for this endpoint
+  
   const res = await api.get(ENDPOINTS.ORDER_PLACE, { params, headers });
   return res.data;
 }
@@ -547,6 +551,7 @@ export async function placeOrderByOfflinePayment({
     method_id,
     method_informations,
   };
+  
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
@@ -556,9 +561,14 @@ export async function placeOrderByOfflinePayment({
       if (guestId) payload.guest_id = guestId;
     }
   }
+  
+  // Debugging জন্য
+  console.log("Offline order placing with payload:", payload);
+  
   Object.keys(payload).forEach(
     (k) => (payload[k] === undefined || payload[k] === null || payload[k] === "") && delete payload[k]
   );
+  
   const res = await api.post(ENDPOINTS.ORDER_PLACE_OFFLINE_PAYMENT, payload, { headers });
   return res.data;
 }
