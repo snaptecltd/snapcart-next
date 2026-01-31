@@ -24,11 +24,11 @@ export default function Footer() {
             <ul className="list-unstyled small">
               <li><Link href="/page/contact-us" className="text-secondary text-decoration-none">Contact Us</Link></li>
               <li><Link href="/page/faq" className="text-secondary text-decoration-none">FAQs</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none">Featured Products</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none">Best Selling Product</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none">Latest Products</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none">Top Rated Product</Link></li>
-              <li><Link href="#" className="text-secondary text-decoration-none">Track Order</Link></li>
+              <li><Link href="/#products-featured" className="text-secondary text-decoration-none">Featured Products</Link></li>
+              <li><Link href="/#products-best_selling" className="text-secondary text-decoration-none">Best Selling Product</Link></li>
+              <li><Link href="/#products-top_rated" className="text-secondary text-decoration-none">Latest Products</Link></li>
+              <li><Link href="/#products-top_rated" className="text-secondary text-decoration-none">Top Rated Product</Link></li>
+              <li><Link href="/order/tracking" className="text-secondary text-decoration-none">Track Order</Link></li>
             </ul>
           </div>
 

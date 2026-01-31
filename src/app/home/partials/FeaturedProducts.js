@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import ProductCard from "@/components/product/ProductCard";
 import SectionTitle from "@/components/html/SectionTitle";
@@ -10,6 +10,7 @@ import {
   getBestSellingProducts,
   getTopRatedProducts,
 } from "@/lib/api/global.service";
+import { useRouter } from "next/navigation";
 
 const TABS = [
   { key: "featured", label: "BEST DEALS", fetcher: getFeaturedProducts },
@@ -18,8 +19,32 @@ const TABS = [
 ];
 
 export default function FeaturedProducts() {
+  // --- Add router and hash/tab sync logic ---
+  const router = useRouter();
   const [active, setActive] = useState("featured");
   const sliderRef = useRef(null);
+
+  // Sync tab with hash in URL on mount and hashchange
+  useEffect(() => {
+    const syncTabWithHash = () => {
+      if (typeof window === "undefined") return;
+      const hash = window.location.hash.replace(/^#/, "");
+      if (hash && hash.startsWith("products-")) {
+        const tabKey = hash.replace("products-", "");
+        if (TABS.some((t) => t.key === tabKey)) setActive(tabKey);
+      }
+    };
+    syncTabWithHash();
+    window.addEventListener("hashchange", syncTabWithHash);
+    return () => window.removeEventListener("hashchange", syncTabWithHash);
+  }, []);
+
+  // When tab changes, update hash in URL
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.location.hash = `products-${active}`;
+    }
+  }, [active]);
 
   const activeTab = useMemo(() => TABS.find((t) => t.key === active) ?? TABS[0], [active]);
 
@@ -45,7 +70,10 @@ export default function FeaturedProducts() {
 
   return (
     <section className="py-4 py-md-5">
-      <div className="container">
+      <div
+        className="container"
+        id={`products-${activeTab.key}`}
+      >
         {/* Header row: Title + arrows */}
         <div className="d-flex align-items-start justify-content-between gap-3">
           <SectionTitle first="Featured" highlight="Products" />
@@ -82,6 +110,7 @@ export default function FeaturedProducts() {
                   isActive ? "btn-dark" : "btn-light border"
                 }`}
                 onClick={() => setActive(t.key)}
+                id={`tab-${t.key}`}
               >
                 {t.label}
               </button>
