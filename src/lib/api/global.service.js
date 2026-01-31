@@ -493,7 +493,13 @@ export async function getOfflinePaymentMethods() {
   return res.data;
 }
 
-export async function placeOrder({ coupon_code, shipping_method_id, payment_method, offline_fields }) {
+export async function placeOrder({
+  coupon_code,
+  order_note,
+  shipping_method_id,
+  address_id,
+  billing_address_id,
+}) {
   let headers = {};
   let params = {};
   if (typeof window !== "undefined") {
@@ -507,14 +513,54 @@ export async function placeOrder({ coupon_code, shipping_method_id, payment_meth
   }
   const payload = {
     coupon_code,
+    order_note,
     shipping_method_id,
-    payment_method,
-    ...offline_fields,
+    address_id,
+    billing_address_id,
   };
   // Remove undefined/null fields
   Object.keys(payload).forEach(
     (k) => (payload[k] === undefined || payload[k] === null) && delete payload[k]
   );
   const res = await api.get(ENDPOINTS.ORDER_PLACE, { params: { ...params, ...payload }, headers });
+  return res.data;
+}
+
+export async function placeOrderByOfflinePayment({
+  coupon_code,
+  order_note,
+  payment_note,
+  shipping_method_id,
+  address_id,
+  billing_address_id,
+  method_id,
+  method_informations,
+}) {
+  let headers = {};
+  let params = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) params.guest_id = guestId;
+    }
+  }
+  // method_informations should be a base64-encoded JSON string of the offline fields
+  const payload = {
+    coupon_code,
+    order_note,
+    payment_note,
+    shipping_method_id,
+    address_id,
+    billing_address_id,
+    method_id,
+    method_informations,
+  };
+  Object.keys(payload).forEach(
+    (k) => (payload[k] === undefined || payload[k] === null) && delete payload[k]
+  );
+  const res = await api.get(ENDPOINTS.ORDER_PLACE_OFFLINE_PAYMENT, { params: { ...params, ...payload }, headers });
   return res.data;
 }

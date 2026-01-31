@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getOfflinePaymentMethods, placeOrder } from "@/lib/api/global.service";
+import { getOfflinePaymentMethods, placeOrder, placeOrderByOfflinePayment } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 
 export default function PaymentPage() {
@@ -12,6 +12,7 @@ export default function PaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [offlineFields, setOfflineFields] = useState({});
   const [agreed, setAgreed] = useState(false);
+  const [orderNote, setOrderNote] = useState(""); // If you want to support order note
 
   // Cart summary
   const [subtotal, setSubtotal] = useState(0);
@@ -51,26 +52,61 @@ export default function PaymentPage() {
   const handleProceed = async () => {
     if (!agreed || !paymentMethod) return;
     try {
-      const res = await placeOrder({
-        shipping_method_id: shippingMethodId,
-        payment_method: paymentMethod,
-        offline_fields: offlineFields,
-      });
-      // Clear cart count in header
-      window.dispatchEvent(new Event("snapcart-auth-change"));
-      // Show success modal
-      if (typeof window !== "undefined" && window.Swal) {
-        window.Swal.fire({
-          icon: "success",
-          title: "Order Placed!",
-          html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
-          confirmButtonText: "Continue Shopping",
-        }).then(() => {
-          window.location.href = "/";
+      // Load address_id and billing_address_id from localStorage if needed
+      const address_id = localStorage.getItem("snapcart_checkout_shipping_id") || undefined;
+      const billing_address_id = localStorage.getItem("snapcart_checkout_billing_id") || undefined;
+
+      if (paymentMethod === "cod") {
+        // Place order for cash on delivery
+        const res = await placeOrder({
+          coupon_code: undefined, // set if you have coupon
+          order_note: orderNote,
+          shipping_method_id: shippingMethodId,
+          address_id,
+          billing_address_id,
         });
+        window.dispatchEvent(new Event("snapcart-auth-change"));
+        if (typeof window !== "undefined" && window.Swal) {
+          window.Swal.fire({
+            icon: "success",
+            title: "Order Placed!",
+            html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
+            confirmButtonText: "Continue Shopping",
+          }).then(() => {
+            window.location.href = "/";
+          });
+        } else {
+          toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
+          setTimeout(() => { window.location.href = "/"; }, 1200);
+        }
       } else {
-        toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
-        setTimeout(() => { window.location.href = "/"; }, 1200);
+        // Place order for offline payment
+        const method_id = paymentMethod;
+        const method_informations = btoa(JSON.stringify(offlineFields));
+        const res = await placeOrderByOfflinePayment({
+          coupon_code: undefined, // set if you have coupon
+          order_note: orderNote,
+          payment_note: undefined, // set if you have payment note
+          shipping_method_id: shippingMethodId,
+          address_id,
+          billing_address_id,
+          method_id,
+          method_informations,
+        });
+        window.dispatchEvent(new Event("snapcart-auth-change"));
+        if (typeof window !== "undefined" && window.Swal) {
+          window.Swal.fire({
+            icon: "success",
+            title: "Order Placed!",
+            html: `<div>Your order has been placed successfully.</div>`,
+            confirmButtonText: "Continue Shopping",
+          }).then(() => {
+            window.location.href = "/";
+          });
+        } else {
+          toast.success(`Order Placed!`);
+          setTimeout(() => { window.location.href = "/"; }, 1200);
+        }
       }
     } catch (e) {
       toast.error("Failed to place order. Please try again.");
