@@ -56,7 +56,7 @@ export default function DealOfTheDay() {
           )}
 
           {/* Product Cards - Right Side */}
-          <div className="col-12 col-md-6 mb-4" style={{ height: "100%" }}>
+          <div className="col-12 col-md-6 mb-4" style={{ maxHeight: 400, overflowY: "auto" }}>
             <SectionTitle first="🔥" highlight="Deals of The Day" />
             <div className="dealofdayProductCard-wrapper">
               <div

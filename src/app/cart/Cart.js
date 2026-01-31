@@ -452,6 +452,7 @@ export default function Cart() {
         @media (max-width: 767.98px) {
           table { min-width: 0 !important; }
         }
+        .text-danger:hover i { cursor: pointer; color: #b02a37 !important; }
       `}</style>
     </div>
   );
