@@ -65,6 +65,18 @@ export default function Cart() {
   const couponDiscount = couponApplied?.coupon_discount || 0;
   const total = Math.max(0, subtotal - couponDiscount);
 
+  // Save cart summary to localStorage for checkout page
+  useEffect(() => {
+    // Save subtotal, discount, total, and shipping (if available)
+    localStorage.setItem("snapcart_cart_subtotal", subtotal);
+    localStorage.setItem("snapcart_cart_discount", couponDiscount);
+    localStorage.setItem("snapcart_cart_total", total);
+    // Save shipping cost if available, otherwise 0
+    const shippingCost =
+      (shippingMethods.find((m) => String(m.id) === String(shippingMethodId))?.cost) || 0;
+    localStorage.setItem("snapcart_cart_shipping", shippingCost);
+  }, [subtotal, couponDiscount, total, shippingMethods, shippingMethodId]);
+
   // Coupon apply handler
   const handleApplyCoupon = async () => {
     if (!coupon) return;

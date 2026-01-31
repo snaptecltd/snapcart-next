@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCustomerAddressList, getAddressDetails } from "@/lib/api/global.service";
+import { getCustomerAddressList } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
+import Link from "next/link";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -25,6 +26,14 @@ export default function CheckoutPage() {
   const [showBilling, setShowBilling] = useState(false);
   const [updateAddress, setUpdateAddress] = useState(false);
   const [errors, setErrors] = useState({ shipping: {}, billing: {} });
+
+  // --- Cart summary state ---
+  const [cartSummary, setCartSummary] = useState({
+    subtotal: 0,
+    shipping: 0,
+    discount: 0,
+    total: 0,
+  });
 
   // Only allow access if shipping method is selected in cart (pseudo check)
   useEffect(() => {
@@ -73,6 +82,19 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (sameAsShipping) setBilling({ ...shipping });
   }, [sameAsShipping, shipping]);
+
+  // --- Load cart summary from localStorage (set in Cart.js) ---
+  useEffect(() => {
+    try {
+      const subtotal = Number(localStorage.getItem("snapcart_cart_subtotal") || 0);
+      const shipping = Number(localStorage.getItem("snapcart_cart_shipping") || 0);
+      const discount = Number(localStorage.getItem("snapcart_cart_discount") || 0);
+      const total = Number(localStorage.getItem("snapcart_cart_total") || (subtotal + shipping - discount));
+      setCartSummary({ subtotal, shipping, discount, total });
+    } catch {
+      setCartSummary({ subtotal: 0, shipping: 0, discount: 0, total: 0 });
+    }
+  }, []);
 
   // Validation
   const validateAddress = (addr) => {
@@ -266,23 +288,19 @@ export default function CheckoutPage() {
           <div className="bg-light rounded-4 p-4 shadow-sm">
             <div className="mb-3 d-flex justify-content-between">
               <span>Sub total</span>
-              <span>৳2,400.00</span>
+              <span>৳{cartSummary.subtotal.toLocaleString()}</span>
             </div>
             <div className="mb-3 d-flex justify-content-between">
               <span>Shipping</span>
-              <span>৳5.00</span>
+              <span>৳{cartSummary.shipping.toLocaleString()}</span>
             </div>
             <div className="mb-3 d-flex justify-content-between">
               <span>Discount on product</span>
-              <span>- ৳0.00</span>
-            </div>
-            <div className="input-group mb-3">
-              <input type="text" className="form-control" placeholder="Coupon code" />
-              <button className="btn btn-outline-secondary" type="button">APPLY</button>
+              <span>- ৳{cartSummary.discount.toLocaleString()}</span>
             </div>
             <div className="mb-3 d-flex justify-content-between fw-bold fs-5">
               <span>Total</span>
-              <span>৳2,405.00</span>
+              <span>৳{cartSummary.total.toLocaleString()}</span>
             </div>
             <button
               className="btn btn-primary w-100 mb-2"
@@ -290,7 +308,7 @@ export default function CheckoutPage() {
             >
               Proceed to Payment
             </button>
-            <button className="btn btn-link w-100"> &lt; Continue Shopping</button>
+            <Link href="/cart" className="tn btn-link w-100 text-center"> &lt; Back to Cart</Link>
           </div>
         </div>
       </div>
