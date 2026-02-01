@@ -16,7 +16,7 @@ export default function OfferButton({
             href={href}
             className="offer-btn btn fw-bold px-4 py-2 w-100"
             style={{ 
-                background: isHovered ? secondaryColor : primaryColor,
+                background: isHovered ? primaryColor : primaryColor,
                 color: "#fff",
                 border: `2px solid ${primaryColor}`,
                 transition: "all 0.3s ease",
@@ -30,7 +30,7 @@ export default function OfferButton({
             onMouseLeave={() => setIsHovered(false)}
         >
             {children}
-            <style jsx>{`
+            <style>{`
                 .offer-btn::after {
                     content: "";
                     position: absolute;
