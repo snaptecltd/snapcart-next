@@ -111,12 +111,12 @@ export default function Cart() {
       } else {
         setCouponApplied(null);
         localStorage.removeItem("snapcart_coupon_applied");
-        toast.error("Invalid or expired coupon.");
+        toast.error(data.message || "Invalid or expired coupon.");
       }
-    } catch {
+    } catch (error) {
       setCouponApplied(null);
       localStorage.removeItem("snapcart_coupon_applied");
-      toast.error("Invalid or expired coupon.");
+      toast.error("Failed to apply coupon.");
     }
     setCouponLoading(false);
   };
