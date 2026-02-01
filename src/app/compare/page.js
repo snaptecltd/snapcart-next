@@ -222,7 +222,7 @@ export default function ComparePage() {
                         Remove
                       </button>
                       <Link href={`/product/${compare[idx].slug}`} className="btn btn-warning rounded-pill px-3 text-white" style={{ background: "#F67535" }}>
-                        Shop Now
+                        See Details
                       </Link>
                     </div>
                   </div>
