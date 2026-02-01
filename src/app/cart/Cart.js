@@ -38,7 +38,7 @@ export default function Cart() {
 
   // ==================== fetchCart ফাংশন যোগ করুন ====================
   const fetchCart = () => {
-    setLoading(true);
+    // setLoading(true);
     getCart()
       .then((data) => {
         setCart(Array.isArray(data) ? data : []);

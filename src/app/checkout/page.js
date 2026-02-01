@@ -231,7 +231,7 @@ export default function CheckoutPage() {
       console.log("Address save API response:", response, response.id);
       
       if (response && response.id) {
-        toast.success("Address saved successfully!");
+        // toast.success("Address saved successfully!");
         return response.id; // Return address ID
       } else if (response && response.errors) {
         response.errors.forEach(err => {
@@ -405,7 +405,7 @@ const handleProceedToPayment = async (e) => {
       }));
     }
     
-    toast.success("Address saved successfully!");
+    // toast.success("Address saved successfully!");
     
     // 5. Navigate to payment page
     setTimeout(() => {
