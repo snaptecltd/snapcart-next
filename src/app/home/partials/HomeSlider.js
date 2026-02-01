@@ -74,11 +74,11 @@ export default function HomeSlider() {
   return (
     <>
       {/* Custom styles for carousel controls and indicators */}
-      <style jsx>{`
+      <style>{`
         .custom-carousel-control {
-          width: 40px;
-          height: 40px;
-          background: rgba(255,255,255,0.9);
+          width: 2rem;
+          height: 2rem;
+          background: rgb(255 255 255);
           border-radius: 50%;
           top: 50%;
           transform: translateY(-50%);
@@ -181,7 +181,7 @@ export default function HomeSlider() {
               data-bs-slide="prev"
               aria-label="Previous"
             >
-              <span className="carousel-control-prev-icon" aria-hidden="true"></span>
+              <i className="fa-solid fa-chevron-left" style={{ color: "#292929" }}></i>
             </button>
 
             <button
@@ -191,7 +191,7 @@ export default function HomeSlider() {
               data-bs-slide="next"
               aria-label="Next"
             >
-              <span className="carousel-control-next-icon" aria-hidden="true"></span>
+              <i className="fa-solid fa-chevron-right" style={{ color: "#292929" }}></i>
             </button>
           </div>
         </div>
