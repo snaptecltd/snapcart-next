@@ -55,7 +55,16 @@ export default function CheckoutPage() {
       setCartSummary({ subtotal: 0, shipping: 0, discount: 0, total: 0 });
     }
   }, []);
-
+  
+useEffect(() => {
+  const cartGroupId = localStorage.getItem("snapcart_cart_group_id");
+  const shippingMethodId = localStorage.getItem("snapcart_shipping_method_id");
+  
+  if (cartGroupId && shippingMethodId) {
+    console.log("Cart group ID:", cartGroupId);
+    console.log("Shipping method ID:", shippingMethodId);
+  }
+}, []);
   // এড্রেস লিস্ট রিফ্রেশ করার জন্য নতুন ফাংশন
   const refreshAddressList = async () => {
     try {
