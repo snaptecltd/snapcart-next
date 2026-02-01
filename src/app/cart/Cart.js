@@ -492,11 +492,19 @@ export default function Cart() {
                   e.preventDefault();
                   toast.error("Please select a shipping method.");
                 } else {
-                  // Shipping method ID সংরক্ষণ করুন
+                  // সঠিকভাবে shipping method ID সংরক্ষণ করুন
                   localStorage.setItem("snapcart_shipping_method_id", shippingMethodId);
-                  // Order note সংরক্ষণ করুন (যদি থাকে)
+                  
+                  // Order note সংরক্ষণ করুন
                   if (orderNote) {
                     localStorage.setItem("snapcart_order_note", orderNote);
+                  } else {
+                    localStorage.removeItem("snapcart_order_note");
+                  }
+                  
+                  // Coupon ডেটা সঠিকভাবে সংরক্ষণ করুন
+                  if (couponApplied) {
+                    localStorage.setItem("snapcart_coupon_applied", JSON.stringify(couponApplied));
                   }
                 }
               }}
