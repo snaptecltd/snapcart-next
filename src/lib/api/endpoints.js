@@ -89,7 +89,7 @@ export const ENDPOINTS = {
   // shipping methods endpoint
   SHIPPING_METHODS: `${PREFIX}/products/shipping-methods`,
   CHOOSE_SHIPPING_FOR_ORDER: `${PREFIX}/shipping-method/choose-for-order`, //need to pass cart_group_id and id (shipping method id)
-
+  CHOOSEN_SHIPPING_METHOD: `${PREFIX}/shipping-method/chosen`,
   // offline payment methods
   OFFLINE_PAYMENT_METHOD_LIST: `${PREFIX}/customer/order/offline-payment-method-list`,
   
