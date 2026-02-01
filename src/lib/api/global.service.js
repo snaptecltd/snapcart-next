@@ -400,7 +400,8 @@ export async function addCustomerAddress(data) {
 
 export async function deleteCustomerAddress(address_id) {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
-  const res = await api.post(`${ENDPOINTS.CUSTOMER_ADDRESS_DELETE}?address_id=${address_id}`, {
+  // Pass {} as body, headers as 3rd arg
+  const res = await api.post(`${ENDPOINTS.CUSTOMER_ADDRESS_DELETE}?address_id=${address_id}`, {}, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   return res.data;
@@ -493,9 +494,22 @@ export async function getOfflinePaymentMethods() {
   return res.data;
 }
 
-export async function placeOrder({ coupon_code, shipping_method_id, payment_method, offline_fields }) {
+export async function placeOrder({
+  coupon_code,
+  order_note,
+  shipping_method_id,
+  address_id,
+  billing_address_id,
+}) {
   let headers = {};
-  let params = {};
+  let params = {
+    coupon_code,
+    order_note,
+    shipping_method_id,
+    address_id,
+    billing_address_id,
+  };
+  
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
@@ -505,16 +519,58 @@ export async function placeOrder({ coupon_code, shipping_method_id, payment_meth
       if (guestId) params.guest_id = guestId;
     }
   }
-  const payload = {
-    coupon_code,
-    shipping_method_id,
-    payment_method,
-    ...offline_fields,
-  };
-  // Remove undefined/null fields
-  Object.keys(payload).forEach(
-    (k) => (payload[k] === undefined || payload[k] === null) && delete payload[k]
+  
+  console.log("Order API call params:", params);
+  
+  //stop placing order to see the prams
+
+  Object.keys(params).forEach(
+    (k) => (params[k] === undefined || params[k] === null || params[k] === "") && delete params[k]
   );
-  const res = await api.get(ENDPOINTS.ORDER_PLACE, { params: { ...params, ...payload }, headers });
+  
+  const res = await api.get(ENDPOINTS.ORDER_PLACE, { params, headers });
+  return res.data;
+}
+
+export async function placeOrderByOfflinePayment({
+  coupon_code,
+  order_note,
+  payment_note,
+  shipping_method_id,
+  address_id,
+  billing_address_id,
+  method_id,
+  method_informations,
+}) {
+  let headers = {};
+  let payload = {
+    coupon_code,
+    order_note,
+    payment_note,
+    shipping_method_id,
+    address_id,
+    billing_address_id,
+    method_id,
+    method_informations,
+  };
+  
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) payload.guest_id = guestId;
+    }
+  }
+  
+  // Debugging জন্য
+  console.log("Offline order placing with payload:", payload);
+  
+  Object.keys(payload).forEach(
+    (k) => (payload[k] === undefined || payload[k] === null || payload[k] === "") && delete payload[k]
+  );
+  
+  const res = await api.post(ENDPOINTS.ORDER_PLACE_OFFLINE_PAYMENT, payload, { headers });
   return res.data;
 }

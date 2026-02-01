@@ -1,8 +1,12 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getOfflinePaymentMethods, placeOrder } from "@/lib/api/global.service";
+import { 
+  getOfflinePaymentMethods, 
+  placeOrder, 
+  placeOrderByOfflinePayment,
+  addCustomerAddress 
+} from "@/lib/api/global.service"; // addCustomerAddress import করুন
 import { toast } from "react-toastify";
 
 export default function PaymentPage() {
@@ -12,28 +16,26 @@ export default function PaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [offlineFields, setOfflineFields] = useState({});
   const [agreed, setAgreed] = useState(false);
-
-  // Cart summary
+  
+  // Cart summary states
   const [subtotal, setSubtotal] = useState(0);
   const [shipping, setShipping] = useState(0);
   const [discount, setDiscount] = useState(0);
-  const [coupon, setCoupon] = useState("");
-  const [couponApplied, setCouponApplied] = useState(null);
   const [shippingMethodId, setShippingMethodId] = useState(null);
 
   // Load cart summary from localStorage
   useEffect(() => {
-    setSubtotal(Number(localStorage.getItem("snapcart_cart_subtotal") || 2400));
-    setShipping(Number(localStorage.getItem("snapcart_shipping_cost") || 5));
+    setSubtotal(Number(localStorage.getItem("snapcart_cart_subtotal") || 0));
+    setShipping(Number(localStorage.getItem("snapcart_cart_shipping") || 0));
+    
     try {
       const stored = localStorage.getItem("snapcart_coupon_applied");
       if (stored) {
         const c = JSON.parse(stored);
         setDiscount(Number(c.coupon_discount || 0));
-        setCouponApplied(c);
-        setCoupon(c.code || c.coupon_code || "");
       }
     } catch {}
+    
     setShippingMethodId(localStorage.getItem("snapcart_shipping_method_id") || "");
   }, []);
 
@@ -51,41 +53,159 @@ export default function PaymentPage() {
     setOfflineFields((prev) => ({ ...prev, [input]: value }));
   };
 
-  // Handle coupon apply (dummy, real logic should call API)
-  const handleApplyCoupon = () => {
-    // ...implement as needed...
+  // Function to save address with is_billing field
+  const saveAddressToAPI = async (addressData, isBilling = false) => {
+    try {
+      const addressToSave = {
+        ...addressData,
+        is_billing: isBilling ? 1 : 0
+      };
+      
+      const response = await addCustomerAddress(addressToSave);
+      return response?.id || null;
+    } catch (error) {
+      console.error("Address save error in payment page:", error);
+      return null;
+    }
   };
 
   // Proceed to checkout
-  const handleProceed = async () => {
-    if (!agreed || !paymentMethod) return;
+// Payment page-এ handleProceed function update করুন
+const handleProceed = async () => {
+  if (!agreed || !paymentMethod) return;
+  
+  try {
+    // LocalStorage থেকে সকল প্রয়োজনীয় ডেটা নিন
+    const shipping_method_id = localStorage.getItem("snapcart_shipping_method_id") || "";
+    const address_id = localStorage.getItem("snapcart_checkout_shipping_id") || "";
+    const billing_address_id = localStorage.getItem("snapcart_checkout_billing_id") || address_id;
+    const order_note = localStorage.getItem("snapcart_order_note") || "";
+    const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
+    
+    // Coupon ডেটা
+    let coupon_code = "";
     try {
-      const res = await placeOrder({
-        coupon_code: coupon,
-        shipping_method_id: shippingMethodId,
-        payment_method: paymentMethod,
-        offline_fields: offlineFields,
-      });
-      // Clear cart count in header
-      window.dispatchEvent(new Event("snapcart-auth-change"));
-      // Show success modal
-      if (typeof window !== "undefined" && window.Swal) {
-        window.Swal.fire({
-          icon: "success",
-          title: "Order Placed!",
-          html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
-          confirmButtonText: "Continue Shopping",
-        }).then(() => {
-          window.location.href = "/";
-        });
-      } else {
-        toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
-        setTimeout(() => { window.location.href = "/"; }, 1200);
+      const stored = localStorage.getItem("snapcart_coupon_applied");
+      if (stored) {
+        const c = JSON.parse(stored);
+        coupon_code = c.code || c.coupon_code || "";
       }
-    } catch (e) {
-      toast.error("Failed to place order. Please try again.");
+    } catch {}
+    
+    // Validation চেক
+    if (!shipping_method_id) {
+      toast.error("Shipping method is missing!");
+      return;
     }
-  };
+    
+    if (!address_id) {
+      toast.error("Shipping address is missing! Please go back and add address.");
+      return;
+    }
+    
+    console.log("Order placing with:", {
+      coupon_code,
+      order_note,
+      shipping_method_id,
+      address_id,
+      billing_address_id: sameAsShipping ? undefined : billing_address_id,
+    });
+    
+    if (paymentMethod === "cod") {
+      // Cash on delivery order
+      const res = await placeOrder({
+        coupon_code,
+        order_note,
+        shipping_method_id,
+        address_id,
+        billing_address_id: sameAsShipping ? undefined : billing_address_id,
+      });
+      
+      // Success handling এবং cleanup
+      handleOrderSuccess(res);
+      
+    } else {
+      // Offline payment order
+      const method_id = paymentMethod;
+      const method_informations = btoa(JSON.stringify(offlineFields));
+      
+      const res = await placeOrderByOfflinePayment({
+        coupon_code,
+        order_note,
+        payment_note: undefined,
+        shipping_method_id,
+        address_id,
+        billing_address_id: sameAsShipping ? undefined : billing_address_id,
+        method_id,
+        method_informations,
+      });
+      
+      // Success handling এবং cleanup
+      handleOrderSuccess(res);
+    }
+  } catch (e) {
+    console.error("Order placement error:", e);
+    handleOrderError(e);
+  }
+};
+
+// Success handler function
+const handleOrderSuccess = (res) => {
+  window.dispatchEvent(new Event("snapcart-auth-change"));
+  
+  // LocalStorage ক্লিয়ার করুন
+  localStorage.removeItem("snapcart_shipping_method_id");
+  localStorage.removeItem("snapcart_checkout_shipping_id");
+  localStorage.removeItem("snapcart_checkout_billing_id");
+  localStorage.removeItem("snapcart_same_as_shipping");
+  localStorage.removeItem("snapcart_order_note");
+  localStorage.removeItem("snapcart_coupon_applied");
+  localStorage.removeItem("snapcart_cart_subtotal");
+  localStorage.removeItem("snapcart_cart_shipping");
+  localStorage.removeItem("snapcart_cart_discount");
+  localStorage.removeItem("snapcart_cart_total");
+  
+  if (typeof window !== "undefined" && window.Swal) {
+    window.Swal.fire({
+      icon: "success",
+      title: "Order Placed!",
+      html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
+      confirmButtonText: "Continue Shopping",
+    }).then(() => {
+      window.location.href = "/";
+    });
+  } else {
+    toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
+    setTimeout(() => { window.location.href = "/"; }, 1200);
+  }
+};
+
+// Error handler function
+const handleOrderError = (e) => {
+  if (e.response?.data?.errors) {
+    e.response.data.errors.forEach(err => {
+      toast.error(`${err.code}: ${err.message}`);
+    });
+  } else if (e.message) {
+    toast.error(`Error: ${e.message}`);
+  } else {
+    toast.error("Failed to place order. Please try again.");
+  }
+};
+
+// Helper function to clear localStorage
+const clearCheckoutLocalStorage = () => {
+  localStorage.removeItem("snapcart_shipping_method_id");
+  localStorage.removeItem("snapcart_checkout_shipping_address");
+  localStorage.removeItem("snapcart_checkout_billing_address");
+  localStorage.removeItem("snapcart_same_as_shipping");
+  localStorage.removeItem("snapcart_order_note");
+  localStorage.removeItem("snapcart_coupon_applied");
+  localStorage.removeItem("snapcart_cart_subtotal");
+  localStorage.removeItem("snapcart_cart_shipping");
+  localStorage.removeItem("snapcart_cart_discount");
+  localStorage.removeItem("snapcart_cart_total");
+};
 
   return (
     <div className="container py-5">
@@ -212,17 +332,6 @@ export default function PaymentPage() {
             <div className="mb-3 d-flex justify-content-between">
               <span>Discount on product</span>
               <span>- ৳{discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div className="input-group mb-3">
-              <span className="input-group-text"><i className="fas fa-ticket-alt"></i></span>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Coupon code"
-                value={coupon}
-                onChange={e => setCoupon(e.target.value)}
-              />
-              <button className="btn btn-outline-secondary" type="button" onClick={handleApplyCoupon}>APPLY</button>
             </div>
             <div className="mb-3 d-flex justify-content-between fw-bold fs-5">
               <span>Total</span>
