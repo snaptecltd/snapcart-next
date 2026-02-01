@@ -32,6 +32,7 @@ function buildFilterStateFromUrl(searchParams) {
     page: Number(searchParams.get("page") || 1),
     limit: Number(searchParams.get("limit") || 12),
     sort: searchParams.get("sort") || "",
+    product_type: searchParams.get("product_type") || "",
   };
 }
 
@@ -95,6 +96,7 @@ export default function ListingPage() {
       offset: ui.page,
       limit: ui.limit,
       sort: ui.sort,
+      product_type: ui.product_type,
 
       // route-based slugs:
       category_slug: levels.category_slug,
@@ -161,6 +163,7 @@ export default function ListingPage() {
     if (next.max_price) q.set("max_price", String(next.max_price));
     if (next.brands?.length) q.set("brands", toCSV(next.brands));
     if (next.colors?.length) q.set("colors", toCSV(next.colors));
+    if (next.product_type) q.set("product_type", next.product_type);
 
     const attrsStr = attrsToQuery(next.attrs);
     if (attrsStr) q.set("attrs", attrsStr);
