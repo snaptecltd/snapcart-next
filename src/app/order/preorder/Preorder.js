@@ -308,6 +308,9 @@ export default function Preorder() {
             .text-secondary{
                 font-size: 14px;
             }
+              .btn.text-danger:hover{
+                color: #dc3545!important;
+            }
 
             /* Change input placeholder color */
             input::placeholder {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import ProductCard from "@/components/product/ProductCard";
 import SectionTitle from "@/components/html/SectionTitle";
@@ -19,32 +19,21 @@ const TABS = [
 ];
 
 export default function FeaturedProducts() {
-  // --- Add router and hash/tab sync logic ---
   const router = useRouter();
   const [active, setActive] = useState("featured");
   const sliderRef = useRef(null);
 
-  // Sync tab with hash in URL on mount and hashchange
-  useEffect(() => {
-    const syncTabWithHash = () => {
-      if (typeof window === "undefined") return;
-      const hash = window.location.hash.replace(/^#/, "");
-      if (hash && hash.startsWith("products-")) {
-        const tabKey = hash.replace("products-", "");
-        if (TABS.some((t) => t.key === tabKey)) setActive(tabKey);
-      }
-    };
-    syncTabWithHash();
-    window.addEventListener("hashchange", syncTabWithHash);
-    return () => window.removeEventListener("hashchange", syncTabWithHash);
-  }, []);
+  // Remove syncTabWithHash logic
 
   // When tab changes, update hash in URL
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.location.hash = `products-${active}`;
-    }
-  }, [active]);
+  // (Optional: If you want to remove hash update too, remove this effect)
+  // If you want to keep hash update, leave this effect
+  // If you want to remove hash update, comment out or delete below:
+  // useEffect(() => {
+  //   if (typeof window !== "undefined") {
+  //     window.location.hash = `products-${active}`;
+  //   }
+  // }, [active]);
 
   const activeTab = useMemo(() => TABS.find((t) => t.key === active) ?? TABS[0], [active]);
 
@@ -63,7 +52,6 @@ export default function FeaturedProducts() {
   const scrollByCards = (dir = 1) => {
     const el = sliderRef.current;
     if (!el) return;
-    // visible width অনুযায়ী scroll
     const amount = Math.round(el.clientWidth * 0.9) * dir;
     el.scrollBy({ left: amount, behavior: "smooth" });
   };

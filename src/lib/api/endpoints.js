@@ -47,6 +47,13 @@ export const ENDPOINTS = {
   CUSTOMER_ORDER_LIST: `${PREFIX}/customer/order/list`,
   CUSTOMER_ORDER_DETAILS: `${PREFIX}/customer/order/details`,
 
+  // Add these review endpoints
+  GET_PRODUCT_REVIEWS: `${PREFIX}/products/reviews`,
+  SUBMIT_PRODUCT_REVIEW: `${PREFIX}/products/reviews/submit`,
+  UPDATE_PRODUCT_REVIEW: `${PREFIX}/products/review/update`,
+  GET_PRODUCT_REVIEW_BY_PRODUCT_AND_ORDER: `${PREFIX}/products/review/by/product-n-order`,
+  DELETE_REVIEW_IMAGE: `${PREFIX}/products/review/delete-image`,
+
   // wishlist endpoints
   CUSTOMER_WISHLIST_ADD: `${PREFIX}/customer/wish-list/add`,
   CUSTOMER_WISHLIST: `${PREFIX}/customer/wish-list`,
@@ -87,4 +94,10 @@ export const ENDPOINTS = {
   // order place endpoint
   ORDER_PLACE: `${PREFIX}/customer/order/place`,
   ORDER_PLACE_OFFLINE_PAYMENT: `${PREFIX}/customer/order/place-by-offline-payment`,
+
+  // EMI banks endpoint
+  EMI_BANKS: `${PREFIX}/products/emi-banks`,
+
+  //offers endpoint
+  OFFERS_TYPE: `${PREFIX}/products/offers-types`,
 };
