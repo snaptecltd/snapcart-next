@@ -14,18 +14,21 @@ export default function ProductCard({ product }) {
   const thumb = product?.thumbnail_full_url?.path; // may be null
   const name = product?.name || "Product";
 
-  const oldPrice = product?.unit_price ?? 0;
+  const unit_price = product?.unit_price ?? 0;
   const discount = product?.discount ?? 0;
   const discountType = product?.discount_type; // "flat" / "percent"
 
-  let price = oldPrice;
+  let price = unit_price;
+  let oldPrice = null;
   let saveText = null;
 
   if (discountType === "flat" && discount > 0) {
-    price = oldPrice - discount;
+    price = unit_price - discount;
+    oldPrice = unit_price;
     saveText = `${moneyBDT(discount)} OFF`;
   } else if (discountType === "percent" && discount > 0) {
-    price = Math.round(oldPrice / (1 - discount / 100));
+    price = Math.round(unit_price / (1 - discount / 100));
+    oldPrice = unit_price;
     saveText = `${discount}% OFF`;
   }
 

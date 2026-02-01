@@ -415,12 +415,19 @@ export default function ProductDetails() {
   const variations = (product.variation || []).filter((v) => !colorNameSet.has(norm(v.type)));
 
   // Price/discount logic
-  let price = product.unit_price;
+  let unit_price = product.unit_price;
   let discount = product.discount;
   let discountType = product.discount_type;
+  let price = unit_price;
   let oldPrice = null;
-  if (discountType === "flat" && discount > 0) oldPrice = price + discount;
-  else if (discountType === "percent" && discount > 0) oldPrice = Math.round(price / (1 - discount / 100));
+  if (discountType === "flat" && discount > 0) {
+    price = unit_price - discount; 
+    oldPrice = unit_price;
+  }
+  else if (discountType === "percent" && discount > 0) {
+    price = Math.round(unit_price / (1 - discount / 100));
+    oldPrice = unit_price;
+  }
   // If variation selected, override price
   if (selectedVariation && product.variation?.length) {
     const v = product.variation.find((v) => v.type === selectedVariation);
