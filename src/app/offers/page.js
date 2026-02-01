@@ -35,9 +35,9 @@ export default function OffersPage() {
                 pattern: "discount-stripes"
             },
             featured: {
-                primary: "#4A6FA5",
-                secondary: "#6B8CBC",
-                gradient: "linear-gradient(135deg, #4A6FA5, #6B8CBC, #8DAAE0)",
+                primary: "#F67535",
+                secondary: "#FF8C42",
+                gradient: "linear-gradient(135deg, #F67535, #FF8C42, #8DAAE0)",
                 icon: "fa-star",
                 pattern: "star-pattern"
             },
