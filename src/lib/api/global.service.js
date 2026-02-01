@@ -415,6 +415,14 @@ export async function getAddressDetails(address_id) {
   return res.data;
 }
 
+export async function getAddressGroupedbyType() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(ENDPOINTS.GET_ADDRESS_DETAILS_GROUPED, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
 export async function getCustomerRestockList() {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
   const res = await api.get(ENDPOINTS.CUSTOMER_RESTOCK_LIST, {
