@@ -780,7 +780,7 @@ export default function ProductDetails() {
             {hasSpec && (
                 <button
                 className={`btn ${tab === "spec" ? "btn-warning text-white" : "btn-outline-light border"} fw-semibold nav-btn`}
-                style={{ background: "#F67535", borderRadius: 8, minWidth: 140 }}
+                style={{ borderRadius: 8, minWidth: 140 }}
                 onClick={() => setTab("spec")}
                 >
                 Specification
