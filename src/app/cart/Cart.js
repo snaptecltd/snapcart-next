@@ -133,7 +133,7 @@ export default function Cart() {
       const response = await chooseShippingForOrder(cartGroupId, newMethodId);
       console.log("Shipping API response:", response);
       
-      if (response && response.success) {
+      if (response) {
         toast.success("Shipping method updated successfully!");
         
         // localStorage আপডেট করুন
