@@ -4,7 +4,8 @@ import {
   getCustomerOrderDetails, 
   getProductReviewByProductAndOrder, 
   submitProductReview, 
-  updateProductReview 
+  updateProductReview,
+  deleteReviewImage // Add this import
 } from "@/lib/api/global.service";
 import Sidebar from "../../partials/Sidebar";
 import { useParams } from "next/navigation";
@@ -36,7 +37,7 @@ export default function OrderDetailsPage() {
   const [comment, setComment] = useState("");
   const [images, setImages] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
-  const [deletedImages, setDeletedImages] = useState([]);
+  const [deletingImage, setDeletingImage] = useState(null); // Track which image is being deleted
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function OrderDetailsPage() {
     setComment("");
     setImages([]);
     setPreviewImages([]);
-    setDeletedImages([]);
+    setDeletingImage(null);
     
     try {
       // Get existing review for this product and order
@@ -75,25 +76,31 @@ export default function OrderDetailsPage() {
         // Try attachment_full_url first
         if (response.attachment_full_url && Array.isArray(response.attachment_full_url)) {
           response.attachment_full_url.forEach((img, index) => {
-            const attachmentId = response.attachment && response.attachment[index] 
-              ? response.attachment[index].id 
-              : `existing-attachment-${index}-${Date.now()}`;
+            const attachment = response.attachment && response.attachment[index];
+            const fileName = attachment?.file_name || 
+                           (typeof img === 'string' ? img.split('/').pop() : 'image');
             
             existingPreviews.push({
-              id: attachmentId,
+              id: attachment?.id || `existing-${index}-${Date.now()}`,
               url: img.path || img,
-              isExisting: true
+              isExisting: true,
+              fileName: fileName,
+              originalIndex: index
             });
           });
         } 
         // Fallback to attachment array
         else if (response.attachment && Array.isArray(response.attachment)) {
           response.attachment.forEach((attachment, index) => {
-            const attachmentId = attachment.id || `existing-attachment-${index}-${Date.now()}`;
+            const fileName = attachment.file_name || 
+                           (typeof attachment === 'string' ? attachment.split('/').pop() : 'image');
+            
             existingPreviews.push({
-              id: attachmentId,
+              id: attachment.id || `existing-${index}-${Date.now()}`,
               url: attachment.path || attachment,
-              isExisting: true
+              isExisting: true,
+              fileName: fileName,
+              originalIndex: index
             });
           });
         }
@@ -140,7 +147,8 @@ export default function OrderDetailsPage() {
         id: uniqueId,
         url: URL.createObjectURL(file),
         isExisting: false,
-        file: file
+        file: file,
+        fileName: file.name
       };
       newPreviews.push(preview);
     });
@@ -154,39 +162,50 @@ export default function OrderDetailsPage() {
     }
   };
 
-  const removeImage = (imageId) => {
-    console.log("Removing image with ID:", imageId);
+  const handleDeleteImage = async (imageId, fileName) => {
+    if (deletingImage === imageId) return; // Prevent multiple clicks
     
-    const imageToRemove = previewImages.find(img => img.id === imageId);
-    if (!imageToRemove) return;
+    setDeletingImage(imageId);
     
-    if (imageToRemove.isExisting) {
-      // For existing images, mark for deletion
-      setDeletedImages(prev => {
-        const newDeleted = [...prev, imageToRemove.id];
-        console.log("Deleted images updated:", newDeleted);
-        return newDeleted;
-      });
-    } else {
-      // Remove from new images array
-      setImages(prev => {
-        const newImages = prev.filter(img => img !== imageToRemove.file);
-        console.log("New images after removal:", newImages);
-        return newImages;
-      });
-      
-      // Revoke the object URL to prevent memory leaks
-      if (imageToRemove.url.startsWith('blob:')) {
-        URL.revokeObjectURL(imageToRemove.url);
+    try {
+      // Check if it's an existing image
+      const imageToRemove = previewImages.find(img => img.id === imageId);
+      if (!imageToRemove) {
+        toast.error("Image not found");
+        return;
       }
+      
+      if (imageToRemove.isExisting && existingReview) {
+        // Delete existing image via API
+        console.log("Deleting existing image:", { imageId, fileName });
+        await deleteReviewImage(existingReview.id, fileName || imageToRemove.fileName);
+        toast.success("Image deleted successfully");
+        
+        // Remove from previews
+        setPreviewImages(prev => prev.filter(img => img.id !== imageId));
+      } else {
+        // Remove new image (not yet uploaded)
+        setImages(prev => prev.filter(img => {
+          const previewImg = previewImages.find(p => p.id === imageId);
+          return !(previewImg && previewImg.file === img);
+        }));
+        
+        // Remove from previews
+        setPreviewImages(prev => {
+          const newPreviews = prev.filter(img => img.id !== imageId);
+          // Revoke object URL to prevent memory leaks
+          if (imageToRemove.url.startsWith('blob:')) {
+            URL.revokeObjectURL(imageToRemove.url);
+          }
+          return newPreviews;
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      toast.error(error.response?.data?.message || "Failed to delete image");
+    } finally {
+      setDeletingImage(null);
     }
-    
-    // Remove from previews
-    setPreviewImages(prev => {
-      const newPreviews = prev.filter(img => img.id !== imageId);
-      console.log("Previews after removal:", newPreviews);
-      return newPreviews;
-    });
   };
 
   const handleSubmitReview = async () => {
@@ -205,13 +224,13 @@ export default function OrderDetailsPage() {
       if (existingReview && existingReview.id) {
         // Update existing review
         const reviewData = {
-          review_id: existingReview.id, // This will be sent as 'id' in the service
+          review_id: existingReview.id,
           product_id: selectedProduct.product_id,
           order_id: orderId,
           comment: comment.trim(),
           rating: rating,
           new_images: images,
-          deleted_images: deletedImages
+          // Don't send deleted_images array since we're deleting via separate API
         };
 
         console.log("Attempting to update review with ID:", existingReview.id);
@@ -282,7 +301,7 @@ export default function OrderDetailsPage() {
     setComment("");
     setImages([]);
     setPreviewImages([]);
-    setDeletedImages([]);
+    setDeletingImage(null);
   };
 
   const renderStars = () => {
@@ -559,13 +578,13 @@ export default function OrderDetailsPage() {
                       multiple
                       accept="image/*"
                       className="d-none"
-                      disabled={reviewLoading}
+                      disabled={reviewLoading || deletingImage !== null}
                     />
                     <button
                       type="button"
                       className="btn btn-outline-secondary"
                       onClick={() => fileInputRef.current.click()}
-                      disabled={reviewLoading}
+                      disabled={reviewLoading || deletingImage !== null}
                     >
                       <i className="fas fa-cloud-upload-alt me-2"></i>
                       Choose Files
@@ -600,10 +619,14 @@ export default function OrderDetailsPage() {
                                   justifyContent: "center",
                                   padding: 0
                                 }}
-                                onClick={() => removeImage(img.id)}
-                                disabled={reviewLoading}
+                                onClick={() => handleDeleteImage(img.id, img.fileName)}
+                                disabled={reviewLoading || deletingImage === img.id}
                               >
-                                <i className="fas fa-times" style={{ fontSize: "12px" }}></i>
+                                {deletingImage === img.id ? (
+                                  <span className="spinner-border spinner-border-sm" role="status" style={{ width: "12px", height: "12px" }}></span>
+                                ) : (
+                                  <i className="fas fa-times" style={{ fontSize: "12px" }}></i>
+                                )}
                               </button>
                             </div>
                           </div>
@@ -618,7 +641,7 @@ export default function OrderDetailsPage() {
                   type="button"
                   className="btn btn-secondary"
                   onClick={handleCloseModal}
-                  disabled={reviewLoading}
+                  disabled={reviewLoading || deletingImage !== null}
                 >
                   Cancel
                 </button>
@@ -626,7 +649,7 @@ export default function OrderDetailsPage() {
                   type="button"
                   className="btn btn-primary"
                   onClick={handleSubmitReview}
-                  disabled={reviewLoading}
+                  disabled={reviewLoading || deletingImage !== null}
                 >
                   {reviewLoading ? (
                     <>

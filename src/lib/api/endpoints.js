@@ -52,6 +52,7 @@ export const ENDPOINTS = {
   SUBMIT_PRODUCT_REVIEW: `${PREFIX}/products/reviews/submit`,
   UPDATE_PRODUCT_REVIEW: `${PREFIX}/products/review/update`,
   GET_PRODUCT_REVIEW_BY_PRODUCT_AND_ORDER: `${PREFIX}/products/review/by/product-n-order`,
+  DELETE_REVIEW_IMAGE: `${PREFIX}/products/review/delete-image`,
 
   // wishlist endpoints
   CUSTOMER_WISHLIST_ADD: `${PREFIX}/customer/wish-list/add`,

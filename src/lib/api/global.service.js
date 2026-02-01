@@ -667,3 +667,21 @@ export async function updateProductReview(data) {
   });
   return res.data;
 }
+
+export async function deleteReviewImage(review_id, image_name) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  
+  formData.append("id", review_id);
+  formData.append("name", image_name);
+  
+  console.log("Deleting review image:", { review_id, image_name });
+  
+  const res = await api.post(ENDPOINTS.DELETE_REVIEW_IMAGE, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
