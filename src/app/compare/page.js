@@ -27,6 +27,8 @@ export default function ComparePage() {
   const [searchResults, setSearchResults] = useState([[], [], []]);
   const [loading, setLoading] = useState([false, false, false]);
   const [specList, setSpecList] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState([false, false, false]);
+  const inputRefs = [useRef(), useRef(), useRef()];
   const didInit = useRef(false);
 
   // Load compare from localStorage only once on mount
@@ -56,11 +58,31 @@ export default function ComparePage() {
     setSpecList([...new Set(allSpecs)]);
   }, [compare]);
 
+  // Hide dropdown on outside click
+  useEffect(() => {
+    function handleClick(e) {
+      setDropdownOpen((open) =>
+        open.map((isOpen, idx) => {
+          if (!inputRefs[idx].current) return false;
+          return inputRefs[idx].current.contains(e.target) ? isOpen : false;
+        })
+      );
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+    // eslint-disable-next-line
+  }, []);
+
   // Search handler
   const handleSearch = async (idx, val) => {
     setSearch((s) => {
       const arr = [...s];
       arr[idx] = val;
+      return arr;
+    });
+    setDropdownOpen((open) => {
+      const arr = [...open];
+      arr[idx] = true;
       return arr;
     });
     if (!val) {
@@ -144,16 +166,23 @@ export default function ComparePage() {
               <div key={idx} className="col-12 col-md-4 border rounded-4  p-3 d-flex flex-column align-items-center position-relative" style={{ minHeight: 320 }}>
                 {/* Search bar */}
                 {!compare[idx] && (
-                  <div className="w-100 mb-3">
+                  <div className="w-100 mb-3" ref={inputRefs[idx]}>
                     <input
                       className="form-control rounded-pill px-3"
                       placeholder="Search..."
                       value={search[idx]}
                       onChange={(e) => handleSearch(idx, e.target.value)}
+                      onFocus={() =>
+                        setDropdownOpen((open) => {
+                          const arr = [...open];
+                          arr[idx] = true;
+                          return arr;
+                        })
+                      }
                       style={{ fontSize: 15 }}
                     />
                     {loading[idx] && <div className="small text-muted mt-1">Searching...</div>}
-                    {searchResults[idx]?.length > 0 && (
+                    {dropdownOpen[idx] && searchResults[idx]?.length > 0 && (
                       <div className="list-group position-absolute w-100 z-3" style={{ maxHeight: 220, overflowY: "auto" }}>
                         {searchResults[idx].map((p) => (
                           <button
