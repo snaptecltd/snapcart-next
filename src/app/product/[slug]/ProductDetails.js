@@ -53,6 +53,7 @@ export default function ProductDetails() {
   const carouselRef = useRef(null);
   const { data: config } = useGlobalConfig();
   const companyWhatsapp = config?.company_whatsapp;
+  const is_emi_enabled = config?.is_emi_enabled; //return true or false
   const whatsappActive = companyWhatsapp?.status === "1";
   const whatsappPhone = (companyWhatsapp?.phone || "").replace(/^\+/, "");
 
@@ -755,9 +756,11 @@ export default function ProductDetails() {
                 </div>
                 {/* EMI, Whatsapp, etc. */}
             <div className="d-flex gap-3 mt-3 align-items-center flex-wrap">
-              <span className="badge bg-light text-dark border px-3 py-2">
-                <i className="fas fa-credit-card me-2"></i>EMI Available <a href="#" className="text-primary ms-1">View Plans</a>
-              </span>
+              {is_emi_enabled && (
+                <span className="badge bg-light text-dark border px-3 py-2">
+                  <i className="fas fa-credit-card me-2"></i>EMI Available <a href="#" className="text-primary ms-1">View Plans</a>
+                </span>
+              )}
               {whatsappActive && whatsappPhone && (
                 <a
                 href={`https://wa.me/${whatsappPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
