@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import React from 'react';
 import { 
   getCustomerAddressList, 
-  addCustomerAddress 
+  addCustomerAddress,
+  getAddressGroupedbyType
 } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 import Link from "next/link";
@@ -12,15 +14,13 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [addresses, setAddresses] = useState([]);
   const [shipping, setShipping] = useState({
-    contact_person_name: "", // backend expects contact_person_name, not contact_name
+    contact_person_name: "",
     phone: "",
     address_type: "Home",
     country: "Bangladesh",
     city: "",
     zip: "",
-    address: "",
-    latitude: "",
-    longitude: "",
+    address: ""
   });
   
   const [billing, setBilling] = useState({ ...shipping });
@@ -50,11 +50,34 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  // Load saved addresses
+  // Load saved addresses - ONLY ONCE!
   useEffect(() => {
-    getCustomerAddressList()
-      .then((res) => setAddresses(Array.isArray(res) ? res : res?.addresses || []))
-      .catch(() => setAddresses([]));
+    console.log("Fetching addresses..."); // Debug log
+    
+    getAddressGroupedbyType()
+      .then((res) => {
+        console.log("Addresses API response:", res); // Debug log
+        
+        // Handle different response formats
+        if (Array.isArray(res)) {
+          setAddresses(res);
+        } else if (res && typeof res === 'object') {
+          // Check if it's the grouped format {Home: [...], Office: [...]}
+          if (res.Home || res.Office) {
+            setAddresses(res);
+          } else if (res.addresses) {
+            setAddresses(res.addresses);
+          } else {
+            setAddresses([]);
+          }
+        } else {
+          setAddresses([]);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching addresses:", error);
+        setAddresses([]);
+      });
   }, []);
 
   // Handle address selection
@@ -247,29 +270,61 @@ const handleProceedToPayment = async (e) => {
           </div>
           
           {/* Shipping Address */}
-          <div className="bg-white rounded-4 p-4 shadow-sm mb-4">
+            <div className="bg-white rounded-4 p-4 shadow-sm mb-4">
             <h5 className="fw-bold mb-3">Shipping Address</h5>
-            
             {/* Saved Address Dropdown */}
-            <div className="mb-3">
-              <div className="dropdown">
-                <button className="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                  Saved Address
-                </button>
-                <ul className="dropdown-menu">
-                  {addresses.length === 0 && <li className="dropdown-item text-muted">No saved address</li>}
-                  {addresses.map((addr) => (
-                    <li key={addr.id}>
-                      <button className="dropdown-item" type="button" onClick={() => handleSelectAddress(addr)}>
-                        {addr.address_type || "Home"} - {addr.address}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+            {addresses && Object.keys(addresses).length > 0 && (
+              <div className="mb-3">
+                <div className="dropdown">
+                  <button 
+                    className="btn btn-outline-secondary dropdown-toggle" 
+                    type="button" 
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    onClick={(e) => {
+                      const dropdownMenu = e.target.nextElementSibling;
+                      if (dropdownMenu) {
+                        dropdownMenu.classList.toggle("show");
+                      }
+                    }}
+                  >
+                    Select Saved Address
+                  </button>
+                  <ul className="dropdown-menu" style={{ maxHeight: "300px", overflowY: "auto" }}>
+                    {Object.entries(addresses).map(([type, addrList]) => (
+                      <>
+                        <li key={`${type}-header`}><h6 className="dropdown-header text-capitalize">{type} Address</h6></li>
+                        {Array.isArray(addrList) && addrList.map((addr) => (
+                          <li key={addr.id}>
+                            <button
+                              className="dropdown-item"
+                              type="button"
+                              onClick={() => {
+                                handleSelectAddress(addr);
+                                // Close the dropdown after selection
+                                const dropdownMenu = document.querySelector('.dropdown-menu.show');
+                                if (dropdownMenu) {
+                                  dropdownMenu.classList.remove('show');
+                                }
+                              }}
+                            >
+                              <div className="d-flex flex-column">
+                                <small className="fw-bold">{addr.contact_person_name}</small>
+                                <small className="text-muted">{addr.phone}</small>
+                                <small className="text-truncate" style={{ maxWidth: "200px" }}>
+                                  {addr.address}
+                                </small>
+                              </div>
+                            </button>
+                          </li>
+                        ))}
+                      </>
+                    ))}
+                  </ul>
+                </div>
               </div>
-            </div>
-            
-            {/* Address Form */}
+            )}
+                    {/* Address Form */}
             <div className="row g-3">
               <div className="col-md-6">
                 <label className="form-label">Contact person name *</label>
