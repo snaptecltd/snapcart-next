@@ -425,7 +425,7 @@ export default function ProductDetails() {
     oldPrice = unit_price;
   }
   else if (discountType === "percent" && discount > 0) {
-    price = Math.round(unit_price / (1 - discount / 100));
+    price = unit_price - Math.round(unit_price * discount / 100);
     oldPrice = unit_price;
   }
   // If variation selected, override price
