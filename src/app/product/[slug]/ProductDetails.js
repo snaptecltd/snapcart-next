@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getProductDetails, getRelatedProducts, addToCart, checkRestockRequest, requestProductRestock } from "@/lib/api/global.service";
+import { getProductDetails, getRelatedProducts, addToCart, checkRestockRequest, requestProductRestock, getEmiBanks } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 import Breadcrumb from "@/components/html/Breadcrumb";
 import ProductCardType2 from "@/components/product/ProductCardType2";
@@ -309,6 +309,57 @@ export default function ProductDetails() {
       toast.error("Failed to request restock.");
     }
     setRestockLoading(false);
+  };
+
+  // --- EMI Modal State ---
+  const [emiModalOpen, setEmiModalOpen] = useState(false);
+  const [emiBanks, setEmiBanks] = useState([]);
+  const [emiLoading, setEmiLoading] = useState(false);
+  const [selectedBank, setSelectedBank] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [emiPrice, setEmiPrice] = useState(0);
+
+  // Fetch EMI banks when modal opens
+  useEffect(() => {
+    if (!emiModalOpen) return;
+    setEmiLoading(true);
+    getEmiBanks()
+      .then((data) => setEmiBanks(Array.isArray(data) ? data : []))
+      .catch(() => setEmiBanks([]))
+      .finally(() => setEmiLoading(false));
+  }, [emiModalOpen]);
+
+  // Set default price and reset selection when modal opens or product changes
+  useEffect(() => {
+    if (!emiModalOpen || !product) return;
+    // Use regular price (without discount)
+    let regularPrice = product.unit_price;
+    if (selectedVariation && product.variation?.length) {
+      const v = product.variation.find((v) => v.type === selectedVariation);
+      if (v) regularPrice = v.price + (product.discount_type === "flat" ? product.discount : 0);
+      else if (product.discount_type === "flat") regularPrice += product.discount;
+    } else if (product.discount_type === "flat") {
+      regularPrice += product.discount;
+    } else if (product.discount_type === "percent" && product.discount > 0) {
+      regularPrice = Math.round(product.unit_price / (1 - product.discount / 100));
+    }
+    setEmiPrice(regularPrice);
+    setSelectedBank(null);
+    setSelectedPlan(null);
+  }, [emiModalOpen, product, selectedVariation]);
+
+  // Calculate EMI and effective cost
+  const calcEmi = (plan, price) => {
+    if (!plan || !price) return { emi: 0, total: 0, effectiveCost: 0 };
+    const chargePercent = parseFloat(plan.charge_percent || 0);
+    const months = parseInt(plan.tenure_months || 1, 10);
+    const totalCost = price + (price * chargePercent / 100);
+    const emi = totalCost / months;
+    return {
+      emi: emi,
+      total: totalCost,
+      effectiveCost: totalCost - price,
+    };
   };
 
   if (!mounted) return null;
@@ -758,7 +809,19 @@ export default function ProductDetails() {
             <div className="d-flex gap-3 mt-3 align-items-center flex-wrap">
               {is_emi_enabled && (
                 <span className="badge bg-light text-dark border px-3 py-2">
-                  <i className="fas fa-credit-card me-2"></i>EMI Available <a href="#" className="text-primary ms-1">View Plans</a>
+                  <i className="fas fa-credit-card me-2"></i>
+                  EMI Available{" "}
+                  <a
+                    href="#"
+                    className="text-primary ms-1"
+                    id="emiPlans"
+                    onClick={e => {
+                      e.preventDefault();
+                      setEmiModalOpen(true);
+                    }}
+                  >
+                    View Plans
+                  </a>
                 </span>
               )}
               {whatsappActive && whatsappPhone && (
@@ -956,6 +1019,162 @@ export default function ProductDetails() {
         </div>
       )}
 
+      {/* EMI Modal */}
+      {emiModalOpen && (
+        <div className="emi-modal-backdrop" onClick={() => setEmiModalOpen(false)}>
+          <div
+            className="emi-modal"
+            onClick={e => e.stopPropagation()}
+            style={{
+              maxWidth: 800,
+              width: "100%",
+              background: "#fff",
+              borderRadius: 16,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+              padding: 0,
+              display: "flex",
+              minHeight: 400,
+              zIndex: 9999,
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)"
+            }}
+          >
+            {/* Left: Bank List */}
+            <div style={{ width: 315, borderRight: "1px solid #eee", padding: 24, overflowY: "auto" }}>
+              <div className="fw-bold mb-3" style={{ fontSize: 18 }}>EMI Banks</div>
+              {emiLoading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" />
+                </div>
+              ) : (
+                <ul className="list-unstyled m-0 p-0" style={{ maxHeight: 350, overflowY: "auto" }}>
+                  {emiBanks.map(bank => (
+                    <li key={bank.id}>
+                      <button
+                        className={`w-100 text-start btn btn-sm mb-2 ${selectedBank?.id === bank.id ? "btn-warning text-white" : "btn-light border"}`}
+                        style={{
+                          borderRadius: 8,
+                          fontWeight: 500,
+                          fontSize: 15,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis"
+                        }}
+                        onClick={() => {
+                          setSelectedBank(bank);
+                          setSelectedPlan(null);
+                        }}
+                      >
+                        {bank.name}
+                        {bank.is_online ? <span className="badge bg-info ms-2">Online</span> : ""}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {/* Right: Plans */}
+            <div style={{ flex: 1, padding: 24, minWidth: 0 }}>
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="fw-bold" style={{ fontSize: 18 }}>
+                  {selectedBank ? selectedBank.name : "Select a Bank"}
+                </div>
+                <button className="btn btn-sm btn-outline-secondary" onClick={() => setEmiModalOpen(false)}>
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              {selectedBank ? (
+                <>
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">Product Price (৳)</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={emiPrice}
+                      min={1}
+                      onChange={e => setEmiPrice(Number(e.target.value) || 1)}
+                      style={{ maxWidth: 200 }}
+                    />
+                  </div>
+                  <div>
+                    <div className="fw-semibold mb-2">Available EMI Plans:</div>
+                    <div className="table-responsive">
+                      <table className="table table-bordered align-middle mb-0">
+                        <thead>
+                          <tr>
+                            <th>Tenure (Months)</th>
+                            <th>Charge (%)</th>
+                            <th>EMI (৳/mo)</th>
+                            <th>Effective Cost (৳)</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedBank.plans.map(plan => {
+                            const { emi, effectiveCost } = calcEmi(plan, emiPrice);
+                            return (
+                              <tr key={plan.id} className={selectedPlan?.id === plan.id ? "table-warning" : ""}>
+                                <td>{plan.tenure_months}</td>
+                                <td>{plan.charge_percent}</td>
+                                <td>{emi ? emi.toLocaleString("en-BD", { maximumFractionDigits: 2 }) : "-"}</td>
+                                <td>{effectiveCost ? effectiveCost.toLocaleString("en-BD", { maximumFractionDigits: 2 }) : "-"}</td>
+                                <td>
+                                  <button
+                                    className={`btn btn-sm ${selectedPlan?.id === plan.id ? "btn-warning text-white" : "btn-outline-warning"}`}
+                                    onClick={() => setSelectedPlan(plan)}
+                                  >
+                                    {selectedPlan?.id === plan.id ? "Selected" : "Select"}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  {selectedPlan && (
+                    <div className="alert alert-info mt-4 mb-0">
+                      <div>
+                        <b>Selected Plan:</b> {selectedPlan.tenure_months} months, {selectedPlan.charge_percent}% charge
+                      </div>
+                      <div>
+                        <b>Monthly EMI:</b> ৳{calcEmi(selectedPlan, emiPrice).emi.toLocaleString("en-BD", { maximumFractionDigits: 2 })}
+                      </div>
+                      <div>
+                        <b>Total Cost:</b> ৳{(emiPrice + calcEmi(selectedPlan, emiPrice).effectiveCost).toLocaleString("en-BD", { maximumFractionDigits: 2 })}
+                        {" "}(<b>Effective Cost:</b> ৳{calcEmi(selectedPlan, emiPrice).effectiveCost.toLocaleString("en-BD", { maximumFractionDigits: 2 })})
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-muted py-5 text-center">Select a bank to view EMI plans.</div>
+              )}
+            </div>
+          </div>
+          <style>{`
+            .emi-modal-backdrop {
+              position: fixed;
+              top: 0; left: 0; right: 0; bottom: 0;
+              background: rgba(0,0,0,0.25);
+              z-index: 9998;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .emi-modal {
+              animation: emiModalFadeIn .2s;
+            }
+            @keyframes emiModalFadeIn {
+              from { opacity: 0; transform: scale(0.98) translate(-50%, -48%);}
+              to { opacity: 1; transform: scale(1) translate(-50%, -50%);}
+            }
+          `}</style>
+        </div>
+      )}
       <style>{`
       .spec-table-wrapper {
         border-radius: .75rem;

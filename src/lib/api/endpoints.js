@@ -94,4 +94,7 @@ export const ENDPOINTS = {
   // order place endpoint
   ORDER_PLACE: `${PREFIX}/customer/order/place`,
   ORDER_PLACE_OFFLINE_PAYMENT: `${PREFIX}/customer/order/place-by-offline-payment`,
+
+  // EMI banks endpoint
+  EMI_BANKS: `${PREFIX}/products/emi-banks`,
 };

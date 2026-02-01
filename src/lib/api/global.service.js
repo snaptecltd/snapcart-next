@@ -685,3 +685,8 @@ export async function deleteReviewImage(review_id, image_name) {
   });
   return res.data;
 }
+
+export async function getEmiBanks() {
+  const res = await api.get(ENDPOINTS.EMI_BANKS);
+  return res.data;
+}
