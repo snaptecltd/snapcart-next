@@ -3,6 +3,8 @@
 import Link from "next/link";
 import useSWR from "swr";
 import { getMainBanners } from "@/lib/api/global.service";
+import { useEffect, useRef, useState } from "react";
+import { useSwipeable } from "react-swipeable";
 
 const fetcher = () => getMainBanners();
 
@@ -54,6 +56,55 @@ export default function HomeSlider() {
     dedupingInterval: 1800000, // 30 minutes
   });
 
+  const [isClient, setIsClient] = useState(false);
+  const carouselRef = useRef(null);
+
+  // Initialize client-side state
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Initialize Bootstrap carousel only on client side
+  useEffect(() => {
+    if (!isClient || !carouselRef.current) return;
+
+    const initCarousel = async () => {
+      const { Carousel } = await import('bootstrap');
+      const carouselElement = carouselRef.current;
+      
+      if (carouselElement) {
+        const carousel = new Carousel(carouselElement, {
+          interval: 4000,
+          ride: 'carousel'
+        });
+        
+        // Cleanup on unmount
+        return () => {
+          carousel.dispose();
+        };
+      }
+    };
+
+    initCarousel();
+  }, [isClient]);
+
+  const handlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (carouselRef.current) {
+        const nextBtn = carouselRef.current.querySelector("[data-bs-slide='next']");
+        if (nextBtn) nextBtn.click();
+      }
+    },
+    onSwipedRight: () => {
+      if (carouselRef.current) {
+        const prevBtn = carouselRef.current.querySelector("[data-bs-slide='prev']");
+        if (prevBtn) prevBtn.click();
+      }
+    },
+    trackMouse: true,
+    preventScrollOnSwipe: true,
+  });
+
   if (isLoading || !data || !data.sliders || !data.sidebanners) {
     return <Skeleton />;
   }
@@ -74,7 +125,7 @@ export default function HomeSlider() {
   return (
     <>
       {/* Custom styles for carousel controls and indicators */}
-      <style>{`
+      <style jsx>{`
         .custom-carousel-control {
           width: 2rem;
           height: 2rem;
@@ -120,16 +171,21 @@ export default function HomeSlider() {
           background: #333;
         }
       `}</style>
+      
       <div className="row g-3 mb-3">
-
         {/* LEFT: Carousel */}
         <div className="col-12 col-md-8 col-lg-8">
           <div
+            {...handlers}
+            ref={carouselRef}
             id="homeCarousel"
             className="carousel slide position-relative"
             data-bs-ride="carousel"
-            data-bs-interval="4000"
-            style={{ minHeight: '220px' }}
+            style={{
+              minHeight: "220px",
+              cursor: "grab",
+              userSelect: "none",
+            }}
           >
             <div className="carousel-inner rounded-3 h-100">
               {sliders.map((slide, idx) => (
@@ -137,7 +193,7 @@ export default function HomeSlider() {
                   key={idx}
                   className={`carousel-item${idx === 0 ? " active" : ""} h-100`}
                 >
-                  <Link href="/" className="d-block h-100">
+                  <Link href={slide.link || "/"} className="d-block h-100">
                     <div className="position-relative w-100 h-100">
                       <img
                         src={slide.photo_full_url?.path || "/slider1.webp"}
@@ -146,10 +202,12 @@ export default function HomeSlider() {
                         style={{
                           width: "100%",
                           height: "100%",
-                          maxWidth: "991px",
                           objectFit: "cover",
                           display: "block",
-                          position: "static",
+                        }}
+                        loading="lazy"
+                        onError={(e) => {
+                          e.target.src = "/slider1.webp";
                         }}
                       />
                     </div>
@@ -198,28 +256,35 @@ export default function HomeSlider() {
 
         {/* RIGHT: Two Banners */}
         <div className="col-12 col-md-4 col-lg-4 d-flex flex-column gap-3">
-          <div className="d-flex flex-column gap-3">          
+          <div className="d-flex flex-row flex-md-column gap-3">          
             {sidebanners.map((banner, idx) => (
-            <Link href="/product/galaxy-watch" className="flex-fill" key={banner.id}>
-              <div className="position-relative w-100 home-slider-banner">
-                <img
-                  src={banner.photo_full_url?.path || "/side1.webp"}
-                  alt="Galaxy Watch"
-                  className="rounded-3 object-fit-cover"
-                  style={{
-                    width: "100%",
-                    height: "auto",
-                    objectFit: "cover",
-                    display: "block",
-                    position: "static",
-                  }}
-                />
-              </div>
-            </Link>          
-          ))}
+              <Link 
+                href={banner.link || "/product/galaxy-watch"} 
+                className="flex-fill" 
+                key={banner.id || idx}
+              >
+                <div className="position-relative w-100 home-slider-banner">
+                  <img
+                    src={banner.photo_full_url?.path || "/side1.webp"}
+                    alt={banner.title || "Side Banner"}
+                    className="rounded-3 object-fit-contain"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      minHeight: "156px",
+                      objectFit: "contain",
+                      display: "block",
+                    }}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.src = "/side1.webp";
+                    }}
+                  />
+                </div>
+              </Link>          
+            ))}
           </div>
         </div>
-
       </div>
     </>
   );
