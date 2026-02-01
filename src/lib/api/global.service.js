@@ -574,3 +574,86 @@ export async function placeOrderByOfflinePayment({
   const res = await api.post(ENDPOINTS.ORDER_PLACE_OFFLINE_PAYMENT, payload, { headers });
   return res.data;
 }
+
+/* =========================
+   REVIEWS
+========================= */
+export async function getProductReviews(product_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.GET_PRODUCT_REVIEWS}?product_id=${product_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function getProductReviewByProductAndOrder(product_id, order_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.GET_PRODUCT_REVIEW_BY_PRODUCT_AND_ORDER}?product_id=${product_id}&order_id=${order_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function submitProductReview(data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  
+  // Append required fields
+  formData.append("product_id", data.product_id);
+  formData.append("order_id", data.order_id);
+  formData.append("comment", data.comment);
+  formData.append("rating", data.rating);
+  
+  // Append images with the correct field name 'fileUpload[]'
+  if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+    data.images.forEach((image) => {
+      if (image instanceof File) {
+        formData.append('fileUpload[]', image);
+      }
+    });
+  }
+  
+  const res = await api.post(ENDPOINTS.SUBMIT_PRODUCT_REVIEW, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function updateProductReview(data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  
+  // Append all required fields
+  formData.append("review_id", data.review_id);
+  formData.append("product_id", data.product_id); // Add product_id
+  formData.append("order_id", data.order_id); // Add order_id
+  formData.append("comment", data.comment);
+  formData.append("rating", data.rating);
+  
+  // Append new images with the correct field name 'fileUpload[]'
+  if (data.new_images && Array.isArray(data.new_images) && data.new_images.length > 0) {
+    data.new_images.forEach((image) => {
+      if (image instanceof File) {
+        formData.append('fileUpload[]', image);
+      }
+    });
+  }
+  
+  // Append deleted image IDs
+  if (data.deleted_images && Array.isArray(data.deleted_images) && data.deleted_images.length > 0) {
+    data.deleted_images.forEach((imageId) => {
+      formData.append('deleted_images[]', imageId);
+    });
+  }
+  
+  const res = await api.post(ENDPOINTS.UPDATE_PRODUCT_REVIEW, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}

@@ -47,6 +47,12 @@ export const ENDPOINTS = {
   CUSTOMER_ORDER_LIST: `${PREFIX}/customer/order/list`,
   CUSTOMER_ORDER_DETAILS: `${PREFIX}/customer/order/details`,
 
+  // Add these review endpoints
+  GET_PRODUCT_REVIEWS: `${PREFIX}/products/reviews`,
+  SUBMIT_PRODUCT_REVIEW: `${PREFIX}/products/reviews/submit`,
+  UPDATE_PRODUCT_REVIEW: `${PREFIX}/products/review/update`,
+  GET_PRODUCT_REVIEW_BY_PRODUCT_AND_ORDER: `${PREFIX}/products/review/by/product-n-order`,
+
   // wishlist endpoints
   CUSTOMER_WISHLIST_ADD: `${PREFIX}/customer/wish-list/add`,
   CUSTOMER_WISHLIST: `${PREFIX}/customer/wish-list`,
