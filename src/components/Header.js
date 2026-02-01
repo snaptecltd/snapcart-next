@@ -347,7 +347,7 @@ export default function Header() {
                 </Link>
 
                 <Link
-                  href="#"
+                  href="/offers"
                   className={`d-flex text-decoration-none ${styles.nav_link} ${styles.nav_link_offers}`}
                 >
                   🎁 Offers

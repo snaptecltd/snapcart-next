@@ -97,4 +97,7 @@ export const ENDPOINTS = {
 
   // EMI banks endpoint
   EMI_BANKS: `${PREFIX}/products/emi-banks`,
+
+  //offers endpoint
+  OFFERS_TYPE: `${PREFIX}/products/offers-types`,
 };

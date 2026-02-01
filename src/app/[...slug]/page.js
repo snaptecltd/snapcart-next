@@ -33,6 +33,7 @@ function buildFilterStateFromUrl(searchParams) {
     limit: Number(searchParams.get("limit") || 12),
     sort: searchParams.get("sort") || "",
     product_type: searchParams.get("product_type") || "",
+    offer_type: searchParams.get("offer_type") || "",
   };
 }
 
@@ -97,6 +98,7 @@ export default function ListingPage() {
       limit: ui.limit,
       sort: ui.sort,
       product_type: ui.product_type,
+      offer_type: ui.offer_type,
 
       // route-based slugs:
       category_slug: levels.category_slug,
@@ -164,6 +166,7 @@ export default function ListingPage() {
     if (next.brands?.length) q.set("brands", toCSV(next.brands));
     if (next.colors?.length) q.set("colors", toCSV(next.colors));
     if (next.product_type) q.set("product_type", next.product_type);
+    if (next.offer_type) q.set("offer_type", next.offer_type);
 
     const attrsStr = attrsToQuery(next.attrs);
     if (attrsStr) q.set("attrs", attrsStr);

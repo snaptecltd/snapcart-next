@@ -690,3 +690,8 @@ export async function getEmiBanks() {
   const res = await api.get(ENDPOINTS.EMI_BANKS);
   return res.data;
 }
+
+export async function getOffersType() {
+  const res = await api.get(ENDPOINTS.OFFERS_TYPE);
+  return res.data;
+}
