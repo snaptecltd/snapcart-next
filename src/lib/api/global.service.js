@@ -476,6 +476,25 @@ export async function getShippingMethods() {
   return res.data;
 }
 
+export async function chooseShippingForOrder(cart_group_id, shipping_method_id) {
+  let headers = {};
+  let payload = {
+    cart_group_id,
+    id: shipping_method_id,
+  };
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) payload.guest_id = guestId;
+    }
+  }
+  const res = await api.post(ENDPOINTS.CHOOSE_SHIPPING_FOR_ORDER, payload, { headers });
+  return res.data;
+}
+
 export async function applyCoupon(code) {
   let headers = {};
   if (typeof window !== "undefined") {
