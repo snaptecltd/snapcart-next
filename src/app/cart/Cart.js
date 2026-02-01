@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getCart, updateCartItem, removeCartItem, getShippingMethods, applyCoupon } from "@/lib/api/global.service";
+import { 
+  getCart, 
+  updateCartItem, 
+  removeCartItem, 
+  getShippingMethods, 
+  applyCoupon,
+  chooseShippingForOrder // এই ফাংশনটি import করুন
+} from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 import Link from "next/link";
 
@@ -15,33 +22,34 @@ export default function Cart() {
   const [shippingMethodId, setShippingMethodId] = useState("");
   const [shippingLoading, setShippingLoading] = useState(true);
   const [orderNoteEnabled, setOrderNoteEnabled] = useState(false);
-  
-  // ==================== এখানে orderNote state যোগ করুন ====================
   const [orderNote, setOrderNote] = useState("");
-  
-  // ==================== useEffect for order note ====================
-  // Order note পরিবর্তন হলে localStorage-এ সংরক্ষণ করুন
-  useEffect(() => {
-    if (orderNote) {
-      localStorage.setItem("snapcart_order_note", orderNote);
-    }
-  }, [orderNote]);
-  
-  // Load order note from localStorage on component mount
-  useEffect(() => {
-    const savedOrderNote = localStorage.getItem("snapcart_order_note");
-    if (savedOrderNote) {
-      setOrderNote(savedOrderNote);
-      setOrderNoteEnabled(true);
-    }
-  }, []);
+  const [selectedShipping, setSelectedShipping] = useState({
+    methodId: "",
+    cartGroupId: ""
+  });
 
-  // ==================== fetchCart ফাংশন যোগ করুন ====================
+  // ==================== fetchCart ফাংশন - cart_group_id পাওয়ার জন্য আপডেট করুন ====================
   const fetchCart = () => {
-    // setLoading(true);
+    setLoading(true);
     getCart()
       .then((data) => {
+        console.log("Cart API response:", data); // Debug জন্য
         setCart(Array.isArray(data) ? data : []);
+        
+        // cart_group_id বের করুন
+        if (Array.isArray(data) && data.length > 0) {
+          // প্রথম আইটেম থেকে cart_group_id নিন (সব আইটেমের একই cart_group_id থাকে)
+          const cartGroupId = data[0]?.cart_group_id;
+          if (cartGroupId) {
+            setSelectedShipping(prev => ({
+              ...prev,
+              cartGroupId: cartGroupId
+            }));
+            
+            // localStorage-এও সংরক্ষণ করুন
+            localStorage.setItem("snapcart_cart_group_id", cartGroupId);
+          }
+        }
       })
       .catch((error) => {
         console.error("Error fetching cart:", error);
@@ -58,16 +66,92 @@ export default function Cart() {
       const stored = localStorage.getItem("snapcart_coupon_applied");
       if (stored) setCouponApplied(JSON.parse(stored));
     } catch {}
+    
+    // Load saved shipping method
+    const savedShippingMethodId = localStorage.getItem("snapcart_shipping_method_id");
+    if (savedShippingMethodId) {
+      setShippingMethodId(savedShippingMethodId);
+      setSelectedShipping(prev => ({
+        ...prev,
+        methodId: savedShippingMethodId
+      }));
+    }
   }, []);
 
   // ==================== Fetch shipping methods ====================
   useEffect(() => {
     setShippingLoading(true);
     getShippingMethods()
-      .then(res => setShippingMethods(Array.isArray(res) ? res : []))
+      .then(res => {
+        const methods = Array.isArray(res) ? res : [];
+        setShippingMethods(methods);
+        
+        // যদি আগে থেকে সিলেক্ট করা shipping method না থাকে এবং shipping methods আছে
+        if (methods.length > 0 && !shippingMethodId) {
+          // প্রথম shipping method ডিফল্ট হিসেবে সেট করুন
+          const firstMethod = methods[0];
+          if (firstMethod) {
+            const methodId = String(firstMethod.id);
+            setShippingMethodId(methodId);
+            setSelectedShipping(prev => ({
+              ...prev,
+              methodId: methodId
+            }));
+            localStorage.setItem("snapcart_shipping_method_id", methodId);
+          }
+        }
+      })
       .catch(() => setShippingMethods([]))
       .finally(() => setShippingLoading(false));
   }, []);
+
+  // ==================== Handle shipping method change ====================
+  const handleShippingMethodChange = async (e) => {
+    const newMethodId = e.target.value;
+    const cartGroupId = selectedShipping.cartGroupId;
+    
+    // Validation চেক
+    if (!newMethodId || !cartGroupId) {
+      toast.error("Please wait for cart data to load");
+      return;
+    }
+    
+    // State আপডেট করুন
+    setShippingMethodId(newMethodId);
+    setSelectedShipping({
+      cartGroupId: cartGroupId,
+      methodId: newMethodId
+    });
+    
+    // API কল করুন
+    try {
+      console.log("Calling shipping API with:", {
+        cartGroupId,
+        shipping_method_id: newMethodId
+      });
+      
+      const response = await chooseShippingForOrder(cartGroupId, newMethodId);
+      console.log("Shipping API response:", response);
+      
+      if (response && response.success) {
+        toast.success("Shipping method updated successfully!");
+        
+        // localStorage আপডেট করুন
+        localStorage.setItem("snapcart_shipping_method_id", newMethodId);
+        
+        // cart আপডেট করুন (যদি প্রয়োজন হয়)
+        fetchCart();
+      } else {
+        toast.error(response?.message || "Failed to update shipping method");
+      }
+    } catch (error) {
+      console.error("Shipping method change error:", error);
+      toast.error("Failed to update shipping method. Please try again.");
+      
+      // Error হলে পূর্বের state-এ ফিরে যান
+      setShippingMethodId(selectedShipping.methodId);
+    }
+  };
 
   // ==================== Save shipping method to localStorage ====================
   useEffect(() => {
@@ -410,6 +494,8 @@ export default function Cart() {
               )}
             </div>
             {/* Shipping Method */}
+
+            {/* Shipping Method Section - আপডেট করুন */}
             <div className="mt-4">
               <label className="form-label fw-semibold">Select Shipping Method <span className="text-danger">*</span></label>
               {shippingLoading ? (
@@ -418,8 +504,9 @@ export default function Cart() {
                 <select
                   className="form-select"
                   value={shippingMethodId}
-                  onChange={e => setShippingMethodId(e.target.value)}
+                  onChange={handleShippingMethodChange} // এই onchange হ্যান্ডলার ব্যবহার করুন
                   required
+                  disabled={!selectedShipping.cartGroupId}
                 >
                   <option value="">Select shipping method</option>
                   {(shippingMethods || []).map(m => (
@@ -428,6 +515,18 @@ export default function Cart() {
                     </option>
                   ))}
                 </select>
+              )}
+              {!selectedShipping.cartGroupId && (
+                <div className="text-warning small mt-1">
+                  <i className="fas fa-info-circle me-1"></i>
+                  Please wait for cart data to load
+                </div>
+              )}
+              {selectedShipping.cartGroupId && shippingMethodId && (
+                <div className="text-success small mt-1">
+                  <i className="fas fa-check-circle me-1"></i>
+                  Shipping method selected: {shippingMethods.find(m => String(m.id) === String(shippingMethodId))?.title}
+                </div>
               )}
             </div>
             {/* Order Note Section */}
@@ -483,28 +582,30 @@ export default function Cart() {
               CONTINUE SHOPPING
             </Link>
             <Link
-              href={shippingMethodId ? "/checkout" : "#"}
+              href={shippingMethodId && selectedShipping.cartGroupId ? "/checkout" : "#"}
               className="btn btn-dark px-4 fw-semibold"
               style={{ minWidth: 180 }}
-              disabled={!shippingMethodId}
               onClick={e => {
-                if (!shippingMethodId) {
+                if (!shippingMethodId || !selectedShipping.cartGroupId) {
                   e.preventDefault();
-                  toast.error("Please select a shipping method.");
+                  toast.error("Please select a shipping method first.");
                 } else {
-                  // সঠিকভাবে shipping method ID সংরক্ষণ করুন
+                  // সব ডেটা localStorage-এ সংরক্ষণ করুন
                   localStorage.setItem("snapcart_shipping_method_id", shippingMethodId);
+                  localStorage.setItem("snapcart_cart_group_id", selectedShipping.cartGroupId);
                   
-                  // Order note সংরক্ষণ করুন
                   if (orderNote) {
                     localStorage.setItem("snapcart_order_note", orderNote);
-                  } else {
-                    localStorage.removeItem("snapcart_order_note");
                   }
                   
-                  // Coupon ডেটা সঠিকভাবে সংরক্ষণ করুন
                   if (couponApplied) {
                     localStorage.setItem("snapcart_coupon_applied", JSON.stringify(couponApplied));
+                  }
+                  
+                  // shipping method ডিটেইলসও সংরক্ষণ করুন
+                  const selectedMethod = shippingMethods.find(m => String(m.id) === String(shippingMethodId));
+                  if (selectedMethod) {
+                    localStorage.setItem("snapcart_selected_shipping_method", JSON.stringify(selectedMethod));
                   }
                 }
               }}
