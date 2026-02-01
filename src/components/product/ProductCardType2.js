@@ -27,7 +27,7 @@ export default function ProductCard({ product }) {
     oldPrice = unit_price;
     saveText = `${moneyBDT(discount)} OFF`;
   } else if (discountType === "percent" && discount > 0) {
-    price = Math.round(unit_price / (1 - discount / 100));
+    price = unit_price - Math.round(unit_price * discount / 100);
     oldPrice = unit_price;
     saveText = `${discount}% OFF`;
   }
