@@ -626,28 +626,38 @@ export async function updateProductReview(data) {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
   const formData = new FormData();
   
-  // Append all required fields
-  formData.append("review_id", data.review_id);
-  formData.append("product_id", data.product_id); // Add product_id
-  formData.append("order_id", data.order_id); // Add order_id
+  // Append all required fields - note: backend expects 'id' not 'review_id'
+  formData.append("id", data.review_id); // Changed from review_id to id
+  formData.append("product_id", data.product_id);
+  formData.append("order_id", data.order_id);
   formData.append("comment", data.comment);
   formData.append("rating", data.rating);
   
   // Append new images with the correct field name 'fileUpload[]'
   if (data.new_images && Array.isArray(data.new_images) && data.new_images.length > 0) {
-    data.new_images.forEach((image) => {
+    data.new_images.forEach((image, index) => {
       if (image instanceof File) {
-        formData.append('fileUpload[]', image);
+        formData.append('fileUpload[]', image); // Keep as array notation
       }
     });
   }
   
-  // Append deleted image IDs
+  // Append deleted image IDs if needed (backend might handle this differently)
   if (data.deleted_images && Array.isArray(data.deleted_images) && data.deleted_images.length > 0) {
-    data.deleted_images.forEach((imageId) => {
-      formData.append('deleted_images[]', imageId);
+    data.deleted_images.forEach((imageId, index) => {
+      formData.append(`deleted_images[${index}]`, imageId);
     });
   }
+  
+  console.log("Update review data being sent:", {
+    id: data.review_id, // This will be sent as 'id'
+    product_id: data.product_id,
+    order_id: data.order_id,
+    comment: data.comment,
+    rating: data.rating,
+    new_images_count: data.new_images?.length || 0,
+    deleted_images_count: data.deleted_images?.length || 0
+  });
   
   const res = await api.post(ENDPOINTS.UPDATE_PRODUCT_REVIEW, formData, {
     headers: {

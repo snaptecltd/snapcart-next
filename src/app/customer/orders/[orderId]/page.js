@@ -61,6 +61,7 @@ export default function OrderDetailsPage() {
     try {
       // Get existing review for this product and order
       const response = await getProductReviewByProductAndOrder(product.product_id, orderId);
+      console.log("Review API response:", response);
       
       if (response && response.id) {
         // Review exists
@@ -70,11 +71,13 @@ export default function OrderDetailsPage() {
         
         // Load existing images if any
         const existingPreviews = [];
-        if (response.attachment_full_url && response.attachment_full_url.length > 0) {
+        
+        // Try attachment_full_url first
+        if (response.attachment_full_url && Array.isArray(response.attachment_full_url)) {
           response.attachment_full_url.forEach((img, index) => {
             const attachmentId = response.attachment && response.attachment[index] 
               ? response.attachment[index].id 
-              : `existing-${index}-${Date.now()}`;
+              : `existing-attachment-${index}-${Date.now()}`;
             
             existingPreviews.push({
               id: attachmentId,
@@ -82,11 +85,27 @@ export default function OrderDetailsPage() {
               isExisting: true
             });
           });
+        } 
+        // Fallback to attachment array
+        else if (response.attachment && Array.isArray(response.attachment)) {
+          response.attachment.forEach((attachment, index) => {
+            const attachmentId = attachment.id || `existing-attachment-${index}-${Date.now()}`;
+            existingPreviews.push({
+              id: attachmentId,
+              url: attachment.path || attachment,
+              isExisting: true
+            });
+          });
         }
+        
+        console.log("Existing previews loaded:", existingPreviews);
         setPreviewImages(existingPreviews);
+      } else {
+        console.log("No existing review found");
       }
     } catch (error) {
       console.error("Error fetching review:", error);
+      console.error("Error details:", error.response?.data);
       // No existing review - this is expected for new reviews
     } finally {
       setShowReviewModal(true);
@@ -95,6 +114,8 @@ export default function OrderDetailsPage() {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
     const newImages = [];
     const newPreviews = [];
 
@@ -114,26 +135,19 @@ export default function OrderDetailsPage() {
       newImages.push(file);
       
       // Create preview with unique key
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const uniqueId = `new-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`;
-        const preview = {
-          id: uniqueId,
-          url: reader.result,
-          isExisting: false,
-          file: file
-        };
-        newPreviews.push(preview);
-        
-        // Update previews only once for all files
-        if (newPreviews.length === files.length) {
-          setPreviewImages(prev => [...prev, ...newPreviews]);
-        }
+      const uniqueId = `new-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`;
+      const preview = {
+        id: uniqueId,
+        url: URL.createObjectURL(file),
+        isExisting: false,
+        file: file
       };
-      reader.readAsDataURL(file);
+      newPreviews.push(preview);
     });
 
     setImages(prev => [...prev, ...newImages]);
+    setPreviewImages(prev => [...prev, ...newPreviews]);
+    
     // Clear file input to allow uploading same file again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -141,24 +155,38 @@ export default function OrderDetailsPage() {
   };
 
   const removeImage = (imageId) => {
-    const imageIndex = previewImages.findIndex(img => img.id === imageId);
-    if (imageIndex === -1) return;
-
-    const imageToRemove = previewImages[imageIndex];
+    console.log("Removing image with ID:", imageId);
+    
+    const imageToRemove = previewImages.find(img => img.id === imageId);
+    if (!imageToRemove) return;
     
     if (imageToRemove.isExisting) {
       // For existing images, mark for deletion
-      setDeletedImages(prev => [...prev, imageToRemove.id]);
+      setDeletedImages(prev => {
+        const newDeleted = [...prev, imageToRemove.id];
+        console.log("Deleted images updated:", newDeleted);
+        return newDeleted;
+      });
     } else {
       // Remove from new images array
-      setImages(prev => prev.filter(img => {
-        // Find the corresponding file by checking if it's the same file object
-        return !(imageToRemove.file && img === imageToRemove.file);
-      }));
+      setImages(prev => {
+        const newImages = prev.filter(img => img !== imageToRemove.file);
+        console.log("New images after removal:", newImages);
+        return newImages;
+      });
+      
+      // Revoke the object URL to prevent memory leaks
+      if (imageToRemove.url.startsWith('blob:')) {
+        URL.revokeObjectURL(imageToRemove.url);
+      }
     }
     
     // Remove from previews
-    setPreviewImages(prev => prev.filter(img => img.id !== imageId));
+    setPreviewImages(prev => {
+      const newPreviews = prev.filter(img => img.id !== imageId);
+      console.log("Previews after removal:", newPreviews);
+      return newPreviews;
+    });
   };
 
   const handleSubmitReview = async () => {
@@ -174,20 +202,23 @@ export default function OrderDetailsPage() {
 
     setReviewLoading(true);
     try {
-      if (existingReview) {
-        // Update existing review - include product_id and order_id
+      if (existingReview && existingReview.id) {
+        // Update existing review
         const reviewData = {
-          review_id: existingReview.id,
-          product_id: selectedProduct.product_id, // Add product_id
-          order_id: orderId, // Add order_id
+          review_id: existingReview.id, // This will be sent as 'id' in the service
+          product_id: selectedProduct.product_id,
+          order_id: orderId,
           comment: comment.trim(),
           rating: rating,
           new_images: images,
           deleted_images: deletedImages
         };
 
-        console.log("Updating review with data:", reviewData);
+        console.log("Attempting to update review with ID:", existingReview.id);
+        console.log("Full review data:", reviewData);
+        
         const response = await updateProductReview(reviewData);
+        console.log("Update response:", response);
         toast.success("Review updated successfully!");
       } else {
         // Submit new review
@@ -199,8 +230,9 @@ export default function OrderDetailsPage() {
           images: images
         };
 
-        console.log("Submitting review with data:", reviewData);
+        console.log("Submitting new review with data:", reviewData);
         const response = await submitProductReview(reviewData);
+        console.log("Submit response:", response);
         toast.success("Review submitted successfully!");
       }
 
@@ -213,14 +245,36 @@ export default function OrderDetailsPage() {
       
     } catch (error) {
       console.error("Error submitting review:", error);
-      console.error("Error response:", error.response?.data);
-      toast.error(error.response?.data?.message || "Failed to submit review");
+      console.error("Error response data:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      
+      if (error.response?.status === 404) {
+        toast.error("Review not found. It may have been deleted. Please submit as a new review.");
+        setExistingReview(null); // Switch to new review mode
+      } else if (error.response?.data?.message?.includes("Attempt to assign property")) {
+        toast.error("Review not found. Please submit as a new review.");
+        setExistingReview(null); // Switch to new review mode
+      } else if (error.response?.data?.errors) {
+        // Show validation errors
+        const errors = error.response.data.errors;
+        const errorMessages = Object.values(errors).flat();
+        toast.error(errorMessages[0] || "Validation error");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to submit review");
+      }
     } finally {
       setReviewLoading(false);
     }
   };
 
   const handleCloseModal = () => {
+    // Clean up object URLs to prevent memory leaks
+    previewImages.forEach(img => {
+      if (!img.isExisting && img.url.startsWith('blob:')) {
+        URL.revokeObjectURL(img.url);
+      }
+    });
+    
     setShowReviewModal(false);
     setSelectedProduct(null);
     setExistingReview(null);
@@ -236,7 +290,7 @@ export default function OrderDetailsPage() {
     for (let i = 1; i <= 5; i++) {
       stars.push(
         <button
-          key={`star-${i}`}
+          key={`star-${i}-${Date.now()}`}
           type="button"
           onClick={() => setRating(i)}
           className="btn btn-link p-0 border-0"
@@ -340,7 +394,7 @@ export default function OrderDetailsPage() {
                     </thead>
                     <tbody>
                       {details.map((item, idx) => (
-                        <tr key={`product-${item.id || idx}`}>
+                        <tr key={`product-${item.id || idx}-${Date.now()}`}>
                           <td>
                             <img
                               src={item.product_details?.thumbnail_full_url?.path || "/placeholder.png"}
@@ -526,7 +580,7 @@ export default function OrderDetailsPage() {
                     <div className="mt-3">
                       <div className="row g-2">
                         {previewImages.map((img) => (
-                          <div key={`preview-${img.id}`} className="col-3">
+                          <div key={`preview-${img.id || `img-${Date.now()}-${Math.random()}`}`} className="col-3">
                             <div className="position-relative">
                               <img
                                 src={img.url}
