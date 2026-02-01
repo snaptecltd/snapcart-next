@@ -78,6 +78,18 @@ body {
   padding: 0;
   margin: 0;
 }
+
+.carousel-indicators .active.active {
+    background-color: var(--primary-color)!important;
+    width: 50px!important;
+    height: 10px!important;
+}
+.carousel-indicators [data-bs-target] {
+    border-radius: 50%!important;
+    width: 12px!important;
+    height: 8px!important;
+    transition: 0.8s all!important;
+}
 /* Default (mobile) */
 
 /* small screen  */
