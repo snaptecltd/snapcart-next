@@ -16,19 +16,19 @@ export default function ProductCard({ p }) {
     "/placeholder.png";
 
   const name = p?.name || "Product";
-  const price = p?.unit_price ?? 0;
+  const oldPrice = p?.unit_price ?? 0;
   const discount = p?.discount ?? 0;
   const discountType = p?.discount_type;
   const currentStock = p?.current_stock ?? 0;
 
-  let oldPrice = null;
+  let price = oldPrice;
   let saveText = null;
 
   if (discountType === "flat" && discount > 0) {
-    oldPrice = price + discount;
+    price = oldPrice - discount;
     saveText = `${moneyBDT(discount)} OFF`;
   } else if (discountType === "percent" && discount > 0) {
-    oldPrice = Math.round(price / (1 - discount / 100));
+    price = Math.round(oldPrice / (1 - discount / 100));
     saveText = `${discount}% OFF`;
   }
 
