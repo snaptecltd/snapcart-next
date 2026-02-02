@@ -160,16 +160,30 @@ export default function Cart() {
     }
   }, [shippingMethodId]);
 
-  // ==================== Calculate subtotal and total ====================
+  // ==================== Calculate subtotal, item discount, total cart items, and total ====================
   const subtotal = Array.isArray(cart)
     ? cart.reduce((sum, item) => {
         if (!item || typeof item.price !== "number" || typeof item.quantity !== "number") return sum;
         return sum + (item.price * item.quantity);
       }, 0)
     : 0;
-
+  // Sum of all per-item discounts (if item.discount exists)
+  const itemDiscount = Array.isArray(cart)
+    ? cart.reduce((sum, item) => {
+        if (!item || typeof item.discount !== "number" || typeof item.quantity !== "number") return sum;
+        return sum + (item.discount * item.quantity);
+      }, 0)
+    : 0;
+  // Total cart items (sum of all quantities)
+  const totalCartItems = Array.isArray(cart)
+    ? cart.reduce((sum, item) => {
+        if (!item || typeof item.quantity !== "number") return sum;
+        return sum + item.quantity;
+      }, 0)
+    : 0;
   const couponDiscount = couponApplied?.coupon_discount || 0;
-  const total = Math.max(0, subtotal - couponDiscount);
+  // Calculate total: subtotal - itemDiscount - couponDiscount
+  const total = Math.max(0, subtotal - itemDiscount - couponDiscount);
 
   // ==================== Save cart summary to localStorage ====================
   useEffect(() => {
@@ -342,6 +356,12 @@ export default function Cart() {
               <td className="fw-bold">{subtotal.toLocaleString()} BDT</td>
               <td></td>
             </tr>
+            {/* Item Discount row */}
+            <tr>
+              <td colSpan={4} className="text-end fw-bold text-primary">Item Discount:</td>
+              <td className="fw-bold text-primary">- {itemDiscount.toLocaleString()} BDT</td>
+              <td></td>
+            </tr>
             {/* Discount row if coupon applied */}
             {couponApplied && couponApplied.coupon_discount > 0 && (
               <tr>
@@ -435,6 +455,14 @@ export default function Cart() {
             <div className="d-flex justify-content-between mb-2">
               <span className="fw-bold">Subtotal:</span>
               <span>{subtotal.toLocaleString()} BDT</span>
+            </div>
+            <div className="d-flex justify-content-between mb-2 text-primary">
+              <span className="fw-bold">Item Discount:</span>
+              <span>- {itemDiscount.toLocaleString()} BDT</span>
+            </div>
+            <div className="d-flex justify-content-between mb-2">
+              <span className="fw-bold">Total Cart Items:</span>
+              <span>{totalCartItems}</span>
             </div>
             {couponApplied && couponApplied.coupon_discount > 0 && (
               <div className="d-flex justify-content-between mb-2 text-success">
