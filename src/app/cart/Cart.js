@@ -112,46 +112,47 @@ export default function Cart() {
   const handleShippingMethodChange = async (e) => {
     const newMethodId = e.target.value;
     const cartGroupId = selectedShipping.cartGroupId;
-    
-    // Validation চেক
+
     if (!newMethodId || !cartGroupId) {
-      toast.error("Please wait for cart data to load");
+      toast.error("You must have selected a shipping method");
       return;
     }
-    
-    // State আপডেট করুন
+
     setShippingMethodId(newMethodId);
     setSelectedShipping({
       cartGroupId: cartGroupId,
       methodId: newMethodId
     });
-    
-    // API কল করুন
+
     try {
-      console.log("Calling shipping API with:", {
-        cartGroupId,
-        shipping_method_id: newMethodId
-      });
-      
       const response = await chooseShippingForOrder(cartGroupId, newMethodId);
-      console.log("Shipping API response:", response);
-      
       if (response) {
         toast.success("Shipping method updated successfully!");
-        
-        // localStorage আপডেট করুন
         localStorage.setItem("snapcart_shipping_method_id", newMethodId);
-        
-        // cart আপডেট করুন (যদি প্রয়োজন হয়)
+        // Update cart and shipping cost immediately after change
         fetchCart();
+        // Force update shipping cost after method change
+        setTimeout(() => {
+          // Re-fetch chosen shipping cost and name
+          getChoosenShippingMethod().then(res => {
+            if (Array.isArray(res) && res.length > 0) {
+              setShippingCost(Number(res[0].shipping_cost) || 0);
+              const methodId = String(res[0].shipping_method_id);
+              setShippingMethodId(methodId);
+              const method = shippingMethods.find(m => String(m.id) === methodId);
+              setShippingCostName(method ? method.title : "Shipping");
+            } else {
+              setShippingCost(0);
+              setShippingCostName("");
+              setShippingMethodId("");
+            }
+          });
+        }, 200); // slight delay to allow backend update
       } else {
         toast.error(response?.message || "Failed to update shipping method");
       }
     } catch (error) {
-      console.error("Shipping method change error:", error);
       toast.error("Failed to update shipping method. Please try again.");
-      
-      // Error হলে পূর্বের state-এ ফিরে যান
       setShippingMethodId(selectedShipping.methodId);
     }
   };
