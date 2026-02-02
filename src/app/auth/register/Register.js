@@ -67,11 +67,23 @@ export default function Register() {
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
-  const filteredCountryCodes = (countryCodes || []).filter((c) => {
-    if (!ccSearch) return true;
-    const s = ccSearch.toLowerCase();
-    return c.name.toLowerCase().includes(s) || c.code.toString().includes(s);
-  });
+  // Deduplicate by code+name, sort by name, then filter by search
+  const filteredCountryCodes = (() => {
+    const list = Array.isArray(countryCodes) ? countryCodes : [];
+    const map = new Map();
+    list.forEach((c) => {
+      const key = `${c.code}-${c.name}`;
+      if (!map.has(key)) map.set(key, c);
+    });
+    const uniq = Array.from(map.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+    const s = (ccSearch || "").trim().toLowerCase();
+    if (!s) return uniq;
+    return uniq.filter(
+      (c) => c.name.toLowerCase().includes(s) || c.code.toString().includes(s)
+    );
+  })();
 
   // Validation logic
   const validate = () => {
@@ -236,20 +248,31 @@ export default function Register() {
                     left: 0,
                     top: "100%",
                     zIndex: 1100,
-                    width: 320,
+                    width: "min(420px, calc(100vw - 32px))",
                     marginTop: 8,
                     padding: 8,
                   }}
                 >
-                  <input
-                    type="text"
-                    className="form-control form-control-sm mb-2"
-                    placeholder="Search"
-                    value={ccSearch}
-                    onChange={(e) => setCcSearch(e.target.value)}
-                    autoFocus
-                  />
-                  <div style={{ maxHeight: 220, overflowY: "auto" }}>
+                  <div className="d-flex align-items-center mb-2">
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      placeholder="Search country or code"
+                      value={ccSearch}
+                      onChange={(e) => setCcSearch(e.target.value)}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-light ms-2"
+                      onClick={() => setCcSearch("")}
+                      title="Clear"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="small text-muted mb-2">Showing {filteredCountryCodes.length} items</div>
+                  <div style={{ maxHeight: 360, overflowY: "auto" }}>
                     {filteredCountryCodes.length === 0 ? (
                       <div className="p-2 text-muted">No results</div>
                     ) : (
@@ -411,6 +434,9 @@ export default function Register() {
         }
         .cc-dropdown button:hover {
           background: #f8f9fa;
+        }
+        .cc-dropdown .form-control-sm {
+          width: calc(100% - 70px);
         }
       `}</style>
     </div>
