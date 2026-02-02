@@ -7,7 +7,7 @@ import { getBottomTextCards } from "@/lib/api/global.service";
 
 export default function BottomTextCard() {
   const [cards, setCards] = useState([]);
-  const [banner, setBanner] = useState(null);
+  const [banners, setBanners] = useState([]);
 
   // Fetch the bottom text cards and banner data
   const { data, error, isLoading } = useSWR("get-bottom-text-cards", getBottomTextCards, {
@@ -17,7 +17,7 @@ export default function BottomTextCard() {
 
   useEffect(() => {
     if (data) {
-      setBanner(data.banner);
+      setBanners(Array.isArray(data.banner) ? data.banner : data.banner ? [data.banner] : []);
       setCards(data.cards);
     }
   }, [data]);
@@ -43,18 +43,60 @@ export default function BottomTextCard() {
           </div>
 
           <div className="col-12 col-md-4 mb-2">
-            {/* Banner in the middle */}
+            {/* Banner in the middle as Bootstrap Carousel */}
             <div className="position-relative overflow-hidden rounded-3" style={{ height: "100%" }}>
-              {banner ? (
-                <img
-                  src={banner.photo_full_url.path}
-                  alt="Banner"
-                  className="w-100"
-                  style={{
-                    objectFit: "cover",
-                    height: "100%", // Ensures the image takes full height of the column without stretching
-                  }}
-                />
+              {banners.length > 0 ? (
+                <div id="bottomTextBannerCarousel" className="carousel slide h-100" data-bs-ride="carousel">
+                  <div className="carousel-inner h-100">
+                    {banners.map((banner, idx) => (
+                      <div
+                        className={`carousel-item h-100${idx === 0 ? " active" : ""}`}
+                        key={banner.id || idx}
+                      >
+                        <a href={banner.url || "#"} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={banner.photo_full_url?.path}
+                            alt={banner.title || "Banner"}
+                            className="w-100"
+                            style={{
+                              objectFit: "cover",
+                              height: "100%",
+                              minHeight: 180,
+                              borderRadius: "0.5rem"
+                            }}
+                          />
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                  {banners.length > 1 && (
+                    <>
+                      <button className="carousel-control-prev" type="button" data-bs-target="#bottomTextBannerCarousel" data-bs-slide="prev" style={{ width: 32 }}>
+                        <span className="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span className="visually-hidden">Previous</span>
+                      </button>
+                      <button className="carousel-control-next" type="button" data-bs-target="#bottomTextBannerCarousel" data-bs-slide="next" style={{ width: 32 }}>
+                        <span className="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span className="visually-hidden">Next</span>
+                      </button>
+                    </>
+                  )}
+                  {banners.length > 1 && (
+                    <div className="carousel-indicators" style={{ bottom: 8 }}>
+                      {banners.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          data-bs-target="#bottomTextBannerCarousel"
+                          data-bs-slide-to={idx}
+                          className={idx === 0 ? "active" : ""}
+                          aria-current={idx === 0 ? "true" : undefined}
+                          aria-label={`Slide ${idx + 1}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div
                   className="d-flex justify-content-center align-items-center bg-light"
