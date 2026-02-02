@@ -19,23 +19,19 @@ export default function PaymentPage() {
   
   // Cart summary states
   const [subtotal, setSubtotal] = useState(0);
+  const [itemDiscount, setItemDiscount] = useState(0);
   const [shipping, setShipping] = useState(0);
+  const [shippingName, setShippingName] = useState("Shipping");
   const [discount, setDiscount] = useState(0);
   const [shippingMethodId, setShippingMethodId] = useState(null);
 
   // Load cart summary from localStorage
   useEffect(() => {
     setSubtotal(Number(localStorage.getItem("snapcart_cart_subtotal") || 0));
+    setItemDiscount(Number(localStorage.getItem("snapcart_cart_item_discount") || 0));
     setShipping(Number(localStorage.getItem("snapcart_cart_shipping") || 0));
-    
-    try {
-      const stored = localStorage.getItem("snapcart_coupon_applied");
-      if (stored) {
-        const c = JSON.parse(stored);
-        setDiscount(Number(c.coupon_discount || 0));
-      }
-    } catch {}
-    
+    setShippingName(localStorage.getItem("snapcart_cart_shipping_name") || "Shipping");
+    setDiscount(Number(localStorage.getItem("snapcart_cart_discount") || 0));
     setShippingMethodId(localStorage.getItem("snapcart_shipping_method_id") || "");
   }, []);
 
@@ -46,7 +42,7 @@ export default function PaymentPage() {
       .catch(() => setOfflineMethods([]));
   }, []);
 
-  const total = Math.max(0, subtotal + shipping - discount);
+  const total = Math.max(0, subtotal - itemDiscount - discount + shipping);
 
   // Handle offline payment field change
   const handleOfflineFieldChange = (input, value) => {
@@ -353,13 +349,15 @@ const clearCheckoutLocalStorage = () => {
               <span>৳{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
             <div className="mb-3 d-flex justify-content-between">
-              <span>Shipping</span>
-              <span>৳{shipping.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <span>Item Discount</span>
+              <span className="text-primary">- ৳{itemDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
-            <div className="mb-3 d-flex justify-content-between">
-              <span>Discount on product</span>
-              <span>- ৳{discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
+            {shipping > 0 && (
+              <div className="mb-3 d-flex justify-content-between">
+                <span>{shippingName}</span>
+                <span>+ ৳{shipping.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+            )}
             <div className="mb-3 d-flex justify-content-between fw-bold fs-5">
               <span>Total</span>
               <span>৳{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
