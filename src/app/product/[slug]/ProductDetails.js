@@ -458,6 +458,20 @@ export default function ProductDetails() {
   // FAQ
   const faqs = parseFaqs(product.faqs);
 
+  // Review breakdown helper
+  function getRatingBreakdown(reviews) {
+    const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    (reviews || []).forEach(r => {
+      const rating = Math.round(Number(r.rating));
+      if (breakdown[rating] !== undefined) breakdown[rating]++;
+    });
+    return breakdown;
+  }
+  const reviews = product.reviews || [];
+  const reviewsCount = Number(product.reviews_count) || reviews.length;
+  const averageReview = Number(product.average_review) || 0;
+  const ratingBreakdown = getRatingBreakdown(reviews);
+
   return (
     <div className="container py-4">
       {/* Breadcrumb */}
@@ -846,7 +860,7 @@ export default function ProductDetails() {
             </div>
           </div>
         </div>
-      </div>      {/* Tabs: Specification, Description, FAQ */}
+      </div>      {/* Tabs: Specification, Description, FAQ, Reviews */}
       <div className="row mt-5">
         <div className="col-12 col-lg-8">
             <div className="d-flex gap-2 mb-4 flex-wrap">
@@ -875,8 +889,17 @@ export default function ProductDetails() {
             >
                 FAQ
             </button>
-        </div>
-        <div className="bg-whitep-4">
+            {reviewsCount > 0 && (
+              <button
+                className={`btn ${tab === "reviews" ? "btn-warning text-white" : "btn-outline-light border"} fw-semibold nav-btn`}
+                style={{ borderRadius: 8, minWidth: 140 }}
+                onClick={() => setTab("reviews")}
+              >
+                Reviews
+              </button>
+            )}
+          </div>
+          <div className="bg-whitep-4">
             {tab === "spec" && hasSpec && (
             <>
                 <h4 className="fw-bold mb-3">Specification</h4>
@@ -934,7 +957,80 @@ export default function ProductDetails() {
                 )}
             </>
             )}
-        </div>
+           {tab === "reviews" && (
+             <div>
+               <div className="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                 <div className="d-flex align-items-center gap-4">
+                   <div style={{ fontSize: 48, fontWeight: 700, color: "#222" }}>
+                     {averageReview.toFixed(2)}
+                   </div>
+                   <div>
+                     <div style={{ fontSize: 24, color: "#F67535" }}>
+                       {"★".repeat(Math.round(averageReview))}{" "}
+                       <span style={{ color: "#bbb", fontSize: 18 }}>
+                         {"★".repeat(5 - Math.round(averageReview))}
+                       </span>
+                     </div>
+                     <div style={{ fontSize: 16, color: "#888" }}>
+                       {reviewsCount} Rating{reviewsCount > 1 ? "s" : ""}
+                     </div>
+                   </div>
+                 </div>
+                 <div style={{ minWidth: 200 }}>
+                   <div>Excellent <span className="ms-2">{ratingBreakdown[5]}</span></div>
+                   <div>Good <span className="ms-2">{ratingBreakdown[4]}</span></div>
+                   <div>Average <span className="ms-2">{ratingBreakdown[3]}</span></div>
+                   <div>Below Average <span className="ms-2">{ratingBreakdown[2]}</span></div>
+                   <div>Poor <span className="ms-2">{ratingBreakdown[1]}</span></div>
+                 </div>
+               </div>
+               <div className="bg-light rounded-3 py-2 px-3 mb-3 text-center fw-semibold" style={{ fontSize: 18 }}>
+                 Product Review
+               </div>
+               {reviews.length === 0 && (
+                 <div className="text-center text-muted py-5">No reviews found.</div>
+               )}
+               {reviews.map((review) => (
+                 <div key={review.id} className="d-flex align-items-start gap-3 py-3 border-bottom">
+                   <div>
+                     <img
+                       src={review.customer?.image_full_url?.path || "/user.png"}
+                       alt={review.customer?.name || "User"}
+                       style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid #eee" }}
+                     />
+                   </div>
+                   <div className="flex-grow-1">
+                     <div className="fw-bold">{review.customer?.name || "User"}</div>
+                     <div className="text-warning" style={{ fontSize: 16 }}>
+                       {"★".repeat(Math.round(review.rating))}
+                       <span className="text-muted" style={{ fontSize: 14 }}>
+                         {"★".repeat(5 - Math.round(review.rating))}
+                       </span>
+                       <span className="ms-2 text-dark">{review.rating} / 5</span>
+                     </div>
+                     <div className="mt-2">{review.comment}</div>
+                     {Array.isArray(review.attachment_full_url) && review.attachment_full_url.length > 0 && (
+                       <div className="d-flex gap-2 mt-2">
+                         {review.attachment_full_url.map((img, idx) => (
+                           <a key={img.key || idx} href={img.path} target="_blank" rel="noopener noreferrer">
+                             <img
+                               src={img.path}
+                               alt="Review"
+                               style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, border: "1px solid #eee" }}
+                             />
+                           </a>
+                         ))}
+                       </div>
+                     )}
+                   </div>
+                   <div className="text-end text-muted" style={{ minWidth: 100 }}>
+                     {review.created_at ? new Date(review.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" }) : ""}
+                   </div>
+                 </div>
+               ))}
+             </div>
+           )}
+          </div>
         </div>
         <div className="col-12 col-lg-4">
             {/* recently viewed products place holder */}
@@ -1232,6 +1328,9 @@ export default function ProductDetails() {
           border-radius: 6px;
           margin-left: 6px;
         }
+     .review-img-thumb:hover {
+       box-shadow: 0 0 0 2px #F67535;
+     }
       `}</style>
     </div>
   );
