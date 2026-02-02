@@ -31,19 +31,31 @@ export default function Register() {
   const [ccOpen, setCcOpen] = useState(false);
   const [ccSearch, setCcSearch] = useState("");
 
-  // small mapping for flagcdn country ISO by common name tokens
-  const isoMap = {
-    uk: "gb",
-    usa: "us",
-    algeria: "dz",
-    andorra: "ad",
-    bangladesh: "bd",
+  // Prefer a mapping from telephone country code -> ISO2 (used by flagcdn)
+  const telephoneToIso = {
+    "1": "us", "7": "ru", "20": "eg", "27": "za", "30": "gr", "31": "nl",
+    "32": "be", "33": "fr", "34": "es", "36": "hu", "39": "it", "40": "ro",
+    "44": "gb", "49": "de", "52": "mx", "54": "ar", "55": "br", "61": "au",
+    "62": "id", "63": "ph", "64": "nz", "65": "sg", "66": "th", "81": "jp",
+    "82": "kr", "84": "vn", "86": "cn", "91": "in", "92": "pk", "93": "af",
+    "94": "lk", "95": "mm", "98": "ir", "213": "dz", "376": "ad", "880": "bd",
+    "971": "ae"
   };
-  const getIso = (name = "") => {
-    const key = name.split(" ")[0].replace(/[()+]/g, "").toLowerCase();
-    return isoMap[key] || key.slice(0, 2) || "bd";
-  };
-  const getFlagUrl = (name) => `https://flagcdn.com/24x18/${getIso(name)}.png`;
+  // small name token fallback for very common tokens
+  const nameTokenIso = { uk: "gb", usa: "us", bangladesh: "bd" };
+  // transparent placeholder to avoid repeated fallback to a specific country flag
+  const placeholderFlag = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+  
+  function getFlagUrlByCode(code, name = "") {
+    if (code != null) {
+      const iso = telephoneToIso[String(code)];
+      if (iso) return `https://flagcdn.com/24x18/${iso}.png`;
+    }
+    const token = (name || "").split(" ")[0].replace(/[()+]/g, "").toLowerCase();
+    const iso2 = nameTokenIso[token];
+    if (iso2) return `https://flagcdn.com/24x18/${iso2}.png`;
+    return placeholderFlag;
+  }
 
   useEffect(() => {
     if (ccData?.country_codes && Array.isArray(ccData.country_codes)) {
@@ -229,11 +241,11 @@ export default function Register() {
                 style={{ gap: 8, border: "1px solid #dee2e6", borderRight: 0 }}
               >
                 <img
-                  src={getFlagUrl(selectedCountry?.name)}
+                  src={getFlagUrlByCode(selectedCountry?.code, selectedCountry?.name)}
                   alt="flag"
                   width={24}
                   height={18}
-                  onError={(e) => (e.currentTarget.src = "https://flagcdn.com/24x18/bd.png")}
+                  onError={(e) => (e.currentTarget.src = placeholderFlag)}
                 />
                 <span className="ms-2">+{selectedCountry?.code || "880"}</span>
                 <i className="fa fa-caret-down ms-2" />
@@ -288,11 +300,11 @@ export default function Register() {
                           }}
                         >
                           <img
-                            src={getFlagUrl(cc.name)}
+                            src={getFlagUrlByCode(cc.code, cc.name)}
                             alt=""
                             width={20}
                             height={14}
-                            onError={(e) => (e.currentTarget.src = "https://flagcdn.com/24x18/bd.png")}
+                            onError={(e) => (e.currentTarget.src = placeholderFlag)}
                             className="me-2"
                           />
                           <div className="flex-grow-1">{cc.name}</div>
