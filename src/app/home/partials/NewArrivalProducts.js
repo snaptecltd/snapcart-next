@@ -8,7 +8,10 @@ import { getNewArrivalProducts } from "@/lib/api/global.service";
 
 export default function NewArrivalProducts() {
   const [products, setProducts] = useState([]);
+  const [mounted, setMounted] = useState(false);
   const sliderRef = useRef(null);
+  useEffect(() => setMounted(true), []);
+
   // Fetch the New Arrival products data
   const { data, error, isLoading } = useSWR(
     "new-arrival-products",
@@ -34,6 +37,7 @@ export default function NewArrivalProducts() {
   };
 
   // Handle loading, error, or no data
+  if (!mounted) return null;
   if (isLoading) return null;
   if (error) return <div>Error fetching data</div>;
   if (!products || products.length === 0) return <div>No products found</div>;
@@ -77,7 +81,7 @@ export default function NewArrivalProducts() {
         >
           {products.map((product) => (
             <div
-              key={product.id}
+              key={`product-${product.id}`}
               style={{
                 minWidth: 260,
                 maxWidth: 260,

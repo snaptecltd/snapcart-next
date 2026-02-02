@@ -35,24 +35,18 @@ export default function HomeBlockBanner() {
         {banner?.photo_full_url?.path && (
           <div className="d-flex justify-content-center align-items-center">
             <div className="position-relative overflow-hidden rounded-3">
-              <img
-                src={banner.photo_full_url.path}
-                alt={banner.title || "Home Block Banner"}
-                className="w-100"
-                style={{ objectFit: "cover", height: "auto" }}
-              />
               {/* Optional: Add a clickable link */}
               {banner.url && (
                 <Link
                   href={banner.url}
-                  className="position-absolute top-50 start-50 translate-middle text-decoration-none text-light"
-                  style={{
-                    background: "rgba(0, 0, 0, 0.5)",
-                    padding: "10px 20px",
-                    borderRadius: "5px",
-                  }}
+                  className="w-100"
                 >
-                  Shop Now
+                <img
+                  src={banner.photo_full_url.path}
+                  alt={banner.title || "Home Block Banner"}
+                  className="w-100"
+                  style={{ objectFit: "cover", height: "auto" }}
+                />
                 </Link>
               )}
             </div>

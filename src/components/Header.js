@@ -133,6 +133,9 @@ export default function Header() {
     return () => window.removeEventListener("snapcart-auth-change", fetchCart);
   }, []);
 
+  // Mobile category sidebar state
+  const [mobileCatOpen, setMobileCatOpen] = useState(false);
+
   return (
     <header className={styles.snapheader}>
       {/* ================= TOP BAR ================= */}
@@ -140,20 +143,29 @@ export default function Header() {
         <div className="container">
           <div className="row align-items-center">
             {/* Logo */}
-                <div className="col-6 col-lg-2">
-                  <Link href="/" className="navbar-brand text-white fw-bold">
-                  <img
-                    src={logo}
-                    alt={config?.company_name || "Logo"}
-                    width={140}
-                    height={40}
-                    style={{ objectFit: "contain" }}
-                  />
-                  </Link>
-                </div>
+            <div className="col-6 col-lg-2 d-flex align-items-center justify-content-start">
+            {/* Mobile Category Toggler */}
+              <button
+                className="btn btn-dark border-0 d-lg-none"
+                style={{ background: "transparent", fontSize: 24 }}
+                onClick={() => setMobileCatOpen(true)}
+                aria-label="Open categories"
+              >
+                <i className="fas fa-bars"></i>
+              </button>
+              <Link href="/" className="navbar-brand text-white fw-bold">
+                <img
+                  src={logo}
+                  alt={config?.company_name || "Logo"}
+                  width={140}
+                  height={40}
+                  style={{ objectFit: "contain" }}
+                />
+              </Link>
+            </div>
 
               {/* Search */}
-            <div className="col-12 col-lg-5 order-3 order-lg-2 mt-2 mt-lg-0 position-relative">
+            <div className="col-12 col-lg-4 order-3 order-lg-2 mt-2 mt-lg-0 position-relative">
               {!showSearch ? (
                 <button
                   type="button"
@@ -202,10 +214,9 @@ export default function Header() {
                         background: "#F67535",
                         color: "#fff",
                         borderRadius: "50%",
-                        marginLeft: -48,
+                        marginLeft: -43,
                         zIndex: 2,
-                        width: 40,
-                        height: 40,
+                        height: 38,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -218,12 +229,11 @@ export default function Header() {
                   {/* Floating Modal */}
                   {mounted && searchModalOpen && (
                     <div
-                      className="shadow-lg bg-white rounded-4 p-4"
+                      className="shadow-lg bg-white rounded-4 p-4 search-modal"
                       style={{
                         position: "absolute",
                         top: "110%",
                         left: 0,
-                        width: "100%",
                         zIndex: 9999,
                         overflowY: "auto",
                         border: "1px solid #eee",
@@ -257,53 +267,57 @@ export default function Header() {
                       </div>
                       {/* Right: Trending Products & Searched */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="fw-bold mb-3">Trending Products</div>
-                        <div className="row g-3 flex-nowrap overflow-auto" style={{ flexWrap: "nowrap" }}>
-                          {/* Searched products row */}
-                          {searchValue && searched.length > 0 && (
+                        <div className="row g-3 overflow-y-auto" style={{ maxHeight: 450 }}>
+                          <style>{`
+                            .badge{
+                                font-size: 8px !important;
+                                }
+                                .fw-semibold{
+                                font-size: 14px !important;
+                                }
+                            `}
+                            </style>
+                          /* Searched products row */
+                          {searchValue && searched.length > 0 ? (
                             <>
                               <div className="col-12">
-                                <div
-                                  className="fw-semibold mb-2"
-                                  style={{ fontSize: 15 }}
-                                >
-                                  Search Results
+                                <div className="fw-semibold mb-3 text-dark" style={{ fontSize: 15 }}>
+                                  Search Results: {searched.length}
                                 </div>
-                                <div className="d-flex flex-column gap-3 overflow-auto pb-2">
+
+                                <div className="row fw-semibold m-auto">
                                   {searched.map((product) => (
                                     <div
-                                      style={{
-                                        minWidth: 180,
-                                        maxWidth: 220,
-                                        flex: "0 0 180px",
-                                      }}
+                                      className="col-6 col-md-3 col-lg-3 p-1"
                                       key={product.id}
                                     >
                                       <ProductCard product={product} />
                                     </div>
                                   ))}
                                 </div>
+
                                 <hr />
                               </div>
                             </>
-                          )}
-                          {/* Trending products */}
-                          <div className="row gap-3 overflow-auto pb-2 m-0">
-                            {trending.products.map((product) => (
-                              <div
-                                style={{
-                                  minWidth: 180,
-                                  maxWidth: 220,
-                                  flex: "0 0 180px",
-                                }}
-                                key={product.id}
-                              >
-                                <div className="col-12.col-md-3">
-                                  <ProductCard product={product} />
-                                </div>
+                          ) : (
+                            searchValue &&
+                            !searchLoading && (
+                              <div className="col-12 text-center text-muted py-4">
+                                No product found.
                               </div>
-                            ))}
+                            )
+                          )}
+
+                        <div className="col-12">
+                         <div className="fw-bold mb-3 text-dark">Trending Products</div>
+                            <div className="row fw-semibold m-auto">
+                              {trending.products.map((product) => (
+                                  <div className="col-6 col-md-3 col-lg-3 p-1" key={product.id}>
+                                    <ProductCard product={product} />
+                                  </div>
+                              ))}
                           </div>
+                        </div>
                         </div>
                         {searchLoading && (
                           <div className="text-center py-3">Searching...</div>
@@ -316,11 +330,11 @@ export default function Header() {
             </div>
 
             {/* Right links */}
-            <div className="col-6 col-lg-5 order-2 order-lg-4 text-end">
+            <div className="col-6 col-lg-6 order-2 order-lg-4 text-end">
               <div className="d-flex justify-content-end align-items-center gap-4 small">
                 <Link
                   href="/store-location"
-                  className={`text-white text-decoration-none ${styles.nav_link}`}
+                  className={`d-none d-md-flex ext-white text-decoration-none ${styles.nav_link}`}
                 >
                   Store
                 </Link>
@@ -333,8 +347,8 @@ export default function Header() {
                 </Link>
 
                 <Link
-                  href="#"
-                  className={`d-none d-md-flex text-decoration-none ${styles.nav_link} ${styles.nav_link_offers}`}
+                  href="/offers"
+                  className={`d-flex text-decoration-none ${styles.nav_link} ${styles.nav_link_offers}`}
                 >
                   🎁 Offers
                 </Link>
@@ -404,7 +418,7 @@ export default function Header() {
       </div>
 
       {/* ================= MENU BAR ================= */}
-      <nav className="navbar navbar-expand-lg navbar-light shadow-sm border-top">
+      <nav className="navbar navbar-expand-lg navbar-light shadow-sm border-top pt-2 d-none d-lg-block">
         <div className="container">
           <ul className="navbar-nav gap-lg-2 flex-wrap">
             {/* Loading state */}
@@ -494,6 +508,131 @@ export default function Header() {
           </ul>
         </div>
       </nav>
+
+      {/* Mobile Category Sidebar */}
+      {mobileCatOpen && (
+        <div>
+          <div
+            className="mobile-cat-overlay"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              background: "rgba(0,0,0,0.35)",
+              zIndex: 1200,
+            }}
+            onClick={() => setMobileCatOpen(false)}
+          />
+          <div
+            className="mobile-cat-sidebar"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "80vw",
+              maxWidth: 320,
+              height: "100vh",
+              background: "#fff",
+              zIndex: 1201,
+              boxShadow: "2px 0 16px rgba(0,0,0,0.08)",
+              overflowY: "auto",
+              transition: "left 0.2s",
+              padding: 0,
+            }}
+          >
+            <div className="d-flex justify-content-between align-items-center border-bottom px-3 py-2">
+              <div className="fw-bold">Categories & Menu</div>
+              <button
+                className="btn btn-link text-dark fs-4 p-0"
+                style={{ lineHeight: 1 }}
+                onClick={() => setMobileCatOpen(false)}
+                aria-label="Close"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="p-3">
+              <ul className="list-unstyled mb-4">
+                {categories.map((category) => (
+                  <li key={category.id} className="mb-2">
+                    <Link
+                      href={`/${category.slug}`}
+                      className="fw-semibold text-dark text-decoration-none"
+                      onClick={() => setMobileCatOpen(false)}
+                    >
+                      {category.name}
+                    </Link>
+                    {/* Children */}
+                    {category.childes?.length > 0 && (
+                      <ul className="list-unstyled ms-3 mt-1">
+                        {category.childes.map((child) => (
+                          <li key={child.id}>
+                            <Link
+                              href={`/${category.slug}/${child.slug}`}
+                              className="text-secondary text-decoration-none"
+                              onClick={() => setMobileCatOpen(false)}
+                            >
+                              {child.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <hr />
+              {/* Show hidden menu links on mobile */}
+              <div className="mb-3">
+                <Link href="/store-location" className="d-block mb-2 text-dark text-decoration-none fw-semibold" onClick={() => setMobileCatOpen(false)}><i className="fas fa-map-marker-alt me-2"></i>Store</Link>
+                <Link href="/order/preorder" className="d-block mb-2 text-dark text-decoration-none fw-semibold" onClick={() => setMobileCatOpen(false)}> <i className="fas fa-shopping-cart me-2"></i>Pre-order</Link>
+                <Link href="/compare" className="d-block mb-2 text-dark text-decoration-none fw-semibold" onClick={() => setMobileCatOpen(false)}> <i className="fas fa-exchange-alt me-2"></i>Compare</Link>
+                <Link href="/cart" className="d-block mb-2 text-dark text-decoration-none fw-semibold" onClick={() => setMobileCatOpen(false)}> <i className="fas fa-shopping-cart me-2"></i>Cart</Link>
+                
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    href="/customer"
+                    className="d-block mb-2 text-dark text-decoration-none fw-semibold"
+                    onClick={() => setMobileCatOpen(false)}
+                  >
+                    <i className="fas fa-user-circle me-2"></i>Profile
+                  </Link>
+                  <button
+                    className="d-block mb-2 text-dark text-decoration-none fw-semibold btn btn-link p-0"
+                    style={{ textAlign: "left" }}
+                    onClick={() => {
+                      setMobileCatOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <i className="fas fa-sign-out-alt me-2"></i>Logout
+                  </button>
+                </>
+              ) : <Link href="/auth/login" className="d-block mb-2 text-dark text-decoration-none fw-semibold" onClick={() => setMobileCatOpen(false)}><i className="fas fa-user me-2"></i> Login</Link>}
+              </div>
+            </div>
+          </div>
+          <style>{`
+            .mobile-cat-overlay {
+              animation: fadeInBg 0.2s;
+            }
+            .mobile-cat-sidebar {
+              animation: slideInLeft 0.2s;
+            }
+            @keyframes fadeInBg {
+              from { background: rgba(0,0,0,0); }
+              to { background: rgba(0,0,0,0.35); }
+            }
+            @keyframes slideInLeft {
+              from { left: -100vw; }
+              to { left: 0; }
+            }
+          `}</style>
+        </div>
+      )}
       <style>{`
         .search-btn:focus {
           outline: none;

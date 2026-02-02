@@ -7,6 +7,7 @@ import NewArrivalProducts from './home/partials/NewArrivalProducts';
 import HomeBlockBanner from './home/partials/HomeBlockBanner';
 import Brands from './home/partials/Brands';
 import BottomTextCard from './home/partials/BottomTextCard';
+import FeaturedDeals from './home/partials/FeaturedDeals';
 
 export const metadata = {
   title: 'Home - Snapcart',
@@ -15,7 +16,7 @@ export const metadata = {
 
 export default function HomePage() {
   return (
-    <div className="container py-5">
+    <div className="container py-4">
       <Slider />
       <CompanyLiability />
       <HomeCategories />
@@ -24,6 +25,7 @@ export default function HomePage() {
       <NewArrivalProducts />
       <HomeBlockBanner />
       <Brands />
+      <FeaturedDeals />
       <BottomTextCard />
 
     </div>

@@ -61,6 +61,16 @@ export async function getNewArrivalProducts() {
   return res.data;
 }
 
+export async function getTelephoneCountryCodes() {
+  const res = await api.get(ENDPOINTS.GET_TELEPHONE_COUNTRY_CODES);
+  return res.data;
+}
+  
+export async function getFeaturedDealProducts() {
+  const res = await api.get(ENDPOINTS.PRODUCTS_FEATURE_DEAL_PRODUCTS);
+  return res.data;
+}
+  
 export async function getHomeBlockBanner() {
   const res = await api.get(ENDPOINTS.HOME_BLOCK_BANNERS);
   return res.data;
@@ -161,37 +171,28 @@ export async function resetPassword(data) {
 
 // Cart
 export async function getCart() {
-  // Try to get token and user/guest id from localStorage
+  let headers = {};
   let params = {};
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
-      // Auth user
-      const user = localStorage.getItem("snapcart_user");
-      try {
-        const userObj = user ? JSON.parse(user) : {};
-        if (userObj?.id) params.user_id = userObj.id;
-      } catch {}
+      headers.Authorization = `Bearer ${token}`;
     } else {
-      // Guest user
       const guestId = localStorage.getItem("guest_id");
       if (guestId) params.guest_id = guestId;
     }
   }
-  const res = await api.get(ENDPOINTS.CART, { params });
+  const res = await api.get(ENDPOINTS.CART, { params, headers });
   return res.data;
 }
 
 export async function addToCart(data) {
   let payload = { ...data };
+  let headers = {};
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
-      const user = localStorage.getItem("snapcart_user");
-      try {
-        const userObj = user ? JSON.parse(user) : {};
-        if (userObj?.id) payload.user_id = userObj.id;
-      } catch {}
+      headers.Authorization = `Bearer ${token}`;
     } else {
       const guestId = localStorage.getItem("guest_id");
       if (guestId) payload.guest_id = guestId;
@@ -201,64 +202,56 @@ export async function addToCart(data) {
   Object.keys(payload).forEach(
     (k) => (payload[k] === undefined || payload[k] === null) && delete payload[k]
   );
-  const res = await api.post(ENDPOINTS.ADD_TO_CART, payload);
+  const res = await api.post(ENDPOINTS.ADD_TO_CART, payload, { headers });
   return res.data;
 }
 
 export async function updateCartItem(data) {
   let payload = { ...data };
+  let headers = {};
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
-      const user = localStorage.getItem("snapcart_user");
-      try {
-        const userObj = user ? JSON.parse(user) : {};
-        if (userObj?.id) payload.user_id = userObj.id;
-      } catch {}
+      headers.Authorization = `Bearer ${token}`;
     } else {
       const guestId = localStorage.getItem("guest_id");
       if (guestId) payload.guest_id = guestId;
     }
   }
-  const res = await api.put(ENDPOINTS.UPDATE_CART_ITEM, payload);
+  const res = await api.post(ENDPOINTS.UPDATE_CART_ITEM, payload, { headers });
   return res.data;
 }
 
 export async function removeCartItem(data) {
   let payload = { ...data };
+  let headers = {};
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
-      const user = localStorage.getItem("snapcart_user");
-      try {
-        const userObj = user ? JSON.parse(user) : {};
-        if (userObj?.id) payload.user_id = userObj.id;
-      } catch {}
+      headers.Authorization = `Bearer ${token}`;
     } else {
       const guestId = localStorage.getItem("guest_id");
       if (guestId) payload.guest_id = guestId;
     }
   }
-  const res = await api.delete(ENDPOINTS.REMOVE_CART_ITEM, payload);
+  // Correct usage: payload as 2nd arg, headers as 3rd arg
+  const res = await api.post(ENDPOINTS.REMOVE_CART_ITEM, payload, { headers });
   return res.data;
 }
 
 export async function removeAllCartItems() {
+  let headers = {};
   let payload = {};
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("snapcart_token");
     if (token) {
-      const user = localStorage.getItem("snapcart_user");
-      try {
-        const userObj = user ? JSON.parse(user) : {};
-        if (userObj?.id) payload.user_id = userObj.id;
-      } catch {}
+      headers.Authorization = `Bearer ${token}`;
     } else {
       const guestId = localStorage.getItem("guest_id");
       if (guestId) payload.guest_id = guestId;
     }
   }
-  const res = await api.delete(ENDPOINTS.REMOVE_CART_ALL_ITEMS, payload);
+  const res = await api.post(ENDPOINTS.REMOVE_CART_ALL_ITEMS, payload, { headers });
   return res.data;
 }
 
@@ -318,8 +311,17 @@ export async function getCustomerWishlist() {
 
 export async function removeFromWishlist(product_id) {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
-  const res = await api.delete(`${ENDPOINTS.CUSTOMER_WISHLIST_REMOVE}?product_id=${product_id}`, {
+  const res = await api.post(`${ENDPOINTS.CUSTOMER_WISHLIST_REMOVE}?product_id=${product_id}`, {}, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function addToWishlist(product_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  if (!token) throw new Error("Not authenticated");
+  const res = await api.post(`${ENDPOINTS.CUSTOMER_WISHLIST_ADD}?product_id=${product_id}`, {}, {
+    headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
 }
@@ -392,14 +394,26 @@ export async function getCustomerAddressList() {
 }
 
 export async function addCustomerAddress(data) {
-  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  let headers = {};
   const formData = new FormData();
+
   Object.entries(data).forEach(([key, value]) => {
     if (value !== undefined && value !== null) formData.append(key, value);
   });
+
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) formData.append("guest_id", guestId);
+    }
+  }
+
   const res = await api.post(ENDPOINTS.CUSTOMER_ADDRESS_ADD, formData, {
     headers: {
-      Authorization: token ? `Bearer ${token}` : "",
+      ...headers,
       "Content-Type": "multipart/form-data",
     },
   });
@@ -408,9 +422,34 @@ export async function addCustomerAddress(data) {
 
 export async function deleteCustomerAddress(address_id) {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
-  const res = await api.delete(`${ENDPOINTS.CUSTOMER_ADDRESS_DELETE}?address_id=${address_id}`, {
+  // Pass {} as body, headers as 3rd arg
+  const res = await api.post(`${ENDPOINTS.CUSTOMER_ADDRESS_DELETE}?address_id=${address_id}`, {}, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
+  return res.data;
+}
+
+export async function getAddressDetails(address_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.GET_ADDRESS_DETAILS}?address_id=${address_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function getAddressGroupedbyType() {
+  let headers = {};
+  let params = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) params.guest_id = guestId;
+    }
+  }
+  const res = await api.get(ENDPOINTS.GET_ADDRESS_DETAILS_GROUPED, { params, headers });
   return res.data;
 }
 
@@ -443,5 +482,296 @@ export async function getCouponList() {
   const res = await api.get(ENDPOINTS.COUPON_LIST, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
+  return res.data;
+}
+
+export async function checkRestockRequest(product_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.CART_CHECK_RESTOCK}?product_id=${product_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function requestProductRestock(product_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.post(`${ENDPOINTS.CART_PRODUCT_RESTOCK}?id=${product_id}`, {}, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function getShippingMethods() {
+  const res = await api.get(ENDPOINTS.SHIPPING_METHODS);
+  return res.data;
+}
+
+export async function chooseShippingForOrder(cart_group_id, shipping_method_id) {
+  let headers = {};
+  let payload = {
+    cart_group_id,
+    id: shipping_method_id,
+  };
+  
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) payload.guest_id = guestId;
+    }
+  }
+  
+  try {
+    const res = await api.post(ENDPOINTS.CHOOSE_SHIPPING_FOR_ORDER, payload, { headers });
+    return res.data;
+  } catch (error) {
+    console.error("Shipping API error:", error);
+    throw error;
+  }
+}
+
+export async function getChoosenShippingMethod() {
+  let headers = {};
+  let params = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) params.guest_id = guestId;
+    }
+  }
+  const res = await api.get(ENDPOINTS.CHOOSEN_SHIPPING_METHOD, { params, headers });
+  return res.data;
+}
+
+export async function applyCoupon(code) {
+  let headers = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+  const res = await api.get(`${ENDPOINTS.COUPON_APPLY}?code=${encodeURIComponent(code)}`, { headers });
+  return res.data;
+}
+
+export async function getOfflinePaymentMethods() {
+  let headers = {};
+  let params = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) params.guest_id = guestId;
+    }
+  }
+  const res = await api.get(ENDPOINTS.OFFLINE_PAYMENT_METHOD_LIST, { params, headers });
+  return res.data;
+}
+
+export async function placeOrder({
+  coupon_code,
+  order_note,
+  shipping_method_id,
+  address_id,
+  billing_address_id,
+}) {
+  let headers = {};
+  let params = {
+    coupon_code,
+    order_note,
+    shipping_method_id,
+    address_id,
+    billing_address_id,
+  };
+  
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) params.guest_id = guestId;
+    }
+  }
+  
+  console.log("Order API call params:", params);
+  
+  //stop placing order to see the prams
+
+  Object.keys(params).forEach(
+    (k) => (params[k] === undefined || params[k] === null || params[k] === "") && delete params[k]
+  );
+  
+  const res = await api.get(ENDPOINTS.ORDER_PLACE, { params, headers });
+  return res.data;
+}
+
+export async function placeOrderByOfflinePayment({
+  coupon_code,
+  order_note,
+  payment_note,
+  shipping_method_id,
+  address_id,
+  billing_address_id,
+  method_id,
+  method_informations,
+}) {
+  let headers = {};
+  let payload = {
+    coupon_code,
+    order_note,
+    payment_note,
+    shipping_method_id,
+    address_id,
+    billing_address_id,
+    method_id,
+    method_informations,
+  };
+  
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) payload.guest_id = guestId;
+    }
+  }
+  
+  // Debugging জন্য
+  console.log("Offline order placing with payload:", payload);
+  
+  Object.keys(payload).forEach(
+    (k) => (payload[k] === undefined || payload[k] === null || payload[k] === "") && delete payload[k]
+  );
+  
+  const res = await api.post(ENDPOINTS.ORDER_PLACE_OFFLINE_PAYMENT, payload, { headers });
+  return res.data;
+}
+
+/* =========================
+   REVIEWS
+========================= */
+export async function getProductReviews(product_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.GET_PRODUCT_REVIEWS}?product_id=${product_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function getProductReviewByProductAndOrder(product_id, order_id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const res = await api.get(`${ENDPOINTS.GET_PRODUCT_REVIEW_BY_PRODUCT_AND_ORDER}?product_id=${product_id}&order_id=${order_id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return res.data;
+}
+
+export async function submitProductReview(data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  
+  // Append required fields
+  formData.append("product_id", data.product_id);
+  formData.append("order_id", data.order_id);
+  formData.append("comment", data.comment);
+  formData.append("rating", data.rating);
+  
+  // Append images with the correct field name 'fileUpload[]'
+  if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+    data.images.forEach((image) => {
+      if (image instanceof File) {
+        formData.append('fileUpload[]', image);
+      }
+    });
+  }
+  
+  const res = await api.post(ENDPOINTS.SUBMIT_PRODUCT_REVIEW, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function updateProductReview(data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  
+  // Append all required fields - note: backend expects 'id' not 'review_id'
+  formData.append("id", data.review_id); // Changed from review_id to id
+  formData.append("product_id", data.product_id);
+  formData.append("order_id", data.order_id);
+  formData.append("comment", data.comment);
+  formData.append("rating", data.rating);
+  
+  // Append new images with the correct field name 'fileUpload[]'
+  if (data.new_images && Array.isArray(data.new_images) && data.new_images.length > 0) {
+    data.new_images.forEach((image, index) => {
+      if (image instanceof File) {
+        formData.append('fileUpload[]', image); // Keep as array notation
+      }
+    });
+  }
+  
+  // Append deleted image IDs if needed (backend might handle this differently)
+  if (data.deleted_images && Array.isArray(data.deleted_images) && data.deleted_images.length > 0) {
+    data.deleted_images.forEach((imageId, index) => {
+      formData.append(`deleted_images[${index}]`, imageId);
+    });
+  }
+  
+  console.log("Update review data being sent:", {
+    id: data.review_id, // This will be sent as 'id'
+    product_id: data.product_id,
+    order_id: data.order_id,
+    comment: data.comment,
+    rating: data.rating,
+    new_images_count: data.new_images?.length || 0,
+    deleted_images_count: data.deleted_images?.length || 0
+  });
+  
+  const res = await api.post(ENDPOINTS.UPDATE_PRODUCT_REVIEW, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function deleteReviewImage(review_id, image_name) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  const formData = new FormData();
+  
+  formData.append("id", review_id);
+  formData.append("name", image_name);
+  
+  console.log("Deleting review image:", { review_id, image_name });
+  
+  const res = await api.post(ENDPOINTS.DELETE_REVIEW_IMAGE, formData, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function getEmiBanks() {
+  const res = await api.get(ENDPOINTS.EMI_BANKS);
+  return res.data;
+}
+
+export async function getOffersType() {
+  const res = await api.get(ENDPOINTS.OFFERS_TYPE);
   return res.data;
 }

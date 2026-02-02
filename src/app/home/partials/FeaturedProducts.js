@@ -10,6 +10,7 @@ import {
   getBestSellingProducts,
   getTopRatedProducts,
 } from "@/lib/api/global.service";
+import { useRouter } from "next/navigation";
 
 const TABS = [
   { key: "featured", label: "BEST DEALS", fetcher: getFeaturedProducts },
@@ -18,8 +19,21 @@ const TABS = [
 ];
 
 export default function FeaturedProducts() {
+  const router = useRouter();
   const [active, setActive] = useState("featured");
   const sliderRef = useRef(null);
+
+  // Remove syncTabWithHash logic
+
+  // When tab changes, update hash in URL
+  // (Optional: If you want to remove hash update too, remove this effect)
+  // If you want to keep hash update, leave this effect
+  // If you want to remove hash update, comment out or delete below:
+  // useEffect(() => {
+  //   if (typeof window !== "undefined") {
+  //     window.location.hash = `products-${active}`;
+  //   }
+  // }, [active]);
 
   const activeTab = useMemo(() => TABS.find((t) => t.key === active) ?? TABS[0], [active]);
 
@@ -38,14 +52,16 @@ export default function FeaturedProducts() {
   const scrollByCards = (dir = 1) => {
     const el = sliderRef.current;
     if (!el) return;
-    // visible width অনুযায়ী scroll
     const amount = Math.round(el.clientWidth * 0.9) * dir;
     el.scrollBy({ left: amount, behavior: "smooth" });
   };
 
   return (
     <section className="py-4 py-md-5">
-      <div className="container">
+      <div
+        className="container"
+        id={`products-${activeTab.key}`}
+      >
         {/* Header row: Title + arrows */}
         <div className="d-flex align-items-start justify-content-between gap-3">
           <SectionTitle first="Featured" highlight="Products" />
@@ -82,6 +98,7 @@ export default function FeaturedProducts() {
                   isActive ? "btn-dark" : "btn-light border"
                 }`}
                 onClick={() => setActive(t.key)}
+                id={`tab-${t.key}`}
               >
                 {t.label}
               </button>

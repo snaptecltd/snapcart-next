@@ -36,7 +36,7 @@ export default function CompanyLiability() {
     <section className="py-3">
       <div className="container p-0">
         {/* Outer rounded box */}
-        <div className="border rounded-4 bg-white px-3 px-md-4 py-3 shadow-sm">
+        <div className="border rounded-3 bg-gray px-3 px-md-4 py-4 shadow-sm">
           <div className="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between gap-3 gap-md-4">
             {items.map((it, idx) => {
               const icon = ICON_MAP[it.item] || "fa-star";

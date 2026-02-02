@@ -10,11 +10,11 @@ export default function Preorder() {
     email: "",
     phone_number: "",
     address: "",
-    product_image: null,
+    product_image: [], // now an array
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imagePreview, setImagePreview] = useState([]); // array of previews
   const fileInputRef = useRef();
 
   // Validation
@@ -26,7 +26,7 @@ export default function Preorder() {
     else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(form.email)) newErrors.email = "Invalid email.";
     if (!form.phone_number) newErrors.phone_number = "Phone number is required.";
     if (!form.address) newErrors.address = "Address is required.";
-    if (!form.product_image) newErrors.product_image = "Product image is required.";
+    if (!form.product_image || form.product_image.length === 0) newErrors.product_image = "At least one product image is required.";
     return newErrors;
   };
 
@@ -46,30 +46,50 @@ export default function Preorder() {
   // Allowed image types
   const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
 
-  // Handle image upload
+  // Handle image upload (multiple)
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files);
+    const validFiles = [];
+    const previews = [];
+    let error = "";
+    files.forEach((file) => {
       if (!allowedTypes.includes(file.type)) {
-        setErrors((prev) => ({
-          ...prev,
-          product_image: "Only JPG, JPEG, PNG, GIF, WEBP images are allowed.",
-        }));
-        setForm((prev) => ({ ...prev, product_image: null }));
-        setImagePreview(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-        return;
+        error = "Only JPG, JPEG, PNG, GIF, WEBP images are allowed.";
+      } else {
+        validFiles.push(file);
+        previews.push(URL.createObjectURL(file));
       }
-      setForm((prev) => ({ ...prev, product_image: file }));
-      setImagePreview(URL.createObjectURL(file));
-      setErrors((prev) => ({ ...prev, product_image: undefined }));
+    });
+    if (error) {
+      setErrors((prev) => ({
+        ...prev,
+        product_image: error,
+      }));
+      setForm((prev) => ({ ...prev, product_image: [] }));
+      setImagePreview([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
     }
+    setForm((prev) => ({ ...prev, product_image: validFiles }));
+    setImagePreview(previews);
+    setErrors((prev) => ({ ...prev, product_image: undefined }));
   };
 
-  // Remove image
-  const handleRemoveImage = () => {
-    setForm((prev) => ({ ...prev, product_image: null }));
-    setImagePreview(null);
+  // Remove single image
+  const handleRemoveImage = (idx) => {
+    setForm((prev) => ({
+      ...prev,
+      product_image: prev.product_image.filter((_, i) => i !== idx),
+    }));
+    setImagePreview((prev) => prev.filter((_, i) => i !== idx));
+    // Reset input if all removed
+    if (fileInputRef.current && form.product_image.length === 1) fileInputRef.current.value = "";
+  };
+
+  // Remove all images
+  const handleRemoveAllImages = () => {
+    setForm((prev) => ({ ...prev, product_image: [] }));
+    setImagePreview([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -90,10 +110,10 @@ export default function Preorder() {
       formData.append("email", form.email);
       formData.append("phone_number", form.phone_number);
       formData.append("address", form.address);
-      // Only append if product_image is a File
-      if (form.product_image instanceof File) {
-        formData.append("product_image", form.product_image);
-      }
+      // Append all images
+      form.product_image.forEach((img) => {
+        if (img instanceof File) formData.append("product_image[]", img);
+      });
 
       await submitPreOrder(formData);
       toast.success("Thank you! One of our agents will contact you soon.");
@@ -103,9 +123,9 @@ export default function Preorder() {
         email: "",
         phone_number: "",
         address: "",
-        product_image: null,
+        product_image: [],
       });
-      setImagePreview(null);
+      setImagePreview([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
       // API returns { errors: { field: [msg] } }
@@ -127,7 +147,7 @@ export default function Preorder() {
   return (
     <div className="container py-5">
       <h2 className="fw-bold text-center mb-4" style={{ fontSize: "2.5rem" }}>
-        Looking for Somethings Different?
+        Looking for Something Different?
       </h2>
       <form onSubmit={handleSubmit} className="mx-auto" style={{ maxWidth: 600 }}>
         <div className="mb-3">
@@ -210,7 +230,7 @@ export default function Preorder() {
             className={`border rounded-3 p-3 d-flex flex-column align-items-center justify-content-center ${errors.product_image ? "border-danger" : "border-secondary"}`}
             style={{ minHeight: 150, background: "#fafafa" }}
           >
-            {!imagePreview ? (
+            {imagePreview.length === 0 ? (
               <>
                 <input
                   type="file"
@@ -219,28 +239,53 @@ export default function Preorder() {
                   style={{ maxWidth: 300 }}
                   ref={fileInputRef}
                   onChange={handleImageChange}
+                  multiple
                 />
                 <div className="text-muted small mt-2">
-                  Click here to upload image
+                  Click here to upload image(s)
                 </div>
               </>
             ) : (
-              <div className="text-center">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }}
-                />
-                <div className="fw-semibold mt-2">Image Uploaded</div>
-                <div className="text-muted small mb-2">
-                  Click here to upload another image
+              <div className="text-center w-100">
+                <div className="d-flex flex-wrap justify-content-center gap-2 mb-2">
+                  {imagePreview.map((src, idx) => (
+                    <div key={idx} style={{ position: "relative", display: "inline-block" }}>
+                      <img
+                        src={src}
+                        alt={`Preview ${idx + 1}`}
+                        style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-link text-danger p-0"
+                        style={{ position: "absolute", top: 2, right: 2, fontSize: 16 }}
+                        onClick={() => handleRemoveImage(idx)}
+                        title="Remove"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
                 </div>
+                <div className="fw-semibold mt-2">Image(s) Uploaded</div>
+                <div className="text-muted small mb-2">
+                  Click below to upload more or remove all
+                </div>
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                  className="form-control mt-2"
+                  style={{ maxWidth: 300 }}
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  multiple
+                />
                 <button
                   type="button"
-                  className="btn btn-link text-danger p-0"
-                  onClick={handleRemoveImage}
+                  className="btn btn-link text-danger p-0 mt-2"
+                  onClick={handleRemoveAllImages}
                 >
-                  Remove
+                  Remove All
                 </button>
               </div>
             )}
@@ -262,6 +307,9 @@ export default function Preorder() {
             
             .text-secondary{
                 font-size: 14px;
+            }
+              .btn.text-danger:hover{
+                color: #dc3545!important;
             }
 
             /* Change input placeholder color */

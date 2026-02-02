@@ -7,6 +7,7 @@ import {
   deleteCustomerAddress,
 } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
+import { confirmAlert } from "@/lib/utils/alert";
 
 const ADDRESS_TYPES = [
   { label: "Permanent", value: "permanent" },
@@ -125,7 +126,16 @@ export default function AddressBookPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this address?")) return;
+    // Use SweetAlert2 for confirmation
+    const result = await confirmAlert({
+      title: "Are you sure?",
+      text: "This will be deleted!",
+    });
+
+    if (result.isConfirmed) {
+      // delete logic
+    }
+    if (!result.isConfirmed) return;
     try {
       await deleteCustomerAddress(id);
       toast.success("Address deleted!");
@@ -378,6 +388,7 @@ export default function AddressBookPage() {
         .modal-dialog {
           max-width: 700px;
         }
+          .text-danger:hover i { cursor: pointer; color: #b02a37 !important; }
       `}</style>
     </div>
   );

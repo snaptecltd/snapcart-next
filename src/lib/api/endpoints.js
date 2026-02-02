@@ -13,6 +13,8 @@ export const ENDPOINTS = {
   PRODUCTS_TOP_RATED: `${PREFIX}/products/top-rated`,
   DEAL_OF_THE_DAY: `${PREFIX}/dealsoftheday/deal-of-the-day`,
   PRODUCTS_NEW_ARRIVALS: `${PREFIX}/products/new-arrival`,
+  GET_TELEPHONE_COUNTRY_CODES: `${PREFIX}/get-telephone-country-codes`,
+  PRODUCTS_FEATURE_DEAL_PRODUCTS: `${PREFIX}/products/featured-deal-products`,
   HOME_BLOCK_BANNERS: `${PREFIX}/get-home-block-banner`,
   BRANDS: `${PREFIX}/brands`,
   BOTTOM_TEXT_CARDS: `${PREFIX}/bottom-text-cards`,
@@ -47,7 +49,15 @@ export const ENDPOINTS = {
   CUSTOMER_ORDER_LIST: `${PREFIX}/customer/order/list`,
   CUSTOMER_ORDER_DETAILS: `${PREFIX}/customer/order/details`,
 
+  // Add these review endpoints
+  GET_PRODUCT_REVIEWS: `${PREFIX}/products/reviews`,
+  SUBMIT_PRODUCT_REVIEW: `${PREFIX}/products/reviews/submit`,
+  UPDATE_PRODUCT_REVIEW: `${PREFIX}/products/review/update`,
+  GET_PRODUCT_REVIEW_BY_PRODUCT_AND_ORDER: `${PREFIX}/products/review/by/product-n-order`,
+  DELETE_REVIEW_IMAGE: `${PREFIX}/products/review/delete-image`,
+
   // wishlist endpoints
+  CUSTOMER_WISHLIST_ADD: `${PREFIX}/customer/wish-list/add`,
   CUSTOMER_WISHLIST: `${PREFIX}/customer/wish-list`,
   CUSTOMER_WISHLIST_REMOVE: `${PREFIX}/customer/wish-list/remove`,
 
@@ -62,14 +72,36 @@ export const ENDPOINTS = {
   CUSTOMER_ADDRESS_LIST: `${PREFIX}/customer/address/list`,
   CUSTOMER_ADDRESS_ADD: `${PREFIX}/customer/address/add`,
   CUSTOMER_ADDRESS_DELETE: `${PREFIX}/customer/address`,
+  GET_ADDRESS_DETAILS: `${PREFIX}/customer/address/get`,
+  GET_ADDRESS_DETAILS_GROUPED: `${PREFIX}/customer/address/grouped-by-type`,
 
   // restock endpoints
   CUSTOMER_RESTOCK_LIST: `${PREFIX}/customer/restock-requests/list`,
   CUSTOMER_RESTOCK_DELETE: `${PREFIX}/customer/restock-requests/delete`,
+  CART_CHECK_RESTOCK: `${PREFIX}/cart/check-restock-request`,
+  CART_PRODUCT_RESTOCK: `${PREFIX}/cart/product-restock-request`,
 
   // order tracking endpoint
   ORDER_TRACK: `${PREFIX}/order/track-order`,
 
   // coupon endpoints
   COUPON_LIST: `${PREFIX}/coupon/list`,
+  COUPON_APPLY: `${PREFIX}/coupon/apply`,
+  
+  // shipping methods endpoint
+  SHIPPING_METHODS: `${PREFIX}/products/shipping-methods`,
+  CHOOSE_SHIPPING_FOR_ORDER: `${PREFIX}/shipping-method/choose-for-order`, //need to pass cart_group_id and id (shipping method id)
+  CHOOSEN_SHIPPING_METHOD: `${PREFIX}/shipping-method/chosen`,
+  // offline payment methods
+  OFFLINE_PAYMENT_METHOD_LIST: `${PREFIX}/customer/order/offline-payment-method-list`,
+  
+  // order place endpoint
+  ORDER_PLACE: `${PREFIX}/customer/order/place`,
+  ORDER_PLACE_OFFLINE_PAYMENT: `${PREFIX}/customer/order/place-by-offline-payment`,
+
+  // EMI banks endpoint
+  EMI_BANKS: `${PREFIX}/products/emi-banks`,
+
+  //offers endpoint
+  OFFERS_TYPE: `${PREFIX}/products/offers-types`,
 };

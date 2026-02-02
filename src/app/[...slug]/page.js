@@ -8,6 +8,7 @@ import ProductSkeletonGrid from "@/components/shop/products/ProductSkeletonGrid"
 import PaginationBar from "@/components/shop/products/PaginationBar";
 import { filterProducts } from "@/lib/api/global.service";
 import { cleanObject, parseCSV, toCSV } from "@/lib/utils/qs";
+import { FaFilter, FaTimes } from "react-icons/fa"; // Add this if using react-icons, or use <i className="fas fa-times"></i> for fontawesome
 
 function buildFilterStateFromUrl(searchParams) {
   return {
@@ -31,6 +32,8 @@ function buildFilterStateFromUrl(searchParams) {
     page: Number(searchParams.get("page") || 1),
     limit: Number(searchParams.get("limit") || 12),
     sort: searchParams.get("sort") || "",
+    product_type: searchParams.get("product_type") || "",
+    offer_type: searchParams.get("offer_type") || "",
   };
 }
 
@@ -62,6 +65,7 @@ export default function ListingPage() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   // meta for filters (dynamic from API recommended)
   const [meta, setMeta] = useState({
@@ -78,16 +82,23 @@ export default function ListingPage() {
   }, [searchParams.toString()]);
 
   const apiFilters = useMemo(() => {
+    // Convert attrs object to { ram: "8GB,12GB", ... }
+    const attr = {};
+    Object.entries(ui.attrs || {}).forEach(([k, vals]) => {
+      if (vals?.length) attr[k] = vals.join(",");
+    });
     return cleanObject({
       keyword: ui.q || "",
       min_price: ui.min_price,
       max_price: ui.max_price,
       brand_ids: toCSV(ui.brands),
       colors: toCSV(ui.colors),
-      attrs: attrsToQuery(ui.attrs),
+      attr, // <-- send as object, not string
       offset: ui.page,
       limit: ui.limit,
       sort: ui.sort,
+      product_type: ui.product_type,
+      offer_type: ui.offer_type,
 
       // route-based slugs:
       category_slug: levels.category_slug,
@@ -114,15 +125,21 @@ export default function ListingPage() {
             image: b.image?.path
           })),
           colors: [], // Extract from attributes if needed
-          attributes: (data.facets.attributes || []).map(attr => ({
-            key: attr.key,
-            title: attr.label,
-            options: (attr.options || []).map(opt => ({
-              value: opt.value,
-              label: opt.value,
-              count: opt.count
-            }))
-          })),
+          attributes: (data.facets.attributes || [])
+            // Only show attribute groups that have at least one option with count > 0 (i.e., present in current result)
+            .filter(attr =>
+              Array.isArray(attr.options) &&
+              attr.options.some(opt => opt.count > 0)
+            )
+            .map(attr => ({
+              key: attr.key,
+              title: attr.label,
+              options: (attr.options || []).filter(opt => opt.count > 0).map(opt => ({
+                value: opt.value,
+                label: opt.value,
+                count: opt.count
+              }))
+            })),
           categories: data.facets.categories || [],
           price: data.facets.price || { min: 0, max: 0 }
         };
@@ -148,6 +165,8 @@ export default function ListingPage() {
     if (next.max_price) q.set("max_price", String(next.max_price));
     if (next.brands?.length) q.set("brands", toCSV(next.brands));
     if (next.colors?.length) q.set("colors", toCSV(next.colors));
+    if (next.product_type) q.set("product_type", next.product_type);
+    if (next.offer_type) q.set("offer_type", next.offer_type);
 
     const attrsStr = attrsToQuery(next.attrs);
     if (attrsStr) q.set("attrs", attrsStr);
@@ -214,8 +233,8 @@ export default function ListingPage() {
   return (
     <div className="container py-4">
       <div className="row g-3">
-        {/* Left Sidebar */}
-        <div className="col-12 col-lg-3">
+        {/* Left Sidebar (Desktop/LG+) */}
+        <div className="col-12 col-lg-3 d-none d-lg-block">
           <FilterSidebar
             meta={meta}
             state={ui}
@@ -233,8 +252,16 @@ export default function ListingPage() {
 
         {/* Main Content */}
         <div className="col-12 col-lg-9">
+            <div className="d-md-none d-flex flex-column mb-3">
+              <div className="fw-bold" style={{ fontSize: 18 }}>
+                Products
+              </div>
+              <div className="text-muted small">
+                Found: {total}
+              </div>
+            </div>
           <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-            <div>
+            <div className="d-none d-md-flex flex-column">
               <div className="fw-bold" style={{ fontSize: 18 }}>
                 Products
               </div>
@@ -255,6 +282,17 @@ export default function ListingPage() {
               <option value="price_desc">Price: High to Low</option>
               <option value="newest">Newest</option>
             </select>
+
+            {/* Filter Button (Mobile only) */}
+            <button
+              className="btn btn-dark d-md-none d-flex align-items-center gap-2"
+              type="button"
+              onClick={() => setMobileFilterOpen(true)}
+              style={{ minWidth: 90 }}
+            >
+              <i className="fas fa-filter"></i>
+              Filter
+            </button>
           </div>
 
           {/* Grid */}
@@ -276,6 +314,86 @@ export default function ListingPage() {
           )}
         </div>
       </div>
+
+      {/* Mobile Filter Sidebar */}
+      {mobileFilterOpen && (
+        <div className="d-lg-none">
+          <div
+            className="mobile-filter-overlay"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              background: "rgba(0,0,0,0.35)",
+              zIndex: 1200,
+              transition: "background 0.2s",
+            }}
+            onClick={() => setMobileFilterOpen(false)}
+          />
+          <div
+            className="mobile-filter-sidebar"
+            style={{
+              position: "fixed",
+              top: 0,
+              right: 0,
+              width: "90vw",
+              maxWidth: 340,
+              height: "100vh",
+              background: "#fff",
+              zIndex: 1201,
+              boxShadow: "-2px 0 16px rgba(0,0,0,0.08)",
+              overflowY: "auto",
+              transition: "right 0.2s",
+              padding: 0,
+            }}
+          >
+            <div className="d-flex justify-content-between align-items-center border-bottom px-3 py-2">
+              <div className="fw-bold">Filter</div>
+              <button
+                className="btn btn-link text-dark fs-4 p-0"
+                style={{ lineHeight: 1 }}
+                onClick={() => setMobileFilterOpen(false)}
+                aria-label="Close"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="p-3">
+              <FilterSidebar
+                meta={meta}
+                state={ui}
+                onSetPrice={onSetPrice}
+                onToggleBrand={onToggleBrand}
+                onToggleColor={onToggleColor}
+                onToggleAttr={onToggleAttr}
+                onReset={onReset}
+                onRemoveChip={onRemoveChip}
+                onToggleCategory={(slug)=>pushUrl({...ui,category:slug,page:1})}
+                onToggleSub={(slug)=>pushUrl({...ui,sub_category:slug,page:1})}
+                onToggleSubSub={(slug)=>pushUrl({...ui,sub_sub_category:slug,page:1})}
+              />
+            </div>
+          </div>
+          <style>{`
+            .mobile-filter-overlay {
+              animation: fadeInBg 0.2s;
+            }
+            .mobile-filter-sidebar {
+              animation: slideInRight 0.2s;
+            }
+            @keyframes fadeInBg {
+              from { background: rgba(0,0,0,0); }
+              to { background: rgba(0,0,0,0.35); }
+            }
+            @keyframes slideInRight {
+              from { right: -100vw; }
+              to { right: 0; }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 }
