@@ -14,6 +14,7 @@ export const ENDPOINTS = {
   DEAL_OF_THE_DAY: `${PREFIX}/dealsoftheday/deal-of-the-day`,
   PRODUCTS_NEW_ARRIVALS: `${PREFIX}/products/new-arrival`,
   PRODUCTS_FEATURE_DEAL_PRODUCTS: `${PREFIX}/products/featured-deal-products`,
+  GET_TELEPHONE_COUNTRY_CODES: `${PREFIX}/get-telephone-country-codes`,
   HOME_BLOCK_BANNERS: `${PREFIX}/get-home-block-banner`,
   BRANDS: `${PREFIX}/brands`,
   BOTTOM_TEXT_CARDS: `${PREFIX}/bottom-text-cards`,

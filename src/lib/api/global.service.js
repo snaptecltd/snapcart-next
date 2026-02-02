@@ -66,6 +66,11 @@ export async function getFeaturedDealProducts() {
   return res.data;
 }
   
+export async function getTelephoneCountryCodes() {
+  const res = await api.get(ENDPOINTS.GET_TELEPHONE_COUNTRY_CODES);
+  return res.data; // expected shape: { country_codes: [...] }
+}
+  
 export async function getHomeBlockBanner() {
   const res = await api.get(ENDPOINTS.HOME_BLOCK_BANNERS);
   return res.data;
