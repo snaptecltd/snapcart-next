@@ -167,12 +167,14 @@ export default function Cart() {
         return sum + (item.price * item.quantity);
       }, 0)
     : 0;
-  // Sum of all per-item discounts (if item.discount exists)
+  // Sum of all per-item discounts (use cart item's own discount, not product.discount)
   const itemDiscount = Array.isArray(cart)
-    ? cart.reduce((sum, item) => {
-        if (!item || typeof item.discount !== "number" || typeof item.quantity !== "number") return sum;
-        return sum + (item.discount * item.quantity);
-      }, 0)
+    ? cart
+        .filter(item => item.addons_parent == 0) // Only main products
+        .reduce((sum, item) => {
+          if (!item || typeof item.discount !== "number" || typeof item.quantity !== "number") return sum;
+          return sum + (item.discount * item.quantity);
+        }, 0)
     : 0;
   // Total cart items (sum of all quantities)
   const totalCartItems = Array.isArray(cart)
