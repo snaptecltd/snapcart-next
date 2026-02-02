@@ -486,6 +486,11 @@ useEffect(() => {
     return "Select Saved Address";
   };
 
+  useEffect(() => {
+    const token = localStorage.getItem("snapcart_token");
+    setIsGuest(!token); // If token exists, user is not a guest
+  }, []);
+
   return (
     <div className="container py-5">
       <div className="row justify-content-center">

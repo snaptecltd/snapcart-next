@@ -16,6 +16,7 @@ export default function PaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [offlineFields, setOfflineFields] = useState({});
   const [agreed, setAgreed] = useState(false);
+  const [isGuest, setIsGuest] = useState(true); // Add isGuest state
   
   // Cart summary states
   const [subtotal, setSubtotal] = useState(0);
@@ -40,6 +41,12 @@ export default function PaymentPage() {
     getOfflinePaymentMethods()
       .then(res => setOfflineMethods(res?.offline_methods || []))
       .catch(() => setOfflineMethods([]));
+  }, []);
+
+  // Check if user is guest or logged in
+  useEffect(() => {
+    const token = localStorage.getItem("snapcart_token");
+    setIsGuest(!token); // If token exists, user is not a guest
   }, []);
 
   const total = Math.max(0, subtotal - itemDiscount - discount + shipping);
