@@ -30,7 +30,7 @@ export default function Cart() {
 
   // ==================== fetchCart ফাংশন - cart_group_id পাওয়ার জন্য আপডেট করুন ====================
   const fetchCart = () => {
-    setLoading(true);
+    // setLoading(true);
     getCart()
       .then((data) => {
         console.log("Cart API response:", data); // Debug জন্য
