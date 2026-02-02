@@ -29,6 +29,10 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState({ shipping: {}, billing: {} });
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [isGuest, setIsGuest] = useState(true);
+  const [createAccount, setCreateAccount] = useState(false);
+  const [guestPassword, setGuestPassword] = useState("");
+  const [guestPasswordError, setGuestPasswordError] = useState("");
   
   // cart summary state
   const [cartSummary, setCartSummary] = useState({
@@ -288,152 +292,171 @@ useEffect(() => {
   };
 
   // Handle proceed to payment
-// Checkout.js - handleProceedToPayment ফাংশনে এই অংশটি আপডেট করুন:
-const handleProceedToPayment = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  
-  // Address validation
-  const shippingErrs = validateAddress(shipping);
-  const billingErrs = sameAsShipping ? {} : validateAddress(billing);
-  
-  setErrors({ shipping: shippingErrs, billing: billingErrs });
-  
-  if (Object.keys(shippingErrs).length || Object.keys(billingErrs).length) {
-    toast.error("Please fill all required address fields.");
-    setIsLoading(false);
-    return;
-  }
-  
-  try {
-    let shippingId = null;
-    let billingId = null;
+  const handleProceedToPayment = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
     
-    // 1. Check if we have a selected saved address
-    if (selectedAddressId && !updateAddress) {
-      shippingId = selectedAddressId;
-      console.log("Using existing shipping address ID:", shippingId);
-    } else {
-      // 2. Check if this address already exists in user's saved addresses
-      const allAddresses = getAllAddresses();
-      const existingAddress = allAddresses.find(addr => {
-        if (!addr || typeof addr !== 'object') return false;
-        
-        return (
-          addr.contact_person_name === shipping.contact_person_name &&
-          addr.phone === shipping.phone &&
-          addr.address === shipping.address &&
-          addr.city === shipping.city &&
-          addr.zip === shipping.zip &&
-          addr.country === shipping.country
-        );
-      });
-      
-      if (existingAddress && !updateAddress) {
-        // Use existing address
-        shippingId = existingAddress.id;
-        setSelectedAddressId(existingAddress.id);
-        console.log("Found existing address, using ID:", shippingId);
-      } else {
-        // Save new address
-        const newAddressResponse = await addCustomerAddress({
-          ...shipping,
-          is_billing: 0
-        });
-        
-        if (newAddressResponse && newAddressResponse.id) {
-          shippingId = newAddressResponse.id;
-          setSelectedAddressId(newAddressResponse.id);
-          
-          // Refresh address list
-          setTimeout(async () => {
-            await refreshAddressList();
-          }, 500);
-          
-          console.log("New address saved with ID:", shippingId);
-        } else {
-          toast.error("Failed to save shipping address. Please try again.");
-          setIsLoading(false);
-          return;
-        }
-      }
+    // Address validation
+    const shippingErrs = validateAddress(shipping);
+    const billingErrs = sameAsShipping ? {} : validateAddress(billing);
+    
+    setErrors({ shipping: shippingErrs, billing: billingErrs });
+    
+    if (Object.keys(shippingErrs).length || Object.keys(billingErrs).length) {
+      toast.error("Please fill all required address fields.");
+      setIsLoading(false);
+      return;
     }
     
-    // 3. Handle billing address
-    if (sameAsShipping) {
-      billingId = shippingId;
-    } else {
-      // Check for existing billing address
-      const allAddresses = getAllAddresses();
-      const existingBillingAddress = allAddresses.find(addr => {
-        if (!addr || typeof addr !== 'object') return false;
-        
-        return (
-          addr.contact_person_name === billing.contact_person_name &&
-          addr.phone === billing.phone &&
-          addr.address === billing.address &&
-          addr.city === billing.city &&
-          addr.zip === billing.zip &&
-          addr.country === billing.country
-        );
-      });
+    // Guest user: if create account checked, validate password
+    if (isGuest && createAccount) {
+      if (!guestPassword || guestPassword.length < 6) {
+        setGuestPasswordError("Password must be at least 6 characters.");
+        setIsLoading(false);
+        return;
+      }
+      setGuestPasswordError("");
+    }
+
+    try {
+      let shippingId = null;
+      let billingId = null;
       
-      if (existingBillingAddress && !updateAddress) {
-        billingId = existingBillingAddress.id;
+      // 1. Check if we have a selected saved address
+      if (selectedAddressId && !updateAddress) {
+        shippingId = selectedAddressId;
+        console.log("Using existing shipping address ID:", shippingId);
       } else {
-        // Save new billing address
-        const newBillingResponse = await addCustomerAddress({
-          ...billing,
-          is_billing: 1
+        // 2. Check if this address already exists in user's saved addresses
+        const allAddresses = getAllAddresses();
+        const existingAddress = allAddresses.find(addr => {
+          if (!addr || typeof addr !== 'object') return false;
+          
+          return (
+            addr.contact_person_name === shipping.contact_person_name &&
+            addr.phone === shipping.phone &&
+            addr.address === shipping.address &&
+            addr.city === shipping.city &&
+            addr.zip === shipping.zip &&
+            addr.country === shipping.country
+          );
         });
         
-        if (newBillingResponse && newBillingResponse.id) {
-          billingId = newBillingResponse.id;
+        if (existingAddress && !updateAddress) {
+          // Use existing address
+          shippingId = existingAddress.id;
+          setSelectedAddressId(existingAddress.id);
+          console.log("Found existing address, using ID:", shippingId);
         } else {
-          toast.error("Failed to save billing address. Please try again.");
-          setIsLoading(false);
-          return;
+          // Save new address
+          const newAddressResponse = await addCustomerAddress({
+            ...shipping,
+            is_billing: 0
+          });
+          console.log(newAddressResponse);
+          
+          if (newAddressResponse && newAddressResponse.id) {
+            shippingId = newAddressResponse.id;
+            setSelectedAddressId(newAddressResponse.id);
+            
+            // Refresh address list
+            setTimeout(async () => {
+              await refreshAddressList();
+            }, 500);
+            
+            console.log("New address saved with ID:", shippingId);
+          } else {
+            toast.error("Failed to save shipping address. Please try again.");
+            setIsLoading(false);
+            return;
+          }
         }
       }
-    }
-    
-    // 4. সংরক্ষণ করুন localStorage-এ
-    localStorage.setItem("snapcart_checkout_shipping_id", shippingId);
-    localStorage.setItem("snapcart_checkout_billing_id", billingId);
-    localStorage.setItem("snapcart_same_as_shipping", sameAsShipping.toString());
-    
-    // Address objects also save for reference
-    localStorage.setItem("snapcart_checkout_shipping_address", JSON.stringify({
-      ...shipping,
-      id: shippingId
-    }));
-    
-    if (sameAsShipping) {
-      localStorage.setItem("snapcart_checkout_billing_address", JSON.stringify({
+      
+      // 3. Handle billing address
+      if (sameAsShipping) {
+        billingId = shippingId;
+      } else {
+        // Check for existing billing address
+        const allAddresses = getAllAddresses();
+        const existingBillingAddress = allAddresses.find(addr => {
+          if (!addr || typeof addr !== 'object') return false;
+          
+          return (
+            addr.contact_person_name === billing.contact_person_name &&
+            addr.phone === billing.phone &&
+            addr.address === billing.address &&
+            addr.city === billing.city &&
+            addr.zip === billing.zip &&
+            addr.country === billing.country
+          );
+        });
+        
+        if (existingBillingAddress && !updateAddress) {
+          billingId = existingBillingAddress.id;
+        } else {
+          // Save new billing address
+          const newBillingResponse = await addCustomerAddress({
+            ...billing,
+            is_billing: 1
+          });
+          
+          if (newBillingResponse && newBillingResponse.id) {
+            billingId = newBillingResponse.id;
+          } else {
+            toast.error("Failed to save billing address. Please try again.");
+            setIsLoading(false);
+            return;
+          }
+        }
+      }
+      
+      // 4. সংরক্ষণ করুন localStorage-এ
+      localStorage.setItem("snapcart_checkout_shipping_id", shippingId);
+      localStorage.setItem("snapcart_checkout_billing_id", billingId);
+      localStorage.setItem("snapcart_same_as_shipping", sameAsShipping.toString());
+      
+      // Address objects also save for reference
+      localStorage.setItem("snapcart_checkout_shipping_address", JSON.stringify({
         ...shipping,
         id: shippingId
       }));
-    } else {
-      localStorage.setItem("snapcart_checkout_billing_address", JSON.stringify({
-        ...billing,
-        id: billingId
-      }));
+      
+      if (sameAsShipping) {
+        localStorage.setItem("snapcart_checkout_billing_address", JSON.stringify({
+          ...shipping,
+          id: shippingId
+        }));
+      } else {
+        localStorage.setItem("snapcart_checkout_billing_address", JSON.stringify({
+          ...billing,
+          id: billingId
+        }));
+      }
+      
+      // If guest and createAccount checked, save password for payment page
+      if (isGuest && createAccount) {
+        localStorage.setItem("snapcart_guest_create_account", "1");
+        localStorage.setItem("snapcart_guest_password", guestPassword);
+      } else {
+        localStorage.removeItem("snapcart_guest_create_account");
+        localStorage.removeItem("snapcart_guest_password");
+      }
+      
+      // toast.success("Address saved successfully!");
+      
+      // 5. Navigate to payment page
+      setTimeout(() => {
+        router.push("/checkout/payment");
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Error in checkout:", error);
+      toast.error("Failed to proceed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    
-    // toast.success("Address saved successfully!");
-    
-    // 5. Navigate to payment page
-    setTimeout(() => {
-      router.push("/checkout/payment");
-    }, 1000);
-    
-  } catch (error) {
-    console.error("Error in checkout:", error);
-    toast.error("Failed to proceed. Please try again.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   // Calculate total
   const subtotal = cartSummary.subtotal;
@@ -670,28 +693,41 @@ const handleProceedToPayment = async (e) => {
                 </div>
               )}
               
-              <div className="col-12">
-                <div className="form-check">
-                  <input 
-                    className="form-check-input" 
-                    type="checkbox" 
-                    id="updateAddress" 
-                    checked={updateAddress} 
-                    onChange={e => {
-                      setUpdateAddress(e.target.checked);
-                      if (e.target.checked) {
-                        setSelectedAddressId(null);
-                      }
-                    }}
-                  />
-                  <label className="form-check-label" htmlFor="updateAddress">
-                    Save as new address (don't update existing)
-                  </label>
-                  <small className="form-text text-muted d-block">
-                    Check this if you want to save a new address instead of updating the selected one.
-                  </small>
+              {/* Only show for guest user */}
+              {isGuest && (
+                <div className="col-12">
+                  <div className="form-check mb-2">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="createAccount"
+                      checked={createAccount}
+                      onChange={e => setCreateAccount(e.target.checked)}
+                    />
+                    <label className="form-check-label" htmlFor="createAccount">
+                      Create a customer account with this address
+                    </label>
+                  </div>
+                  {createAccount && (
+                    <div className="mb-2">
+                      <label className="form-label" htmlFor="guestPassword">
+                        Set Password <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        className={`form-control${guestPasswordError ? " is-invalid" : ""}`}
+                        id="guestPassword"
+                        value={guestPassword}
+                        onChange={e => setGuestPassword(e.target.value)}
+                        placeholder="Password (min 6 chars)"
+                      />
+                      {guestPasswordError && (
+                        <div className="invalid-feedback">{guestPasswordError}</div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
           </div>
           

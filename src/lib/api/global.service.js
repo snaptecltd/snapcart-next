@@ -394,14 +394,26 @@ export async function getCustomerAddressList() {
 }
 
 export async function addCustomerAddress(data) {
-  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  let headers = {};
   const formData = new FormData();
+
   Object.entries(data).forEach(([key, value]) => {
     if (value !== undefined && value !== null) formData.append(key, value);
   });
+
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) formData.append("guest_id", guestId);
+    }
+  }
+
   const res = await api.post(ENDPOINTS.CUSTOMER_ADDRESS_ADD, formData, {
     headers: {
-      Authorization: token ? `Bearer ${token}` : "",
+      ...headers,
       "Content-Type": "multipart/form-data",
     },
   });
@@ -426,10 +438,18 @@ export async function getAddressDetails(address_id) {
 }
 
 export async function getAddressGroupedbyType() {
-  const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
-  const res = await api.get(ENDPOINTS.GET_ADDRESS_DETAILS_GROUPED, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  let headers = {};
+  let params = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) params.guest_id = guestId;
+    }
+  }
+  const res = await api.get(ENDPOINTS.GET_ADDRESS_DETAILS_GROUPED, { params, headers });
   return res.data;
 }
 
