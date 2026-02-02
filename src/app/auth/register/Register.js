@@ -12,6 +12,7 @@ export default function Register() {
     f_name: "",
     l_name: "",
     email: "",
+    country_code: "",
     phone: "",
     password: "",
     confirmPassword: "",
@@ -46,14 +47,10 @@ export default function Register() {
   // transparent placeholder to avoid repeated fallback to a specific country flag
   const placeholderFlag = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
   
-  function getFlagUrlByCode(code, name = "") {
-    if (code != null) {
-      const iso = telephoneToIso[String(code)];
-      if (iso) return `https://flagcdn.com/24x18/${iso}.png`;
-    }
-    const token = (name || "").split(" ")[0].replace(/[()+]/g, "").toLowerCase();
-    const iso2 = nameTokenIso[token];
-    if (iso2) return `https://flagcdn.com/24x18/${iso2}.png`;
+  function getFlagUrlByCode(code) {
+    
+    if (code) return `https://flagsapi.com/${code}/flat/24.png`;
+    // Last resort: transparent placeholder
     return placeholderFlag;
   }
 
@@ -152,7 +149,7 @@ export default function Register() {
         l_name: form.l_name,
         email: form.email,
         phone: form.phone,
-        country_code: selectedCountry?.code || "880",
+        country_code: '+' + selectedCountry?.code || "880",
         password: form.password,
       });
       toast.success("Registration successful! Please sign in.");
@@ -241,7 +238,7 @@ export default function Register() {
                 style={{ gap: 8, border: "1px solid #dee2e6", borderRight: 0 }}
               >
                 <img
-                  src={getFlagUrlByCode(selectedCountry?.code, selectedCountry?.name)}
+                  src={getFlagUrlByCode(selectedCountry?.country_code)}
                   alt="flag"
                   width={24}
                   height={18}
@@ -300,7 +297,7 @@ export default function Register() {
                           }}
                         >
                           <img
-                            src={getFlagUrlByCode(cc.code, cc.name)}
+                            src={getFlagUrlByCode(cc.country_code)}
                             alt=""
                             width={20}
                             height={14}
