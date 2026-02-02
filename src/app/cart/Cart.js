@@ -168,25 +168,29 @@ export default function Cart() {
     async function fetchShippingCost() {
       try {
         const res = await getChoosenShippingMethod();
-        // res is array, take first item
         if (Array.isArray(res) && res.length > 0) {
           setShippingCost(Number(res[0].shipping_cost) || 0);
+          const methodId = String(res[0].shipping_method_id);
+          // Auto-select the chosen shipping method
+          setShippingMethodId(methodId);
           // Find shipping method name from shippingMethods
-          const method = shippingMethods.find(m => String(m.id) === String(res[0].shipping_method_id));
+          const method = shippingMethods.find(m => String(m.id) === methodId);
           setShippingCostName(method ? method.title : "Shipping");
         } else {
           setShippingCost(0);
           setShippingCostName("");
+          setShippingMethodId(""); // No chosen, default to ""
         }
       } catch {
         setShippingCost(0);
         setShippingCostName("");
+        setShippingMethodId(""); // On error, default to ""
       }
     }
-    if (shippingMethodId && selectedShipping.cartGroupId) {
+    if (selectedShipping.cartGroupId) {
       fetchShippingCost();
     }
-  }, [shippingMethodId, selectedShipping.cartGroupId, shippingMethods]);
+  }, [selectedShipping.cartGroupId, shippingMethods]);
 
   // ==================== Calculate subtotal, item discount, total cart items, and total ====================
   const subtotal = Array.isArray(cart)
@@ -570,8 +574,8 @@ export default function Cart() {
               ) : (
                 <select
                   className="form-select"
-                  value={shippingMethodId}
-                  onChange={handleShippingMethodChange} // এই onchange হ্যান্ডলার ব্যবহার করুন
+                  value={shippingMethodId || ""}
+                  onChange={handleShippingMethodChange}
                   required
                   disabled={!selectedShipping.cartGroupId}
                 >
