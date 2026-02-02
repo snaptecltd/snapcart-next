@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 
 const menu = [
@@ -12,23 +15,39 @@ const menu = [
   { label: "Track Order", icon: "fas fa-shipping-fast", href: "/order/tracking" },
 ];
 
-export default function Sidebar({ active }) {
+export default function MobileSidebar({ active }) {
+  const [open, setOpen] = useState(true);
+
   return (
-    <aside className="sticky-top" style={{ top: 24 }}>
-      <ul className="list-group list-group-flush shadow-sm rounded-4 py-3 bg-white">
-        {menu.map((item, idx) => (
-          <li key={item.label} className="list-group-item border-0 px-4 py-2">
-            <Link
-              href={item.href}
-              className={`d-flex align-items-center gap-3 text-decoration-none ${active === idx ? "fw-bold text-primary" : "text-dark"}`}
-              style={{ fontSize: 15 }}
-            >
-              <i className={item.icon + " me-1"} style={{ opacity: active === idx ? 1 : 0.5 }} />
-              {item.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </aside>
+    <div className="dropdown">
+      <button
+        className="btn btn-light w-100 d-flex justify-content-between align-items-center shadow-sm rounded-4"
+        type="button"
+        onClick={() => setOpen(!open)}
+      >
+        <span>
+          <i className="fas fa-user me-2" /> {menu[0].label}
+        </span>
+        <i className={`fas fa-chevron-${open ? "up" : "down"}`} />
+      </button>
+      {open && (
+        <ul className="list-group list-group-flush shadow-sm rounded-4 mt-2 bg-white">
+          {menu.map((item, idx) => (
+            <li key={item.label} className="list-group-item border-0 px-3 py-2">
+              <Link
+                href={item.href}
+                className={`d-flex align-items-center gap-3 text-decoration-none ${
+                  active === idx ? "fw-bold text-primary" : "text-dark"
+                }`}
+                style={{ fontSize: 15 }}
+              >
+                <i className={item.icon + " me-1"} style={{ opacity: active === idx ? 1 : 0.5 }} />
+                {item.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
