@@ -33,7 +33,9 @@ export default function CheckoutPage() {
   // cart summary state
   const [cartSummary, setCartSummary] = useState({
     subtotal: 0,
+    itemDiscount: 0,
     shipping: 0,
+    shippingName: "",
     discount: 0,
     total: 0,
   });
@@ -45,14 +47,18 @@ export default function CheckoutPage() {
   // Load cart summary from localStorage
   useEffect(() => {
     try {
+      // Always get the latest values from localStorage (set by Cart page)
       const subtotal = Number(localStorage.getItem("snapcart_cart_subtotal") || 0);
+      const itemDiscount = Number(localStorage.getItem("snapcart_cart_item_discount") || 0);
       const shipping = Number(localStorage.getItem("snapcart_cart_shipping") || 0);
+      const shippingName = localStorage.getItem("snapcart_cart_shipping_name") || "Shipping";
       const discount = Number(localStorage.getItem("snapcart_cart_discount") || 0);
-      const total = Number(localStorage.getItem("snapcart_cart_total") || (subtotal + shipping - discount));
-      setCartSummary({ subtotal, shipping, discount, total });
+      // Calculation: subtotal - itemDiscount - discount + shipping
+      const total = Math.max(0, subtotal - itemDiscount - discount + shipping);
+      setCartSummary({ subtotal, itemDiscount, shipping, shippingName, discount, total });
     } catch (error) {
       console.error("Error loading cart summary:", error);
-      setCartSummary({ subtotal: 0, shipping: 0, discount: 0, total: 0 });
+      setCartSummary({ subtotal: 0, itemDiscount: 0, shipping: 0, shippingName: "", discount: 0, total: 0 });
     }
   }, []);
   
@@ -431,10 +437,12 @@ const handleProceedToPayment = async (e) => {
 
   // Calculate total
   const subtotal = cartSummary.subtotal;
+  const itemDiscount = cartSummary.itemDiscount;
   const shippingCharge = cartSummary.shipping;
+  const shippingName = cartSummary.shippingName || "Shipping";
   const discount = cartSummary.discount;
   const tax = 0; // any tax, set to 0 if not applicable
-  const total = subtotal + shippingCharge + tax - discount;
+  const total = cartSummary.total;
 
   // Toggle dropdown
   const toggleDropdown = () => {
@@ -811,18 +819,22 @@ const handleProceedToPayment = async (e) => {
             
             <div className="mb-3 d-flex justify-content-between">
               <span>Sub total</span>
-              <span className="fw-bold">৳{cartSummary.subtotal.toLocaleString()}</span>
+              <span className="fw-bold">৳{subtotal.toLocaleString()}</span>
             </div>
-            
             <div className="mb-3 d-flex justify-content-between">
-              <span>Shipping</span>
-              <span>৳{cartSummary.shipping.toLocaleString()}</span>
+              <span>Item Discount</span>
+              <span className="text-primary">- ৳{itemDiscount.toLocaleString()}</span>
             </div>
-            
-            {cartSummary.discount > 0 && (
+            {shippingCharge > 0 && (
+              <div className="mb-3 d-flex justify-content-between">
+                <span>{shippingName}</span>
+                <span>+ ৳{shippingCharge.toLocaleString()}</span>
+              </div>
+            )}
+            {discount > 0 && (
               <div className="mb-3 d-flex justify-content-between">
                 <span>Discount</span>
-                <span className="text-success">- ৳{cartSummary.discount.toLocaleString()}</span>
+                <span className="text-success">- ৳{discount.toLocaleString()}</span>
               </div>
             )}
             

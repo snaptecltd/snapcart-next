@@ -223,8 +223,11 @@ export default function Cart() {
     localStorage.setItem("snapcart_cart_subtotal", subtotal);
     localStorage.setItem("snapcart_cart_discount", couponDiscount);
     localStorage.setItem("snapcart_cart_total", total);
+    localStorage.setItem("snapcart_cart_item_discount", itemDiscount);
+    localStorage.setItem("snapcart_cart_shipping", shippingCost);
+    localStorage.setItem("snapcart_cart_shipping_name", shippingCostName);
     // No need to store shipping cost in localStorage
-  }, [subtotal, couponDiscount, total]);
+  }, [subtotal, couponDiscount, total, itemDiscount, shippingCost, shippingCostName]);
 
   // ==================== Coupon apply handler ====================
   const handleApplyCoupon = async () => {
