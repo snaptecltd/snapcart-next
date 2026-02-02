@@ -134,40 +134,61 @@ export default function Register() {
   };
 
   // Submit handler
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrors({});
-    const newErrors = validate();
-    if (Object.keys(newErrors).length) {
-      setErrors(newErrors);
-      return;
-    }
-    setLoading(true);
-    try {
-      await registerUser({
-        f_name: form.f_name,
-        l_name: form.l_name,
-        email: form.email,
-        phone: form.phone,
-        country_code: '+' + selectedCountry?.code || "880",
-        password: form.password,
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setErrors({});
+  const newErrors = validate();
+  if (Object.keys(newErrors).length) {
+    setErrors(newErrors);
+    return;
+  }
+  setLoading(true);
+  try {
+    await registerUser({
+      f_name: form.f_name,
+      l_name: form.l_name,
+      email: form.email,
+      phone: form.phone,
+      country_code: '+' + (selectedCountry?.code || "880"),
+      password: form.password,
+    });
+    toast.success("Registration successful! Please sign in.");
+    router.push("/auth/login");
+  } catch (err) {
+    // Check for different possible error structures
+    let apiErrors = {};
+    
+    // Case 1: Direct errors array in err (your current check)
+    if (err?.errors && Array.isArray(err.errors)) {
+      err.errors.forEach((e) => {
+        apiErrors[e.code === "password_confirmation" ? "confirmPassword" : e.code] = e.message;
       });
-      toast.success("Registration successful! Please sign in.");
-      router.push("/auth/login");
-    } catch (err) {
-      // API returns { errors: [{ code, message }, ...] }
-      if (err?.errors) {
-        const apiErrors = {};
-        err.errors.forEach((e) => {
-          apiErrors[e.code === "password_confirmation" ? "confirmPassword" : e.code] = e.message;
-        });
-        setErrors(apiErrors);
-      } else {
-        toast.error("Registration failed. Please try again.");
-      }
+    } 
+    // Case 2: Response data with errors property (from your console)
+    else if (err?.response?.data?.errors) {
+      err.response.data.errors.forEach((e) => {
+        apiErrors[e.code === "password_confirmation" ? "confirmPassword" : e.code] = e.message;
+      });
     }
-    setLoading(false);
-  };
+    // Case 3: Plain errors property
+    else if (err?.data?.errors) {
+      err.data.errors.forEach((e) => {
+        apiErrors[e.code === "password_confirmation" ? "confirmPassword" : e.code] = e.message;
+      });
+    }
+    
+    // If we found API errors
+    if (Object.keys(apiErrors).length > 0) {
+      setErrors(apiErrors);
+      // Show the first error message as toast
+      const firstErrorKey = Object.keys(apiErrors)[0];
+      toast.error(apiErrors[firstErrorKey]);
+    } else {
+      toast.error("Registration failed. Please try again.");
+    }
+  }
+  setLoading(false);
+};
 
   // Button enabled only if all validations pass
   const isFormValid = () => {
