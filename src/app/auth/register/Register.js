@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { registerUser } from "@/lib/api/global.service";
+import useSWR from "swr";
+import { registerUser, getTelephoneCountryCodes } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 
 export default function Register() {
@@ -20,6 +21,38 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { data: ccData } = useSWR("telephone-country-codes", getTelephoneCountryCodes, {
+    revalidateOnFocus: false,
+    dedupingInterval: 1000 * 60 * 30,
+  });
+  const [countryCodes, setCountryCodes] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState({ name: "Bangladesh (+880)", code: "880" });
+
+  // small mapping for flagcdn country ISO by common name tokens
+  const isoMap = {
+    uk: "gb",
+    usa: "us",
+    algeria: "dz",
+    andorra: "ad",
+    bangladesh: "bd",
+  };
+  const getIso = (name = "") => {
+    const key = name.split(" ")[0].replace(/[()+]/g, "").toLowerCase();
+    return isoMap[key] || key.slice(0, 2) || "bd";
+  };
+  const getFlagUrl = (name) => `https://flagcdn.com/24x18/${getIso(name)}.png`;
+
+  useEffect(() => {
+    if (ccData?.country_codes && Array.isArray(ccData.country_codes)) {
+      setCountryCodes(ccData.country_codes);
+      // prefer Bangladesh (+880) if present, else pick first
+      const bd = ccData.country_codes.find(
+        (c) => c.code === "880" || /bangla/i.test(c.name)
+      );
+      setSelectedCountry(bd || ccData.country_codes[0] || selectedCountry);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ccData]);
 
   // Validation logic
   const validate = () => {
@@ -76,6 +109,7 @@ export default function Register() {
         l_name: form.l_name,
         email: form.email,
         phone: form.phone,
+        country_code: selectedCountry?.code || "880",
         password: form.password,
       });
       toast.success("Registration successful! Please sign in.");
@@ -134,7 +168,7 @@ export default function Register() {
             />
             {errors.l_name && <div className="invalid-feedback">{errors.l_name}</div>}
           </div>
-          <div className="col-md-6">
+          <div className="col-md-12">
             <label className="form-label">
               Email Address <span className="text-danger">*</span>
             </label>
@@ -150,17 +184,42 @@ export default function Register() {
               <div className="invalid-feedback d-block">{errors.email}</div>
             )}
           </div>
-          <div className="col-md-6">
+          <div className="col-md-12">
             <label className="form-label">
               Phone Number <span className="text-danger">*</span>
             </label>
             <div className="input-group">
-              <span className="input-group-text">
-                <span role="img" aria-label="Bangladesh Flag">
-                  <img src="https://flagcdn.com/24x18/bd.png" alt="BD" width={24} height={18} />
-                </span>
-                +880
+              <span className="input-group-text d-flex align-items-center">
+                <img
+                  src={getFlagUrl(selectedCountry?.name)}
+                  alt="flag"
+                  width={24}
+                  height={18}
+                  onError={(e) => {
+                    // fallback to bd if flag not found
+                    e.currentTarget.src = "https://flagcdn.com/24x18/bd.png";
+                  }}
+                />
+                <span className="ms-2">+{selectedCountry?.code || "880"}</span>
               </span>
+              <select
+                className="form-select form-select-sm"
+                value={selectedCountry?.code || ""}
+                onChange={(e) => {
+                  const sel = countryCodes.find((c) => c.code === e.target.value);
+                  if (sel) setSelectedCountry(sel);
+                }}
+                style={{ maxWidth: 180 }}
+              >
+                {countryCodes.length === 0 && (
+                  <option key="default-880" value="880">Bangladesh (+880)</option>
+                )}
+                {countryCodes.map((cc) => (
+                  <option key={`${cc.code}-${cc.name}`} value={cc.code}>
+                    {cc.name}
+                  </option>
+                ))}
+              </select>
               <input
                 type="text"
                 name="phone"

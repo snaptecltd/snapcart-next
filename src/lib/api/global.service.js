@@ -61,14 +61,14 @@ export async function getNewArrivalProducts() {
   return res.data;
 }
 
-export async function getFeaturedDealProducts() {
-  const res = await api.get(ENDPOINTS.PRODUCTS_FEATURE_DEAL_PRODUCTS);
+export async function getTelephoneCountryCodes() {
+  const res = await api.get(ENDPOINTS.GET_TELEPHONE_COUNTRY_CODES);
   return res.data;
 }
   
-export async function getTelephoneCountryCodes() {
-  const res = await api.get(ENDPOINTS.GET_TELEPHONE_COUNTRY_CODES);
-  return res.data; // expected shape: { country_codes: [...] }
+export async function getFeaturedDealProducts() {
+  const res = await api.get(ENDPOINTS.PRODUCTS_FEATURE_DEAL_PRODUCTS);
+  return res.data;
 }
   
 export async function getHomeBlockBanner() {

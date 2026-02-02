@@ -40,7 +40,7 @@ export default function FeaturedDeals() {
     <section className="py-4 py-md-5">
       <div className="container">
         {deals.map((deal) => (
-          <div key={deal.id} className="mb-5">
+          <div key={`deal-${deal.id}`} className="mb-5">
             <div className="d-flex justify-content-between align-items-center mb-4">
               <SectionTitle first={deal.title} highlight="" />
               <div className="d-flex gap-2">
@@ -70,7 +70,7 @@ export default function FeaturedDeals() {
             >
               {(deal.products || []).map((product) => (
                 <div
-                  key={product.id}
+                  key={`product-${deal.id}-${product.id}`}
                   style={{
                     minWidth: 260,
                     maxWidth: 260,

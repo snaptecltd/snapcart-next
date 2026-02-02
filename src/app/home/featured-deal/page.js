@@ -1,4 +1,4 @@
-import FeaturedDeals from "../partials/FeaturedDeals";
+import FeaturedDeals from "./FeaturedDeals";
 
 export default function Page() {
   return <FeaturedDeals />;
