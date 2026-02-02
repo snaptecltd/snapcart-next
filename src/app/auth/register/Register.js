@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
@@ -27,6 +27,9 @@ export default function Register() {
   });
   const [countryCodes, setCountryCodes] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState({ name: "Bangladesh (+880)", code: "880" });
+  const dropdownRef = useRef(null);
+  const [ccOpen, setCcOpen] = useState(false);
+  const [ccSearch, setCcSearch] = useState("");
 
   // small mapping for flagcdn country ISO by common name tokens
   const isoMap = {
@@ -53,6 +56,22 @@ export default function Register() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ccData]);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setCcOpen(false);
+      }
+    }
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, []);
+
+  const filteredCountryCodes = (countryCodes || []).filter((c) => {
+    if (!ccSearch) return true;
+    const s = ccSearch.toLowerCase();
+    return c.name.toLowerCase().includes(s) || c.code.toString().includes(s);
+  });
 
   // Validation logic
   const validate = () => {
@@ -168,7 +187,7 @@ export default function Register() {
             />
             {errors.l_name && <div className="invalid-feedback">{errors.l_name}</div>}
           </div>
-          <div className="col-md-12">
+          <div className="col-md-6">
             <label className="form-label">
               Email Address <span className="text-danger">*</span>
             </label>
@@ -184,42 +203,84 @@ export default function Register() {
               <div className="invalid-feedback d-block">{errors.email}</div>
             )}
           </div>
-          <div className="col-md-12">
+          <div className="col-md-6">
             <label className="form-label">
               Phone Number <span className="text-danger">*</span>
             </label>
-            <div className="input-group">
-              <span className="input-group-text d-flex align-items-center">
+
+            <div className="input-group" style={{ position: "relative" }} ref={dropdownRef}>
+              <button
+                type="button"
+                className="btn btn-outline-secondary d-flex align-items-center"
+                onClick={() => setCcOpen((v) => !v)}
+                aria-expanded={ccOpen}
+                style={{ gap: 8, border: "1px solid #dee2e6", borderRight: 0 }}
+              >
                 <img
                   src={getFlagUrl(selectedCountry?.name)}
                   alt="flag"
                   width={24}
                   height={18}
-                  onError={(e) => {
-                    // fallback to bd if flag not found
-                    e.currentTarget.src = "https://flagcdn.com/24x18/bd.png";
-                  }}
+                  onError={(e) => (e.currentTarget.src = "https://flagcdn.com/24x18/bd.png")}
                 />
                 <span className="ms-2">+{selectedCountry?.code || "880"}</span>
-              </span>
-              <select
-                className="form-select form-select-sm"
-                value={selectedCountry?.code || ""}
-                onChange={(e) => {
-                  const sel = countryCodes.find((c) => c.code === e.target.value);
-                  if (sel) setSelectedCountry(sel);
-                }}
-                style={{ maxWidth: 180 }}
-              >
-                {countryCodes.length === 0 && (
-                  <option key="default-880" value="880">Bangladesh (+880)</option>
-                )}
-                {countryCodes.map((cc) => (
-                  <option key={`${cc.code}-${cc.name}`} value={cc.code}>
-                    {cc.name}
-                  </option>
-                ))}
-              </select>
+                <i className="fa fa-caret-down ms-2" />
+              </button>
+
+              {/* Searchable dropdown panel */}
+              {ccOpen && (
+                <div
+                  className="card cc-dropdown"
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    top: "100%",
+                    zIndex: 1100,
+                    width: 320,
+                    marginTop: 8,
+                    padding: 8,
+                  }}
+                >
+                  <input
+                    type="text"
+                    className="form-control form-control-sm mb-2"
+                    placeholder="Search"
+                    value={ccSearch}
+                    onChange={(e) => setCcSearch(e.target.value)}
+                    autoFocus
+                  />
+                  <div style={{ maxHeight: 220, overflowY: "auto" }}>
+                    {filteredCountryCodes.length === 0 ? (
+                      <div className="p-2 text-muted">No results</div>
+                    ) : (
+                      filteredCountryCodes.map((cc) => (
+                        <button
+                          type="button"
+                          className="d-flex align-items-center w-100 btn btn-sm btn-transparent text-start px-2 py-2"
+                          key={`${cc.code}-${cc.name}`}
+                          onClick={() => {
+                            setSelectedCountry(cc);
+                            setCcOpen(false);
+                            setCcSearch("");
+                          }}
+                        >
+                          <img
+                            src={getFlagUrl(cc.name)}
+                            alt=""
+                            width={20}
+                            height={14}
+                            onError={(e) => (e.currentTarget.src = "https://flagcdn.com/24x18/bd.png")}
+                            className="me-2"
+                          />
+                          <div className="flex-grow-1">{cc.name}</div>
+                          <div className="text-muted">+{cc.code}</div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
               <input
                 type="text"
                 name="phone"
@@ -229,6 +290,7 @@ export default function Register() {
                 onChange={handleChange}
               />
             </div>
+
             {errors.phone && <div className="invalid-feedback d-block">{errors.phone}</div>}
           </div>
           <div className="col-md-6">
@@ -341,6 +403,14 @@ export default function Register() {
           border-top-left-radius: 0;
           border-bottom-left-radius: 0;
           border-color: #ced4da;
+        }
+        .cc-dropdown .btn-transparent {
+          background: transparent;
+          border: none;
+          color: inherit;
+        }
+        .cc-dropdown button:hover {
+          background: #f8f9fa;
         }
       `}</style>
     </div>
