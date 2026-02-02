@@ -362,6 +362,15 @@ export default function ProductDetails() {
     };
   };
 
+  // Review image preview modal state (MUST be here, not after useEffect or returns)
+  const [previewImg, setPreviewImg] = useState(null); // {src, list, idx}
+  const handlePreview = (imgList, idx) => {
+    setPreviewImg({ list: imgList, idx });
+  };
+  const closePreview = () => setPreviewImg(null);
+  const showPrev = () => setPreviewImg((p) => ({ ...p, idx: (p.idx - 1 + p.list.length) % p.list.length }));
+  const showNext = () => setPreviewImg((p) => ({ ...p, idx: (p.idx + 1) % p.list.length }));
+
   if (!mounted) return null;
   if (!product) {
     return (
@@ -1012,13 +1021,19 @@ export default function ProductDetails() {
                      {Array.isArray(review.attachment_full_url) && review.attachment_full_url.length > 0 && (
                        <div className="d-flex gap-2 mt-2">
                          {review.attachment_full_url.map((img, idx) => (
-                           <a key={img.key || idx} href={img.path} target="_blank" rel="noopener noreferrer">
+                           <button
+                             key={img.key || idx}
+                             type="button"
+                             className="p-0 border-0 bg-transparent"
+                             style={{ outline: "none" }}
+                             onClick={() => handlePreview(review.attachment_full_url, idx)}
+                           >
                              <img
                                src={img.path}
                                alt="Review"
-                               style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, border: "1px solid #eee" }}
+                               style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, border: "1px solid #eee", cursor: "pointer" }}
                              />
-                           </a>
+                           </button>
                          ))}
                        </div>
                      )}
@@ -1028,6 +1043,78 @@ export default function ProductDetails() {
                    </div>
                  </div>
                ))}
+              {/* Image Preview Modal */}
+              {previewImg && (
+                <div
+                  className="review-img-modal"
+                  tabIndex={-1}
+                  onClick={closePreview}
+                  style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    width: "100vw",
+                    height: "100vh",
+                    background: "rgba(0,0,0,0.8)",
+                    zIndex: 99999,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "relative",
+                      maxWidth: "90vw",
+                      maxHeight: "90vh",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      className="btn btn-light rounded-circle"
+                      style={{ position: "absolute", left: -50, top: "50%", transform: "translateY(-50%)", zIndex: 2, fontSize: 24, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}
+                      onClick={showPrev}
+                      disabled={previewImg.list.length <= 1}
+                      tabIndex={0}
+                    >
+                      <i className="fa fa-chevron-left"></i>
+                    </button>
+                    <img
+                      src={previewImg.list[previewImg.idx]?.path}
+                      alt="Preview"
+                      style={{
+                        maxWidth: "80vw",
+                        maxHeight: "80vh",
+                        borderRadius: 12,
+                        boxShadow: "0 4px 32px #0008",
+                        background: "#fff",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-light rounded-circle"
+                      style={{ position: "absolute", right: -50, top: "50%", transform: "translateY(-50%)", zIndex: 2, fontSize: 24, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}
+                      onClick={showNext}
+                      disabled={previewImg.list.length <= 1}
+                      tabIndex={0}
+                    >
+                      <i className="fa fa-chevron-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger rounded-circle"
+                      style={{ position: "absolute", top: -20, right: -25, zIndex: 3, fontSize: 20, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}
+                      onClick={closePreview}
+                      tabIndex={0}
+                    >
+                      <i className="fa fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              )}
              </div>
            )}
           </div>
@@ -1328,9 +1415,16 @@ export default function ProductDetails() {
           border-radius: 6px;
           margin-left: 6px;
         }
-     .review-img-thumb:hover {
-       box-shadow: 0 0 0 2px #F67535;
+     .review-img-modal {
+       animation: fadeIn .15s;
      }
+     @keyframes fadeIn {
+       from { opacity: 0; }
+       to { opacity: 1; }
+     }
+      .review-img-thumb:hover {
+        box-shadow: 0 0 0 2px #F67535;
+      }
       `}</style>
     </div>
   );
