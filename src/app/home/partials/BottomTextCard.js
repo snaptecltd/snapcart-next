@@ -69,18 +69,7 @@ export default function BottomTextCard() {
                       </div>
                     ))}
                   </div>
-                  {banners.length > 1 && (
-                    <>
-                      <button className="carousel-control-prev" type="button" data-bs-target="#bottomTextBannerCarousel" data-bs-slide="prev" style={{ width: 32 }}>
-                        <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span className="visually-hidden">Previous</span>
-                      </button>
-                      <button className="carousel-control-next" type="button" data-bs-target="#bottomTextBannerCarousel" data-bs-slide="next" style={{ width: 32 }}>
-                        <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span className="visually-hidden">Next</span>
-                      </button>
-                    </>
-                  )}
+                  {/* Carousel indicators (bottom dots) */}
                   {banners.length > 1 && (
                     <div className="carousel-indicators" style={{ bottom: 8 }}>
                       {banners.map((_, idx) => (
@@ -95,6 +84,18 @@ export default function BottomTextCard() {
                         />
                       ))}
                     </div>
+                  )}
+                  {banners.length > 1 && (
+                    <>
+                      <button className="carousel-control-prev" type="button" data-bs-target="#bottomTextBannerCarousel" data-bs-slide="prev" style={{ width: 32 }}>
+                        <span className="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span className="visually-hidden">Previous</span>
+                      </button>
+                      <button className="carousel-control-next" type="button" data-bs-target="#bottomTextBannerCarousel" data-bs-slide="next" style={{ width: 32 }}>
+                        <span className="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span className="visually-hidden">Next</span>
+                      </button>
+                    </>
                   )}
                 </div>
               ) : (
