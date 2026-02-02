@@ -503,8 +503,6 @@ export async function chooseShippingForOrder(cart_group_id, shipping_method_id) 
     }
   }
   
-  console.log("Shipping payload:", payload); // Debug জন্য
-  
   try {
     const res = await api.post(ENDPOINTS.CHOOSE_SHIPPING_FOR_ORDER, payload, { headers });
     return res.data;

@@ -6,7 +6,8 @@ import {
   removeCartItem, 
   getShippingMethods, 
   applyCoupon,
-  chooseShippingForOrder // এই ফাংশনটি import করুন
+  chooseShippingForOrder,
+  getChoosenShippingMethod
 } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 import Link from "next/link";
@@ -27,6 +28,8 @@ export default function Cart() {
     methodId: "",
     cartGroupId: ""
   });
+  const [shippingCost, setShippingCost] = useState(0);
+  const [shippingCostName, setShippingCostName] = useState("");
 
   // ==================== fetchCart ফাংশন - cart_group_id পাওয়ার জন্য আপডেট করুন ====================
   const fetchCart = () => {
@@ -160,6 +163,31 @@ export default function Cart() {
     }
   }, [shippingMethodId]);
 
+  // ==================== Fetch chosen shipping cost ====================
+  useEffect(() => {
+    async function fetchShippingCost() {
+      try {
+        const res = await getChoosenShippingMethod();
+        // res is array, take first item
+        if (Array.isArray(res) && res.length > 0) {
+          setShippingCost(Number(res[0].shipping_cost) || 0);
+          // Find shipping method name from shippingMethods
+          const method = shippingMethods.find(m => String(m.id) === String(res[0].shipping_method_id));
+          setShippingCostName(method ? method.title : "Shipping");
+        } else {
+          setShippingCost(0);
+          setShippingCostName("");
+        }
+      } catch {
+        setShippingCost(0);
+        setShippingCostName("");
+      }
+    }
+    if (shippingMethodId && selectedShipping.cartGroupId) {
+      fetchShippingCost();
+    }
+  }, [shippingMethodId, selectedShipping.cartGroupId, shippingMethods]);
+
   // ==================== Calculate subtotal, item discount, total cart items, and total ====================
   const subtotal = Array.isArray(cart)
     ? cart.reduce((sum, item) => {
@@ -167,7 +195,6 @@ export default function Cart() {
         return sum + (item.price * item.quantity);
       }, 0)
     : 0;
-  // Sum of all per-item discounts (use cart item's own discount, not product.discount)
   const itemDiscount = Array.isArray(cart)
     ? cart
         .filter(item => item.addons_parent == 0) // Only main products
@@ -176,7 +203,6 @@ export default function Cart() {
           return sum + (item.discount * item.quantity);
         }, 0)
     : 0;
-  // Total cart items (sum of all quantities)
   const totalCartItems = Array.isArray(cart)
     ? cart.reduce((sum, item) => {
         if (!item || typeof item.quantity !== "number") return sum;
@@ -184,19 +210,16 @@ export default function Cart() {
       }, 0)
     : 0;
   const couponDiscount = couponApplied?.coupon_discount || 0;
-  // Calculate total: subtotal - itemDiscount - couponDiscount
-  const total = Math.max(0, subtotal - itemDiscount - couponDiscount);
+  // Calculate total: subtotal - itemDiscount - couponDiscount + shippingCost
+  const total = Math.max(0, subtotal - itemDiscount - couponDiscount + shippingCost);
 
   // ==================== Save cart summary to localStorage ====================
   useEffect(() => {
     localStorage.setItem("snapcart_cart_subtotal", subtotal);
     localStorage.setItem("snapcart_cart_discount", couponDiscount);
     localStorage.setItem("snapcart_cart_total", total);
-    
-    // Save shipping cost if available
-    const shippingCost = shippingMethods.find((m) => String(m.id) === String(shippingMethodId))?.cost || 0;
-    localStorage.setItem("snapcart_cart_shipping", shippingCost);
-  }, [subtotal, couponDiscount, total, shippingMethods, shippingMethodId]);
+    // No need to store shipping cost in localStorage
+  }, [subtotal, couponDiscount, total]);
 
   // ==================== Coupon apply handler ====================
   const handleApplyCoupon = async () => {
@@ -364,6 +387,14 @@ export default function Cart() {
               <td className="fw-bold text-primary">- {itemDiscount.toLocaleString()} BDT</td>
               <td></td>
             </tr>
+            {/* Shipping Cost row */}
+            {shippingCost > 0 && (
+              <tr>
+                <td colSpan={4} className="text-end fw-bold">{shippingCostName || "Shipping Cost"}:</td>
+                <td className="fw-bold">+ {shippingCost.toLocaleString()} BDT</td>
+                <td></td>
+              </tr>
+            )}
             {/* Discount row if coupon applied */}
             {couponApplied && couponApplied.coupon_discount > 0 && (
               <tr>
@@ -462,6 +493,12 @@ export default function Cart() {
               <span className="fw-bold">Item Discount:</span>
               <span>- {itemDiscount.toLocaleString()} BDT</span>
             </div>
+            {shippingCost > 0 && (
+              <div className="d-flex justify-content-between mb-2">
+                <span className="fw-bold">{shippingCostName || "Shipping Cost"}:</span>
+                <span>+ {shippingCost.toLocaleString()} BDT</span>
+              </div>
+            )}
             <div className="d-flex justify-content-between mb-2">
               <span className="fw-bold">Total Cart Items:</span>
               <span>{totalCartItems}</span>
