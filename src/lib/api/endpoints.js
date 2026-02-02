@@ -13,6 +13,7 @@ export const ENDPOINTS = {
   PRODUCTS_TOP_RATED: `${PREFIX}/products/top-rated`,
   DEAL_OF_THE_DAY: `${PREFIX}/dealsoftheday/deal-of-the-day`,
   PRODUCTS_NEW_ARRIVALS: `${PREFIX}/products/new-arrival`,
+  PRODUCTS_FEATURE_DEAL_PRODUCTS: `${PREFIX}/products/featured-deal-products`,
   HOME_BLOCK_BANNERS: `${PREFIX}/get-home-block-banner`,
   BRANDS: `${PREFIX}/brands`,
   BOTTOM_TEXT_CARDS: `${PREFIX}/bottom-text-cards`,

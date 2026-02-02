@@ -61,6 +61,11 @@ export async function getNewArrivalProducts() {
   return res.data;
 }
 
+export async function getFeaturedDealProducts() {
+  const res = await api.get(ENDPOINTS.PRODUCTS_FEATURE_DEAL_PRODUCTS);
+  return res.data;
+}
+  
 export async function getHomeBlockBanner() {
   const res = await api.get(ENDPOINTS.HOME_BLOCK_BANNERS);
   return res.data;
