@@ -291,6 +291,10 @@ export async function updateCustomerProfile(data) {
 
 export async function getCustomerOrderList() {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  if (!token) {
+    router.push('/auth/login');
+    return;
+  }
   const res = await api.get(ENDPOINTS.CUSTOMER_ORDER_LIST, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -299,6 +303,10 @@ export async function getCustomerOrderList() {
 
 export async function getCustomerOrderDetails(order_id) {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  if (!token) {
+    router.push('/auth/login');
+    return;
+  }
   const res = await api.get(`${ENDPOINTS.CUSTOMER_ORDER_DETAILS}?order_id=${order_id}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -307,6 +315,10 @@ export async function getCustomerOrderDetails(order_id) {
 
 export async function getCustomerWishlist() {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  if (!token) {
+    router.push('/auth/login');
+    return;
+  }
   const res = await api.get(ENDPOINTS.CUSTOMER_WISHLIST, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -315,6 +327,10 @@ export async function getCustomerWishlist() {
 
 export async function removeFromWishlist(product_id) {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  if (!token) {
+    router.push('/auth/login');
+    return;
+  }
   const res = await api.post(`${ENDPOINTS.CUSTOMER_WISHLIST_REMOVE}?product_id=${product_id}`, {}, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -323,7 +339,10 @@ export async function removeFromWishlist(product_id) {
 
 export async function addToWishlist(product_id) {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
-  if (!token) throw new Error("Not authenticated");
+  if (!token) {
+    router.push('/auth/login');
+    return;
+  }
   const res = await api.post(`${ENDPOINTS.CUSTOMER_WISHLIST_ADD}?product_id=${product_id}`, {}, {
     headers: { Authorization: `Bearer ${token}` },
   });

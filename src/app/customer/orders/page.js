@@ -4,6 +4,7 @@ import { getCustomerOrderList } from "@/lib/api/global.service";
 import Sidebar from "../partials/Sidebar";
 import { toast } from "react-toastify";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 
 function moneyBDT(value) {
   const n = Number(value || 0);
@@ -20,6 +21,15 @@ const statusMap = {
 };
 
 export default function CustomerOrderPage() {
+  const router = useRouter();
+  useEffect(() => {
+    const token = localStorage.getItem("snapcart_token");
+    if (!token) {
+      router.replace("/auth/login");
+      return;
+    }
+  }, [router]);
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
