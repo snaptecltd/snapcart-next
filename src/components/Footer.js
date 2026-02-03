@@ -17,7 +17,21 @@ export default function Footer() {
         <div className="row g-4">
           {/* Brand / Logo */}
           <div className="col-12 col-md-6 col-lg-3">
-            <h4 className="fw-bold mb-3">Snapcart</h4>
+            {/* --- Use company logo and name from config --- */}
+            <div className="mb-3">
+              {config?.company_logo?.path && (
+                <img
+                  src={config.company_logo.path}
+                  alt={config?.company_name || "Logo"}
+                  width={140}
+                  height={40}
+                  style={{ objectFit: "contain", padding: 4 }}
+                />
+              )}
+            </div>
+            <h4 className="fw-bold mb-3">
+              {config?.company_name || "Snapcart"}
+            </h4>
             <p className="text-secondary small">
               Your trusted online shopping destination for quality products
               and reliable service.
@@ -69,20 +83,23 @@ export default function Footer() {
 
           {/* Newsletter */}
           <div className="col-12 col-md-6 col-lg-3">
-            <h6 className="fw-semibold mb-3">NEWSLETTER</h6>
+            <h6 className="fw-semibold mb-3">LOCATION</h6>
             <p className="text-secondary small">
-              Subscribe to get latest updates and offers.
+              Our company outlets are located across various prime locations to
+              serve you better.
             </p>
-            <div className="input-group input-group-sm">
-              <input
-                type="email"
-                className="form-control bg-dark text-light border-secondary"
-                placeholder="Your Email Address"
-              />
-              <button className="btn btn-outline-light">
-                Subscribe
-              </button>
-            </div>
+            <ul className="list-unstyled small">
+              {Array.isArray(config?.company_outlets) &&
+                config.company_outlets.map((outlet, index) => (
+                  <li key={index} className="text-secondary d-flex align-items-start mb-2">
+                   <span><i className="fas fa-map-marker-alt me-2"></i></span>
+                   <div className="d-flex flex-column">
+                    <Link href={`/store-location/${outlet.slug || "#"}`} className="text-secondary text-decoration-none fw-semibold"> {outlet.store_name}</Link>
+                    <small style={{ fontSize: "12px" }}> {outlet.address}</small>
+                    </div>
+                  </li>
+                ))}
+            </ul>
           </div>
         </div>
 
@@ -99,14 +116,14 @@ export default function Footer() {
           <div className="col-12 col-md-6">
             <h6 className="fw-semibold mb-2">Start A Conversation</h6>
             <p className="small text-secondary mb-1">
-              📞 +8801330011588
+              <i className="fas fa-phone-alt me-2"></i> {config?.company_phone || "+8801330011588"}
             </p>
             <p className="small text-secondary mb-1">
-              ✉ rsminternationalbd@gmail.com
+              <i className="fas fa-envelope me-2"></i> {config?.company_email || "rsminternationalbd@gmail.com"}
             </p>
             <p className="small text-secondary mb-0">
               <Link href="/customer/support" className="text-light text-decoration-none me-2" title="Support Ticket">
-                <i className="fab fa-rocketchat me-1"></i> Support Ticket
+                <i className="fas fa-headset me-1"></i> Support Ticket
               </Link>
             </p>
           </div>
@@ -114,7 +131,8 @@ export default function Footer() {
           {/* Address + Social */}
                 <div className="col-12 col-md-6 text-md-end">
                 <p className="small text-secondary mb-2">
-                  📍 Shop #4A-27D, Level# 4, Block# A, Jamuna Future Park
+                  <i className="fas fa-map-marker-alt me-2"></i>
+                  {config?.company_address || "Shop #4A-27D, Level# 4, Block# A, Jamuna Future Park"}
                 </p>
 
                 <div className="d-flex justify-content-md-end gap-3" id="footer-social-medias">
@@ -143,7 +161,7 @@ export default function Footer() {
         <hr className="border-secondary my-4" />
         <div className="text-center pb-4">
           <small className="text-secondary">
-            © 2026 Snapcart. All rights reserved.
+            {config?.company_copyright_text || "© 2026 Snapcart. All rights reserved."}
           </small>
         </div>
       </div>
