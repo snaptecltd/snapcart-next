@@ -369,6 +369,9 @@ const handleSubmit = async (e) => {
                 <i className={`fas ${showPassword ? "fa-eye" : "fa-eye-slash"}`}></i>
               </button>
             </div>
+            {form.password && form.password.length < 8 && (
+              <div className="text-danger small">Password must be at least 8 characters long.</div>
+            )}
             {errors.password && <div className="invalid-feedback">{errors.password}</div>}
           </div>
           <div className="col-md-6">

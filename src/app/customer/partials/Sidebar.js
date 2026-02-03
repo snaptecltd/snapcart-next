@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const menu = [
@@ -17,6 +18,14 @@ const menu = [
 
 export default function MobileSidebar({ active }) {
   const [open, setOpen] = useState(true);
+  const router = useRouter();
+
+  // useEffect(() => {
+  //   const token = localStorage.getItem("snapcart_token"); // Replace with your actual token key
+  //   if (!token) {
+  //     router.push("/auth/login");
+  //   }
+  // }, [router]);
 
   return (
     <div className="dropdown">

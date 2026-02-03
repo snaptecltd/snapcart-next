@@ -9,6 +9,7 @@ import {
   closeCustomerSupportTicket,
 } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 const TICKET_TYPES = [
   "Website problem",
@@ -23,6 +24,15 @@ function formatDate(date) {
 }
 
 export default function SupportTicketPage() {
+  const router = useRouter();
+  useEffect(() => {
+    const token = localStorage.getItem("snapcart_token");
+    if (!token) {
+      router.replace("/auth/login");
+      return;
+    }
+  }, [router]);
+
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -48,7 +58,7 @@ export default function SupportTicketPage() {
     setLoading(true);
     getCustomerSupportTickets()
       .then(setTickets)
-      .catch(() => toast.error("Failed to load tickets"))
+      .catch(() => router.replace("/auth/login"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -98,7 +108,7 @@ export default function SupportTicketPage() {
         .then(setTickets)
         .finally(() => setLoading(false));
     } catch (err) {
-      toast.error("Failed to create ticket");
+      router.replace("/auth/login")
     }
     setModalLoading(false);
   };
