@@ -77,7 +77,15 @@ export default function Login() {
       // Notify header to update
       window.dispatchEvent(new Event("snapcart-auth-change"));
       toast.success("Login successful!");
-      router.push("/");
+    //   router.push("/");
+    const lastRoute = localStorage.getItem("snapcart_last_route");
+
+    if (lastRoute) {
+        localStorage.removeItem("snapcart_last_route");
+        router.push(lastRoute);
+    } else {
+        router.push("/");
+    }
     } catch (err) {
       if (err?.errors) {
         const apiErrors = {};

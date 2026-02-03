@@ -10,7 +10,10 @@ export default function CustomerProfilePage() {
   useEffect(() => {
     const token = localStorage.getItem("snapcart_token");
     if (!token) {
-      router.replace("/auth/login");
+      if (!localStorage.getItem("snapcart_token")) {
+        localStorage.setItem("snapcart_last_route", window.location.pathname);
+        router.push("/auth/login");
+      }
       return;
     }
   }, [router]);
