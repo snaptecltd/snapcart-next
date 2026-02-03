@@ -97,7 +97,9 @@ body {
     transition: 0.8s!important;
 }
 /* Default (mobile) */
-
+.text-danger.small{
+  font-size: 12px !important;
+}
 /* small screen  */
 @media (max-width: 425.98px) {
     .search-modal {
