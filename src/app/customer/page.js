@@ -1,10 +1,20 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, use } from "react";
 import Sidebar from "./partials/Sidebar";
 import { getCustomerInfo, updateCustomerProfile } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 export default function CustomerProfilePage() {
+  const router = useRouter();
+  useEffect(() => {
+    const token = localStorage.getItem("snapcart_token");
+    if (!token) {
+      router.replace("/auth/login");
+      return;
+    }
+  }, [router]);
+
   const [form, setForm] = useState({
     f_name: "",
     l_name: "",

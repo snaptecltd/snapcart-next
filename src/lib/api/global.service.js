@@ -257,8 +257,12 @@ export async function removeAllCartItems() {
 
 export async function getCustomerInfo() {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  if (!token) {
+    router.push('/auth/login');
+    return;
+  }
   const res = await api.get(ENDPOINTS.CUSTOMER_INFO, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
 }
@@ -328,6 +332,10 @@ export async function addToWishlist(product_id) {
 
 export async function getCustomerSupportTickets() {
   const token = typeof window !== "undefined" ? localStorage.getItem("snapcart_token") : null;
+  if (!token) {
+    router.push('/auth/login');
+    return;
+  }
   const res = await api.get(ENDPOINTS.CUSTOMER_SUPPORT_TICKET_LIST, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
