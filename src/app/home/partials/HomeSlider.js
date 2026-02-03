@@ -150,26 +150,6 @@ export default function HomeSlider() {
         .carousel-control-next {
           right: 16px;
         }
-        .carousel-indicators {
-          position: absolute;
-          bottom: 12px;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 2;
-        }
-        .carousel-indicators [data-bs-target] {
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          background: #bbb;
-          margin: 0 4px;
-          border: none;
-          opacity: 1;
-          transition: background 0.2s;
-        }
-        .carousel-indicators .active {
-          background: #333;
-        }
       `}</style>
       
       <div className="row g-3 mb-3">

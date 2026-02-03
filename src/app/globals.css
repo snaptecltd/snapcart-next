@@ -82,15 +82,19 @@ body {
   color: #fff;;
 }
 .carousel-indicators .active.active {
-    background-color: var(--primary-color)!important;
-    width: 50px!important;
-    height: 10px!important;
+  
+  width: 28px!important;              /* stretch only */
+  background: #ff8c1a!important; /* active color */
 }
 .carousel-indicators [data-bs-target] {
-    border-radius: 50%!important;
-    width: 12px!important;
-    height: 8px!important;
-    transition: 0.8s all!important;
+    border: none!important;
+    width: 8px!important;
+    height: 6px!important;
+    margin: 0 5px!important;
+    background: #fff!important;
+    border-radius: 10px!important;
+    display: inline-block;
+    transition: 0.8s!important;
 }
 /* Default (mobile) */
 
