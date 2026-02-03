@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
   getCart, 
   updateCartItem, 
@@ -31,6 +32,11 @@ export default function Cart() {
   const [shippingCost, setShippingCost] = useState(0);
   const [shippingCostName, setShippingCostName] = useState("");
 
+  useEffect(() => {
+      if (!localStorage.getItem("snapcart_token")) {
+        localStorage.setItem("snapcart_last_route", window.location.pathname);
+      }
+  }, []);
   // ==================== fetchCart ফাংশন - cart_group_id পাওয়ার জন্য আপডেট করুন ====================
   const fetchCart = () => {
     // setLoading(true);

@@ -10,6 +10,9 @@ export default function OffersPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        if (!localStorage.getItem("snapcart_token")) {
+            localStorage.setItem("snapcart_last_route", window.location.pathname);
+        }
         async function fetchOffers() {
             try {
                 const data = await getOffersType();

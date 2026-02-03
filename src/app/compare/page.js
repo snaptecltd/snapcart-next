@@ -33,6 +33,10 @@ export default function ComparePage() {
 
   // Load compare from localStorage only once on mount
   useEffect(() => {
+    if (!localStorage.getItem("snapcart_token")) {
+      localStorage.setItem("snapcart_last_route", window.location.pathname);
+    }
+
     if (didInit.current) return;
     let stored = [];
     try {

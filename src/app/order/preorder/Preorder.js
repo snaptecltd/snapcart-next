@@ -1,6 +1,6 @@
 "use client";
-import { useState, useRef } from "react";
-import { submitPreOrder } from "@/lib/api/global.service";
+import { useState, useRef, useEffect } from "react";
+import { submitPreOrder, getCustomerInfo } from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 
 export default function Preorder() {
@@ -16,6 +16,26 @@ export default function Preorder() {
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState([]); // array of previews
   const fileInputRef = useRef();
+
+  useEffect(() => {
+    if (!localStorage.getItem("snapcart_token")) {
+        localStorage.setItem("snapcart_last_route", window.location.pathname);
+    }
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      getCustomerInfo()
+        .then((data) => {
+          setForm((prev) => ({
+            ...prev,
+            name: data.f_name + " " + data.l_name,
+            email: data.email,
+            phone_number: data.phone,
+            address: data.address || "",
+          }));
+        })
+        .catch(() => toast.error("Failed to fetch customer information"));
+    }
+  }, []);
 
   // Validation
   const validate = () => {
