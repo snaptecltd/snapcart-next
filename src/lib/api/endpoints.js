@@ -105,9 +105,13 @@ export const ENDPOINTS = {
   //offers endpoint
   OFFERS_TYPE: `${PREFIX}/products/offers-types`,
 
-  // digitalpayments
+
   SSLCOMMERZ_INITIATE_PAYMENT: `${PREFIX}/digital-payment/sslcommerz/initiate`,
   SSLCOMMERZ_SUCCESS: `${PREFIX}/digital-payment/sslcommerz/success`,
   SSLCOMMERZ_FAILED: `${PREFIX}/digital-payment/sslcommerz/failed`,
   SSLCOMMERZ_CANCELED: `${PREFIX}/digital-payment/sslcommerz/canceled`,
+  SSLCOMMERZ_CHECK_STATUS: `${PREFIX}/digital-payment/sslcommerz/check-status`,
+  
+  ORDER_PLACE_WITH_DIGITAL: `${PREFIX}/customer/order/place-with-digital-payment`,
+  
 };

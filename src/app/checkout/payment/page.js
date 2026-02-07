@@ -1,297 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { 
-  getOfflinePaymentMethods, 
-  placeOrder, 
-  placeOrderByOfflinePayment,
-  addCustomerAddress,
-  initiateSSLCommerzPayment,
-  placeOrderWithDigitalPayment
-} from "@/lib/api/global.service";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
-import { useGlobalConfig } from "@/context/GlobalConfigContext";
+import { checkSSLCommerzPaymentStatus } from "@/lib/api/global.service";
 
-export default function PaymentPage() {
+export default function PaymentCallbackPage() {
   const router = useRouter();
-  const [offlineMethods, setOfflineMethods] = useState([]);
-  const [showMore, setShowMore] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cod");
-  const [offlineFields, setOfflineFields] = useState({});
-  const [agreed, setAgreed] = useState(false);
-  const [isGuest, setIsGuest] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { data: config } = useGlobalConfig();
-  
-  // Cart summary states
-  const [subtotal, setSubtotal] = useState(0);
-  const [itemDiscount, setItemDiscount] = useState(0);
-  const [shipping, setShipping] = useState(0);
-  const [shippingName, setShippingName] = useState("Shipping");
-  const [discount, setDiscount] = useState(0);
-  const [shippingMethodId, setShippingMethodId] = useState(null);
+  const searchParams = useSearchParams();
+  const [status, setStatus] = useState("processing");
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [transactionId, setTransactionId] = useState("");
+  const [pollingInterval, setPollingInterval] = useState(null);
 
-  // Load cart summary from localStorage
-  useEffect(() => {
-    setSubtotal(Number(localStorage.getItem("snapcart_cart_subtotal") || 0));
-    setItemDiscount(Number(localStorage.getItem("snapcart_cart_item_discount") || 0));
-    setShipping(Number(localStorage.getItem("snapcart_cart_shipping") || 0));
-    setShippingName(localStorage.getItem("snapcart_cart_shipping_name") || "Shipping");
-    setDiscount(Number(localStorage.getItem("snapcart_cart_discount") || 0));
-    setShippingMethodId(localStorage.getItem("snapcart_shipping_method_id") || "");
-  }, []);
-
-  // Load offline payment methods
-  useEffect(() => {
-    getOfflinePaymentMethods()
-      .then(res => setOfflineMethods(res?.offline_methods || []))
-      .catch(() => setOfflineMethods([]));
-  }, []);
-
-  // Check if user is guest or logged in
-  useEffect(() => {
-    const token = localStorage.getItem("snapcart_token");
-    setIsGuest(!token);
-  }, []);
-
-  const total = Math.max(0, subtotal - itemDiscount - discount + shipping);
-
-  // Handle offline payment field change
-  const handleOfflineFieldChange = (input, value) => {
-    setOfflineFields((prev) => ({ ...prev, [input]: value }));
-  };
-
-  // Handle SSLCommerz payment initiation
-  const handleSSLCommerzPayment = async () => {
-    setIsProcessing(true);
-    try {
-      // First, create the order
-      const shipping_address_id = localStorage.getItem("snapcart_checkout_shipping_id") || "";
-      const billing_address_id = localStorage.getItem("snapcart_checkout_billing_id") || shipping_address_id;
-      const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
-      const order_note = localStorage.getItem("snapcart_order_note") || "";
-      
-      let coupon_code = "";
-      try {
-        const storedCoupon = localStorage.getItem("snapcart_coupon_applied");
-        if (storedCoupon) {
-          const couponData = JSON.parse(storedCoupon);
-          coupon_code = couponData.code || couponData.coupon_code || "";
-        }
-      } catch (e) {
-        console.error("Error parsing coupon:", e);
-      }
-
-      // Get customer info
-      const token = localStorage.getItem("snapcart_token");
-      let customerInfo = {};
-      
-      if (token) {
-        // For logged in users
-        const userData = JSON.parse(localStorage.getItem("snapcart_user") || "{}");
-        customerInfo = {
-          name: `${userData.f_name || ''} ${userData.l_name || ''}`.trim(),
-          email: userData.email || '',
-          phone: userData.phone || '',
-        };
-      } else {
-        // For guest users - get from shipping address
-        const shippingAddressStr = localStorage.getItem("snapcart_checkout_shipping_address");
-        if (shippingAddressStr) {
-          try {
-            const shippingAddress = JSON.parse(shippingAddressStr);
-            customerInfo = {
-              name: shippingAddress.contact_person_name || '',
-              email: shippingAddress.email || '',
-              phone: shippingAddress.phone || '',
-            };
-          } catch (e) {
-            console.error("Error parsing shipping address:", e);
-          }
-        }
-      }
-
-      // Prepare SSLCommerz data
-      const sslData = {
-        order_id: `${Date.now()}`,
-        amount: total,
-        currency: "BDT",
-        customer_name: customerInfo.name || "Customer",
-        customer_email: customerInfo.email || "customer@example.com",
-        customer_phone: customerInfo.phone || "0000000000",
-        // Additional order data for backend
-        coupon_code,
-        order_note,
-        shipping_method_id: shippingMethodId,
-        address_id: shipping_address_id,
-        billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
-      };
-
-      console.log("SSLCommerz data:", sslData);
-
-      // Initiate payment
-      const response = await initiateSSLCommerzPayment(sslData);
-      
-      if (response && response.payment_url) {
-        // Redirect to SSLCommerz payment page
-        window.location.href = response.payment_url;
-      } else {
-        toast.error("Failed to initiate payment. Please try again."+response);
-      }
-    } catch (error) {
-      console.error("SSLCommerz payment error:", error);
-      toast.error(error.response?.data?.message || "Payment initiation failed");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Proceed to checkout
-  const handleProceed = async () => {
-    if (!agreed || !paymentMethod) {
-      toast.error("Please agree to terms and select a payment method");
-      return;
-    }
-    
-    if (isProcessing) return;
-    
-    try {
-      // Get all required data from localStorage
-      const shipping_method_id = localStorage.getItem("snapcart_shipping_method_id") || "";
-      const shipping_address_id = localStorage.getItem("snapcart_checkout_shipping_id") || "";
-      const billing_address_id = localStorage.getItem("snapcart_checkout_billing_id") || shipping_address_id;
-      const order_note = localStorage.getItem("snapcart_order_note") || "";
-      const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
-      
-      // Get coupon data
-      let coupon_code = "";
-      try {
-        const storedCoupon = localStorage.getItem("snapcart_coupon_applied");
-        if (storedCoupon) {
-          const couponData = JSON.parse(storedCoupon);
-          coupon_code = couponData.code || couponData.coupon_code || "";
-        }
-      } catch (e) {
-        console.error("Error parsing coupon:", e);
-      }
-      
-      // Validate required fields
-      if (!shipping_method_id) {
-        toast.error("Shipping method is required!");
-        router.push("/cart");
-        return;
-      }
-      
-      if (!shipping_address_id) {
-        toast.error("Shipping address is required!");
-        router.push("/checkout");
-        return;
-      }
-      
-      console.log("Order placing with data:", {
-        shipping_method_id,
-        address_id: shipping_address_id,
-        billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
-        coupon_code,
-        order_note,
-        sameAsShipping
-      });
-      
-      let response;
-      
-      if (paymentMethod === "cod") {
-        // Cash on Delivery
-        setIsProcessing(true);
-        response = await placeOrder({
-          coupon_code,
-          order_note,
-          shipping_method_id,
-          address_id: shipping_address_id,
-          billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
-        });
-      } else if (paymentMethod === "ssl_commerz") {
-        // SSLCommerz Digital Payment
-        await handleSSLCommerzPayment();
-        return; // Return early as handleSSLCommerzPayment will handle the redirect
-      } else {
-        // Offline Payment
-        setIsProcessing(true);
-        const method_id = paymentMethod;
-        const method_informations = btoa(JSON.stringify(offlineFields));
-        
-        response = await placeOrderByOfflinePayment({
-          coupon_code,
-          order_note,
-          payment_note: offlineFields.note || "",
-          shipping_method_id,
-          address_id: shipping_address_id,
-          billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
-          method_id,
-          method_informations,
-        });
-      }
-      
-      // Success handling for COD and Offline payments
-      if (response && (response.order_ids || response.messages)) {
-        // Clear localStorage
-        clearCheckoutLocalStorage();
-        
-        // Dispatch event for cart update
-        window.dispatchEvent(new Event("snapcart-auth-change"));
-        
-        // Show success message
-        const orderIds = response.order_ids ? response.order_ids.join(", ") : "N/A";
-        toast.success(`Order placed successfully! Order ID: ${orderIds}`);
-        
-        // Redirect to home or orders page
-        setTimeout(() => {
-          router.push("/");
-        }, 2000);
-        
-      } else {
-        toast.error("Failed to place order. Please try again.");
-      }
-      
-    } catch (error) {
-      console.error("Order placement error:", error);
-      
-      // Show specific error messages
-      if (error.response?.data?.errors) {
-        error.response.data.errors.forEach(err => {
-          toast.error(`${err.code}: ${err.message}`);
-        });
-      } else if (error.message) {
-        toast.error(`Error: ${error.message}`);
-      } else {
-        toast.error("Failed to place order. Please try again.");
-      }
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Success handler function
-  const handleOrderSuccess = (res) => {
-    window.dispatchEvent(new Event("snapcart-auth-change"));
-    
-    clearCheckoutLocalStorage();
-    
-    if (typeof window !== "undefined" && window.Swal) {
-      window.Swal.fire({
-        icon: "success",
-        title: "Order Placed!",
-        html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
-        confirmButtonText: "Continue Shopping",
-      }).then(() => {
-        window.location.href = "/";
-      });
-    } else {
-      toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
-      setTimeout(() => { window.location.href = "/"; }, 1200);
-    }
-  };
-
-  // Helper function to clear localStorage
+  // Function to clear checkout localStorage
   const clearCheckoutLocalStorage = () => {
     const keys = [
       "snapcart_shipping_method_id",
@@ -305,225 +26,342 @@ export default function PaymentPage() {
       "snapcart_cart_discount",
       "snapcart_cart_total",
       "snapcart_checkout_shipping_address",
-      "snapcart_checkout_billing_address"
+      "snapcart_checkout_billing_address",
+      "pending_ssl_order"
     ];
     
     keys.forEach(key => localStorage.removeItem(key));
+    
+    // Dispatch event for cart update
+    window.dispatchEvent(new Event("snapcart-auth-change"));
+  };
+
+  // Function to check payment status
+  const checkPaymentStatus = async (tranId) => {
+    try {
+      const response = await checkSSLCommerzPaymentStatus(tranId);
+      console.log("Payment status check response:", response);
+      
+      if (response.status === "completed") {
+        // Payment completed successfully
+        setStatus("success");
+        
+        // Get order details from localStorage
+        const pendingOrderStr = localStorage.getItem("pending_ssl_order");
+        if (pendingOrderStr) {
+          const pendingOrder = JSON.parse(pendingOrderStr);
+          setOrderDetails(pendingOrder);
+        }
+        
+        // Clear localStorage
+        clearCheckoutLocalStorage();
+        
+        // Stop polling
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+        
+        toast.success(`Payment successful!`);
+        
+        // Redirect to home after 5 seconds
+        setTimeout(() => {
+          router.push("/");
+        }, 5000);
+        
+      } else if (response.status === "failed") {
+        setStatus("failed");
+        clearCheckoutLocalStorage();
+        
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+        
+        toast.error("Payment failed. Please try again.");
+        setTimeout(() => {
+          router.push("/cart");
+        }, 3000);
+        
+      } else if (response.status === "canceled") {
+        setStatus("canceled");
+        clearCheckoutLocalStorage();
+        
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+        
+        toast.warning("Payment canceled.");
+        setTimeout(() => {
+          router.push("/cart");
+        }, 3000);
+      }
+      // If still pending, continue polling
+      
+    } catch (error) {
+      console.error("Payment status check error:", error);
+      
+      // After 30 seconds of polling without success, show timeout
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime > 30000) { // 30 seconds timeout
+        setStatus("timeout");
+        clearCheckoutLocalStorage();
+        
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+        
+        toast.error("Payment verification timeout. Please contact support.");
+        setTimeout(() => {
+          router.push("/");
+        }, 5000);
+      }
+    }
+  };
+
+  let startTime = Date.now();
+
+  useEffect(() => {
+    const statusParam = searchParams.get("status");
+    const tranId = searchParams.get("tran_id");
+    
+    console.log("Payment callback received:", {
+      statusParam,
+      tranId,
+      allParams: Object.fromEntries(searchParams.entries())
+    });
+
+    if (!tranId) {
+      toast.error("Invalid payment callback");
+      setTimeout(() => {
+        router.push("/");
+      }, 3000);
+      return;
+    }
+
+    setTransactionId(tranId);
+
+    if (statusParam === "success") {
+      setStatus("verifying");
+      
+      // Start polling for payment status
+      const interval = setInterval(() => {
+        checkPaymentStatus(tranId);
+      }, 3000); // Check every 3 seconds
+      
+      setPollingInterval(interval);
+      
+      // Initial check
+      checkPaymentStatus(tranId);
+      
+      // Auto timeout after 30 seconds
+      setTimeout(() => {
+        if (status === "verifying") {
+          setStatus("timeout");
+          clearCheckoutLocalStorage();
+          
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
+          
+          toast.error("Payment verification timeout. Please contact support.");
+          setTimeout(() => {
+            router.push("/");
+          }, 5000);
+        }
+      }, 30000);
+      
+    } else if (statusParam === "failed") {
+      setStatus("failed");
+      clearCheckoutLocalStorage();
+      toast.error("Payment failed. Please try again.");
+      
+      setTimeout(() => {
+        router.push("/cart");
+      }, 3000);
+      
+    } else if (statusParam === "canceled") {
+      setStatus("canceled");
+      clearCheckoutLocalStorage();
+      toast.warning("Payment canceled.");
+      
+      setTimeout(() => {
+        router.push("/cart");
+      }, 3000);
+    } else {
+      setStatus("processing");
+    }
+
+    // Cleanup interval on unmount
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [searchParams]);
+
+  // Get order IDs for display
+  const getOrderIds = () => {
+    if (orderDetails?.order_ids) {
+      return orderDetails.order_ids.join(", ");
+    }
+    return "Processing...";
   };
 
   return (
     <div className="container py-5">
-      {/* Stepper */}
-      <div className="mb-4">
-        <div className="d-flex align-items-center justify-content-center gap-4">
-          <div className="text-center">
-            <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>1</div>
-            <div style={{ fontSize: 13 }}>Cart</div>
-          </div>
-          <div style={{ width: 80, height: 2, background: "#1976d2" }} />
-          <div className="text-center">
-            <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>2</div>
-            <div style={{ fontSize: 13 }}>Shipping And billing</div>
-          </div>
-          <div style={{ width: 80, height: 2, background: "#1976d2" }} />
-          <div className="text-center">
-            <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>3</div>
-            <div style={{ fontSize: 13 }}>Payment</div>
-          </div>
-        </div>
-      </div>
-      <div className="row g-4">
-        {/* Payment Method Card */}
-        <div className="col-12 col-lg-7">
-          <div className="bg-white rounded-4 p-4 shadow-sm mb-4">
-            <h4 className="fw-bold mb-3">Payment method</h4>
-            <div className="mb-3">Select A Payment Method To Proceed</div>
-            <div className="d-flex flex-column gap-3">
-              {/* Cash on Delivery */}
-              <div
-                className={`d-flex align-items-center border rounded-3 p-3 ${paymentMethod === "cod" ? "border-primary bg-light" : "border-light"}`}
-                style={{ cursor: "pointer" }}
-                onClick={() => setPaymentMethod("cod")}
-              >
-                <input
-                  type="radio"
-                  className="form-check-input me-3"
-                  checked={paymentMethod === "cod"}
-                  onChange={() => setPaymentMethod("cod")}
-                  id="cod"
-                />
-                <span className="me-2" style={{ fontSize: 22 }}>
-                  <i className="fas fa-money-bill-wave text-success"></i>
-                </span>
-                <label htmlFor="cod" className="mb-0 fw-semibold" style={{ cursor: "pointer" }}>
-                  Cash on Delivery
-                </label>
-              </div>
-
-              {/* Digital Payment Section */}
-              {config?.digital_payment === true && Array.isArray(config?.payment_methods) && config.payment_methods.length > 0 && (
-                <div className="mb-2">
-                  <div className="fw-semibold mb-2">Digital Payment</div>
-                  {config.payment_methods.map((method) => {
-                    if (method.key_name === "ssl_commerz") {
-                      return (
-                        <div
-                          key={method.key_name}
-                          className={`d-flex align-items-center border rounded-3 p-3 mb-2 ${paymentMethod === method.key_name ? "border-primary bg-light" : "border-light"}`}
-                          style={{ cursor: "pointer" }}
-                          onClick={() => setPaymentMethod(method.key_name)}
-                        >
-                          <input
-                            type="radio"
-                            className="form-check-input me-3"
-                            checked={paymentMethod === method.key_name}
-                            onChange={() => setPaymentMethod(method.key_name)}
-                            id={`digital-${method.key_name}`}
-                          />
-                          <span className="me-2" style={{ fontSize: 22 }}>
-                            {/* SSLCommerz icon */}
-                            <img
-                              src="/images/ssl-commerce-logo.png"
-                              alt="SSLCommerz"
-                              style={{ height: 20, objectFit: "contain", background: "#fff", borderRadius: 4, border: "1px solid #eee" }}
-                            />
-                          </span>
-                          <label htmlFor={`digital-${method.key_name}`} className="mb-0 fw-semibold" style={{ cursor: "pointer" }}>
-                            {method.additional_datas?.gateway_title || "SSLCommerz"} (Visa, MasterCard, bKash, Nagad, Rocket)
-                          </label>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-              )}
-
-              {/* See More */}
-              {offlineMethods.length > 0 && !showMore && (
-                <div className="text-end">
-                  <button className="btn btn-link p-0" onClick={() => setShowMore(true)}>
-                    See More
-                  </button>
-                </div>
-              )}
-              {/* Offline Payment Methods */}
-              {showMore && offlineMethods.map((method) => (
-                <div
-                  key={method.id}
-                  className={`d-flex flex-column border rounded-3 p-3 mb-2 ${paymentMethod === String(method.id) ? "border-primary bg-light" : "border-light"}`}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => setPaymentMethod(String(method.id))}
-                >
-                  <div className="d-flex align-items-center">
-                    <input
-                      type="radio"
-                      className="form-check-input me-3"
-                      checked={paymentMethod === String(method.id)}
-                      onChange={() => setPaymentMethod(String(method.id))}
-                      id={`offline-${method.id}`}
-                    />
-                    <span className="me-2" style={{ fontSize: 22 }}>
-                      <i className="fas fa-university text-info"></i>
-                    </span>
-                    <label htmlFor={`offline-${method.id}`} className="mb-0 fw-semibold" style={{ cursor: "pointer" }}>
-                      {method.method_name}
-                    </label>
-                  </div>
-                  {/* Show method fields */}
-                  {paymentMethod === String(method.id) && (
-                    <div className="ps-4 pt-2">
-                      {Array.isArray(method.method_fields) && method.method_fields.map((f, idx) => (
-                        <div key={idx} className="mb-1">
-                          <span className="text-muted small">{f.input_name}: </span>
-                          <span className="fw-semibold">{f.input_data}</span>
-                        </div>
-                      ))}
-                      {Array.isArray(method.method_informations) && method.method_informations.map((info, idx) => (
-                        <div key={idx} className="mb-2">
-                          <input
-                            className="form-control"
-                            required={info.is_required === 1}
-                            placeholder={info.customer_placeholder}
-                            value={offlineFields[info.customer_input] || ""}
-                            onChange={e => handleOfflineFieldChange(info.customer_input, e.target.value)}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="mt-3">
-              <a href="/checkout" className="text-primary text-decoration-none">
-                &lt; Go back
-              </a>
-            </div>
-          </div>
-        </div>
-        {/* Order Summary */}
-        <div className="col-12 col-lg-5">
-          <div className="bg-white rounded-4 p-4 shadow-sm mb-4">
-            <div className="mb-3 d-flex justify-content-between">
-              <span>Sub total</span>
-              <span>৳{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div className="mb-3 d-flex justify-content-between">
-              <span>Item Discount</span>
-              <span className="text-primary">- ৳{itemDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-            {shipping > 0 && (
-              <div className="mb-3 d-flex justify-content-between">
-                <span>{shippingName}</span>
-                <span>+ ৳{shipping.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-              </div>
-            )}
-            <div className="mb-3 d-flex justify-content-between fw-bold fs-5">
-              <span>Total</span>
-              <span>৳{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div className="form-check mb-3">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="agree"
-                checked={agreed}
-                onChange={e => setAgreed(e.target.checked)}
-              />
-              <label className="form-check-label" htmlFor="agree">
-                I agree to Your <a href="/terms" className="text-primary">Terms and condition</a>, <a href="/privacy" className="text-primary">Privacy policy</a>, <a href="/refund" className="text-primary">Refund policy</a>
-              </label>
-            </div>
-            <button
-              className="btn btn-primary w-100 mb-2"
-              disabled={!agreed || !paymentMethod || isProcessing}
-              onClick={handleProceed}
-            >
-              {isProcessing ? (
+      <div className="row justify-content-center">
+        <div className="col-md-8">
+          <div className="card text-center">
+            <div className="card-body py-5">
+              {status === "processing" && (
                 <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Processing...
+                  <div className="spinner-border text-primary mb-3" style={{ width: "3rem", height: "3rem" }} role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <h3>Processing Payment Callback...</h3>
+                  <p className="text-muted">Please wait while we process your payment information.</p>
                 </>
-              ) : (
-                "Proceed to Checkout"
               )}
-            </button>
-            <a href="/" className="btn btn-link w-100"> &lt; Continue Shopping</a>
+              
+              {status === "verifying" && (
+                <>
+                  <div className="spinner-border text-primary mb-3" style={{ width: "3rem", height: "3rem" }} role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <h3>Verifying Payment...</h3>
+                  <p className="text-muted">Please wait while we verify your payment with SSLCommerz.</p>
+                  <div className="mt-3">
+                    <p className="small text-muted">
+                      Transaction ID: <code>{transactionId}</code>
+                    </p>
+                    <p className="small text-muted">
+                      This may take a few moments. Please don't close this page.
+                    </p>
+                  </div>
+                </>
+              )}
+              
+              {status === "success" && (
+                <>
+                  <div className="text-success mb-3" style={{ fontSize: "4rem" }}>
+                    <i className="fas fa-check-circle"></i>
+                  </div>
+                  <h3>Payment Successful!</h3>
+                  <p className="text-muted">Your payment has been verified and order has been placed successfully.</p>
+                  
+                  <div className="alert alert-success mt-3">
+                    <h5 className="alert-heading">Order Details</h5>
+                    <hr />
+                    <p className="mb-1"><strong>Order ID(s):</strong> {getOrderIds()}</p>
+                    <p className="mb-1"><strong>Transaction ID:</strong> {transactionId}</p>
+                    {orderDetails?.amount && (
+                      <p className="mb-0"><strong>Amount Paid:</strong> ৳{orderDetails.amount.toLocaleString()}</p>
+                    )}
+                  </div>
+                  
+                  <p className="mt-3">You will receive a confirmation email shortly.</p>
+                  <p>Redirecting to home page in 5 seconds...</p>
+                </>
+              )}
+              
+              {status === "failed" && (
+                <>
+                  <div className="text-danger mb-3" style={{ fontSize: "4rem" }}>
+                    <i className="fas fa-times-circle"></i>
+                  </div>
+                  <h3>Payment Failed</h3>
+                  <p className="text-muted">Your payment was not successful. Please try again.</p>
+                  
+                  <div className="alert alert-danger mt-3">
+                    <p className="mb-0">Transaction ID: <code>{transactionId}</code></p>
+                  </div>
+                  
+                  <p className="mt-3">If money was deducted from your account, it will be refunded within 3-7 business days.</p>
+                  <p>Redirecting to cart...</p>
+                </>
+              )}
+              
+              {status === "canceled" && (
+                <>
+                  <div className="text-warning mb-3" style={{ fontSize: "4rem" }}>
+                    <i className="fas fa-exclamation-circle"></i>
+                  </div>
+                  <h3>Payment Canceled</h3>
+                  <p className="text-muted">You canceled the payment process.</p>
+                  
+                  <div className="alert alert-warning mt-3">
+                    <p className="mb-0">Transaction ID: <code>{transactionId}</code></p>
+                  </div>
+                  
+                  <p>Redirecting to cart...</p>
+                </>
+              )}
+              
+              {status === "timeout" && (
+                <>
+                  <div className="text-warning mb-3" style={{ fontSize: "4rem" }}>
+                    <i className="fas fa-clock"></i>
+                  </div>
+                  <h3>Verification Timeout</h3>
+                  <p className="text-muted">Payment verification is taking longer than expected.</p>
+                  
+                  <div className="alert alert-info mt-3">
+                    <h5 className="alert-heading">What to do next?</h5>
+                    <ul className="text-start">
+                      <li>Check your email for payment confirmation</li>
+                      <li>Check your bank/SSLCommerz account for transaction status</li>
+                      <li>Contact our support with Transaction ID: <code>{transactionId}</code></li>
+                      <li>If payment was successful, your order will be processed</li>
+                    </ul>
+                  </div>
+                  
+                  <p>Redirecting to home page...</p>
+                </>
+              )}
+              
+              <div className="mt-4">
+                <a href="/" className="btn btn-primary me-2">
+                  <i className="fas fa-home me-1"></i> Go to Home
+                </a>
+                
+                {status === "success" && orderDetails?.order_ids && (
+                  <a href="/orders" className="btn btn-outline-primary me-2">
+                    <i className="fas fa-list-alt me-1"></i> View Orders
+                  </a>
+                )}
+                
+                {(status === "failed" || status === "canceled") && (
+                  <a href="/cart" className="btn btn-outline-primary">
+                    <i className="fas fa-shopping-cart me-1"></i> Back to Cart
+                  </a>
+                )}
+                
+                {status === "timeout" && (
+                  <a href="/contact" className="btn btn-outline-warning">
+                    <i className="fas fa-headset me-1"></i> Contact Support
+                  </a>
+                )}
+              </div>
+              
+              {/* Transaction details footer */}
+              {transactionId && (
+                <div className="mt-4 pt-3 border-top">
+                  <p className="small text-muted mb-0">
+                    Transaction Reference: <code>{transactionId}</code>
+                  </p>
+                  <p className="small text-muted mb-0">
+                    Need help? Contact support@yourdomain.com
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-      <style>{`
-        .border-primary {
-          border-color: #1976d2 !important;
-        }
-        .bg-light {
-          background: #f8f9fa !important;
-        }
-        .rounded-4 {
-          border-radius: 1.25rem !important;
-        }
-      `}</style>
     </div>
   );
 }
