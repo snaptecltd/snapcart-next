@@ -1,4 +1,4 @@
-// app/order-confirmation/page.js
+// app/checkout/order-confirmation/page.js
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";

@@ -6,6 +6,8 @@ import Link from "next/link";
 import { toast } from "react-toastify";
 import { 
   placeOrder,
+  placeOrderWithDigitalPayment,
+  placeOrderByOfflinePayment,
   initiateSSLCommerzPayment,
   getOfflinePaymentMethods 
 } from "@/lib/api/global.service";
@@ -59,6 +61,20 @@ export default function PaymentPage() {
     loadOfflineMethods();
   }, []);
 
+  const getGuestIdFromLocalStorage = () => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("guest_id") || "";
+    }
+    return "";
+  };
+
+  const getTokenFromLocalStorage = () => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("snapcart_token") || "";
+    }
+    return "";
+  };
+  
   // checkout/payment/page.js - handlePlaceOrder function
   const handlePlaceOrder = async () => {
     setIsLoading(true);
@@ -168,22 +184,42 @@ export default function PaymentPage() {
       else if (paymentMethod === "ssl_commerz") {
         console.log("Initiating SSLCommerz payment");
         
-        // Prepare payment data
+        // FIRST: Place order to get order_id
+        const orderResponse = await placeOrderWithDigitalPayment(commonOrderData);
+        
+        if (!orderResponse || !orderResponse.order_ids || orderResponse.order_ids.length === 0) {
+          toast.error("Failed to create order. Please try again.");
+          setIsLoading(false);
+          return;
+        }
+        
+        const orderId = orderResponse.order_ids[0];
+        
+        // Prepare payment data with order_id
         const paymentData = {
-          ...commonOrderData,
+          order_id: orderId,
           amount: cartSummary.total,
           currency: "BDT",
           customer_name: shippingAddress.contact_person_name || "Customer",
           customer_email: shippingAddress.email || "customer@example.com",
           customer_phone: shippingAddress.phone || "01XXXXXXXXX",
           callback_url: `${window.location.origin}/checkout/payment/sslcommerz-callback`,
+          // Additional order data for reference
+          coupon_code: commonOrderData.coupon_code,
+          order_note: commonOrderData.order_note,
+          shipping_method_id: commonOrderData.shipping_method_id,
+          address_id: commonOrderData.address_id,
+          billing_address_id: commonOrderData.billing_address_id,
+          guest_id: getGuestIdFromLocalStorage(),
+          token: getTokenFromLocalStorage()
         };
 
         console.log("Payment data:", paymentData);
 
-        // Store pending order data for callback verification
+        // Store pending order data for callback
         localStorage.setItem("pending_order_data", JSON.stringify({
           ...commonOrderData,
+          order_id: orderId,
           payment_method: 'ssl_commerz',
           customer_info: {
             name: shippingAddress.contact_person_name,
@@ -198,7 +234,6 @@ export default function PaymentPage() {
         
         if (sslResponse && sslResponse.payment_url) {
           console.log("Redirecting to SSLCommerz:", sslResponse.payment_url);
-          // Redirect to SSLCommerz payment page
           window.location.href = sslResponse.payment_url;
         } else {
           throw new Error("Failed to initiate payment");

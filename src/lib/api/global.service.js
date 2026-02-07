@@ -882,7 +882,7 @@ export async function placeOrderWithDigitalPayment(orderData) {
   console.log("Placing Order with Digital Payment:", orderData);
   
   try {
-    const res = await api.post(`${ENDPOINTS.ORDER_PLACE}/with-digital-payment`, orderData, { 
+    const res = await api.post(`${ENDPOINTS.ORDER_PLACE}/place-with-digital-payment`, orderData, { 
       headers: {
         ...headers,
         'Content-Type': 'application/json'
