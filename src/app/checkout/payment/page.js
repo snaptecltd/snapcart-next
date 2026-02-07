@@ -5,8 +5,10 @@ import {
   getOfflinePaymentMethods, 
   placeOrder, 
   placeOrderByOfflinePayment,
-  addCustomerAddress 
-} from "@/lib/api/global.service"; // addCustomerAddress import করুন
+  addCustomerAddress,
+  initiateSSLCommerzPayment,
+  placeOrderWithDigitalPayment
+} from "@/lib/api/global.service";
 import { toast } from "react-toastify";
 import { useGlobalConfig } from "@/context/GlobalConfigContext";
 
@@ -17,7 +19,8 @@ export default function PaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [offlineFields, setOfflineFields] = useState({});
   const [agreed, setAgreed] = useState(false);
-  const [isGuest, setIsGuest] = useState(true); // Add isGuest state
+  const [isGuest, setIsGuest] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { data: config } = useGlobalConfig();
   
   // Cart summary states
@@ -48,7 +51,7 @@ export default function PaymentPage() {
   // Check if user is guest or logged in
   useEffect(() => {
     const token = localStorage.getItem("snapcart_token");
-    setIsGuest(!token); // If token exists, user is not a guest
+    setIsGuest(!token);
   }, []);
 
   const total = Math.max(0, subtotal - itemDiscount - discount + shipping);
@@ -58,186 +61,255 @@ export default function PaymentPage() {
     setOfflineFields((prev) => ({ ...prev, [input]: value }));
   };
 
-  // Function to save address with is_billing field
-  const saveAddressToAPI = async (addressData, isBilling = false) => {
+  // Handle SSLCommerz payment initiation
+  const handleSSLCommerzPayment = async () => {
+    setIsProcessing(true);
     try {
-      const addressToSave = {
-        ...addressData,
-        is_billing: isBilling ? 1 : 0
-      };
+      // First, create the order
+      const shipping_address_id = localStorage.getItem("snapcart_checkout_shipping_id") || "";
+      const billing_address_id = localStorage.getItem("snapcart_checkout_billing_id") || shipping_address_id;
+      const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
+      const order_note = localStorage.getItem("snapcart_order_note") || "";
       
-      const response = await addCustomerAddress(addressToSave);
-      return response?.id || null;
+      let coupon_code = "";
+      try {
+        const storedCoupon = localStorage.getItem("snapcart_coupon_applied");
+        if (storedCoupon) {
+          const couponData = JSON.parse(storedCoupon);
+          coupon_code = couponData.code || couponData.coupon_code || "";
+        }
+      } catch (e) {
+        console.error("Error parsing coupon:", e);
+      }
+
+      // Get customer info
+      const token = localStorage.getItem("snapcart_token");
+      let customerInfo = {};
+      
+      if (token) {
+        // For logged in users
+        const userData = JSON.parse(localStorage.getItem("snapcart_user") || "{}");
+        customerInfo = {
+          name: `${userData.f_name || ''} ${userData.l_name || ''}`.trim(),
+          email: userData.email || '',
+          phone: userData.phone || '',
+        };
+      } else {
+        // For guest users - get from shipping address
+        const shippingAddressStr = localStorage.getItem("snapcart_checkout_shipping_address");
+        if (shippingAddressStr) {
+          try {
+            const shippingAddress = JSON.parse(shippingAddressStr);
+            customerInfo = {
+              name: shippingAddress.contact_person_name || '',
+              email: shippingAddress.email || '',
+              phone: shippingAddress.phone || '',
+            };
+          } catch (e) {
+            console.error("Error parsing shipping address:", e);
+          }
+        }
+      }
+
+      // Prepare SSLCommerz data
+      const sslData = {
+        order_id: `ORDER-${Date.now()}`,
+        amount: total,
+        currency: "BDT",
+        customer_name: customerInfo.name || "Customer",
+        customer_email: customerInfo.email || "customer@example.com",
+        customer_phone: customerInfo.phone || "0000000000",
+        // Additional order data for backend
+        coupon_code,
+        order_note,
+        shipping_method_id: shippingMethodId,
+        address_id: shipping_address_id,
+        billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
+      };
+
+      console.log("SSLCommerz data:", sslData);
+
+      // Initiate payment
+      const response = await initiateSSLCommerzPayment(sslData);
+      
+      if (response && response.payment_url) {
+        // Redirect to SSLCommerz payment page
+        window.location.href = response.payment_url;
+      } else {
+        toast.error("Failed to initiate payment. Please try again."+response);
+      }
     } catch (error) {
-      console.error("Address save error in payment page:", error);
-      return null;
+      console.error("SSLCommerz payment error:", error);
+      toast.error(error.response?.data?.message || "Payment initiation failed");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   // Proceed to checkout
-// Payment page-এ handleProceed function update করুন
-const handleProceed = async () => {
-  if (!agreed || !paymentMethod) return;
-  
-  try {
-    // Get all required data from localStorage
-    const shipping_method_id = localStorage.getItem("snapcart_shipping_method_id") || "";
-    const shipping_address_id = localStorage.getItem("snapcart_checkout_shipping_id") || "";
-    const billing_address_id = localStorage.getItem("snapcart_checkout_billing_id") || shipping_address_id;
-    const order_note = localStorage.getItem("snapcart_order_note") || "";
-    const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
+  const handleProceed = async () => {
+    if (!agreed || !paymentMethod) {
+      toast.error("Please agree to terms and select a payment method");
+      return;
+    }
     
-    // Get coupon data
-    let coupon_code = "";
+    if (isProcessing) return;
+    
     try {
-      const storedCoupon = localStorage.getItem("snapcart_coupon_applied");
-      if (storedCoupon) {
-        const couponData = JSON.parse(storedCoupon);
-        coupon_code = couponData.code || couponData.coupon_code || "";
+      // Get all required data from localStorage
+      const shipping_method_id = localStorage.getItem("snapcart_shipping_method_id") || "";
+      const shipping_address_id = localStorage.getItem("snapcart_checkout_shipping_id") || "";
+      const billing_address_id = localStorage.getItem("snapcart_checkout_billing_id") || shipping_address_id;
+      const order_note = localStorage.getItem("snapcart_order_note") || "";
+      const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
+      
+      // Get coupon data
+      let coupon_code = "";
+      try {
+        const storedCoupon = localStorage.getItem("snapcart_coupon_applied");
+        if (storedCoupon) {
+          const couponData = JSON.parse(storedCoupon);
+          coupon_code = couponData.code || couponData.coupon_code || "";
+        }
+      } catch (e) {
+        console.error("Error parsing coupon:", e);
       }
-    } catch (e) {
-      console.error("Error parsing coupon:", e);
-    }
-    
-    // Validate required fields
-    if (!shipping_method_id) {
-      toast.error("Shipping method is required!");
-      router.push("/cart");
-      return;
-    }
-    
-    if (!shipping_address_id) {
-      toast.error("Shipping address is required!");
-      router.push("/checkout");
-      return;
-    }
-    
-    console.log("Order placing with data:", {
-      shipping_method_id,
-      address_id: shipping_address_id,
-      billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
-      coupon_code,
-      order_note,
-      sameAsShipping
-    });
-    
-    let response;
-    
-    if (paymentMethod === "cod") {
-      // Cash on Delivery
-      response = await placeOrder({
-        coupon_code,
-        order_note,
+      
+      // Validate required fields
+      if (!shipping_method_id) {
+        toast.error("Shipping method is required!");
+        router.push("/cart");
+        return;
+      }
+      
+      if (!shipping_address_id) {
+        toast.error("Shipping address is required!");
+        router.push("/checkout");
+        return;
+      }
+      
+      console.log("Order placing with data:", {
         shipping_method_id,
         address_id: shipping_address_id,
         billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
-      });
-    } else {
-      // Offline Payment
-      const method_id = paymentMethod;
-      const method_informations = btoa(JSON.stringify(offlineFields));
-      
-      response = await placeOrderByOfflinePayment({
         coupon_code,
         order_note,
-        payment_note: offlineFields.note || "",
-        shipping_method_id,
-        address_id: shipping_address_id,
-        billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
-        method_id,
-        method_informations,
+        sameAsShipping
       });
+      
+      let response;
+      
+      if (paymentMethod === "cod") {
+        // Cash on Delivery
+        setIsProcessing(true);
+        response = await placeOrder({
+          coupon_code,
+          order_note,
+          shipping_method_id,
+          address_id: shipping_address_id,
+          billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
+        });
+      } else if (paymentMethod === "ssl_commerz") {
+        // SSLCommerz Digital Payment
+        await handleSSLCommerzPayment();
+        return; // Return early as handleSSLCommerzPayment will handle the redirect
+      } else {
+        // Offline Payment
+        setIsProcessing(true);
+        const method_id = paymentMethod;
+        const method_informations = btoa(JSON.stringify(offlineFields));
+        
+        response = await placeOrderByOfflinePayment({
+          coupon_code,
+          order_note,
+          payment_note: offlineFields.note || "",
+          shipping_method_id,
+          address_id: shipping_address_id,
+          billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
+          method_id,
+          method_informations,
+        });
+      }
+      
+      // Success handling for COD and Offline payments
+      if (response && (response.order_ids || response.messages)) {
+        // Clear localStorage
+        clearCheckoutLocalStorage();
+        
+        // Dispatch event for cart update
+        window.dispatchEvent(new Event("snapcart-auth-change"));
+        
+        // Show success message
+        const orderIds = response.order_ids ? response.order_ids.join(", ") : "N/A";
+        toast.success(`Order placed successfully! Order ID: ${orderIds}`);
+        
+        // Redirect to home or orders page
+        setTimeout(() => {
+          router.push("/");
+        }, 2000);
+        
+      } else {
+        toast.error("Failed to place order. Please try again.");
+      }
+      
+    } catch (error) {
+      console.error("Order placement error:", error);
+      
+      // Show specific error messages
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach(err => {
+          toast.error(`${err.code}: ${err.message}`);
+        });
+      } else if (error.message) {
+        toast.error(`Error: ${error.message}`);
+      } else {
+        toast.error("Failed to place order. Please try again.");
+      }
+    } finally {
+      setIsProcessing(false);
     }
+  };
+
+  // Success handler function
+  const handleOrderSuccess = (res) => {
+    window.dispatchEvent(new Event("snapcart-auth-change"));
     
-    // Success handling
-    if (response && (response.order_ids || response.messages)) {
-      // Clear localStorage
-      clearCheckoutLocalStorage();
-      
-      // Dispatch event for cart update
-      window.dispatchEvent(new Event("snapcart-auth-change"));
-      
-      // Show success message
-      const orderIds = response.order_ids ? response.order_ids.join(", ") : "N/A";
-      toast.success(`Order placed successfully! Order ID: ${orderIds}`);
-      
-      // Redirect to home or orders page
-      setTimeout(() => {
-        router.push("/");
-      }, 2000);
-      
-    } else {
-      toast.error("Failed to place order. Please try again.");
-    }
+    clearCheckoutLocalStorage();
     
-  } catch (error) {
-    console.error("Order placement error:", error);
-    
-    // Show specific error messages
-    if (error.response?.data?.errors) {
-      error.response.data.errors.forEach(err => {
-        toast.error(`${err.code}: ${err.message}`);
+    if (typeof window !== "undefined" && window.Swal) {
+      window.Swal.fire({
+        icon: "success",
+        title: "Order Placed!",
+        html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
+        confirmButtonText: "Continue Shopping",
+      }).then(() => {
+        window.location.href = "/";
       });
-    } else if (error.message) {
-      toast.error(`Error: ${error.message}`);
     } else {
-      toast.error("Failed to place order. Please try again.");
+      toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
+      setTimeout(() => { window.location.href = "/"; }, 1200);
     }
-  }
-};
+  };
 
-// Success handler function
-const handleOrderSuccess = (res) => {
-  window.dispatchEvent(new Event("snapcart-auth-change"));
-  
-  // LocalStorage ক্লিয়ার করুন
-  localStorage.removeItem("snapcart_shipping_method_id");
-  localStorage.removeItem("snapcart_checkout_shipping_id");
-  localStorage.removeItem("snapcart_checkout_billing_id");
-  localStorage.removeItem("snapcart_same_as_shipping");
-  localStorage.removeItem("snapcart_order_note");
-  localStorage.removeItem("snapcart_coupon_applied");
-  localStorage.removeItem("snapcart_cart_subtotal");
-  localStorage.removeItem("snapcart_cart_shipping");
-  localStorage.removeItem("snapcart_cart_discount");
-  localStorage.removeItem("snapcart_cart_total");
-  
-  if (typeof window !== "undefined" && window.Swal) {
-    window.Swal.fire({
-      icon: "success",
-      title: "Order Placed!",
-      html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
-      confirmButtonText: "Continue Shopping",
-    }).then(() => {
-      window.location.href = "/";
-    });
-  } else {
-    toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
-    setTimeout(() => { window.location.href = "/"; }, 1200);
-  }
-};
-
-
-// Helper function to clear localStorage
-// Clear localStorage function
-const clearCheckoutLocalStorage = () => {
-  const keys = [
-    "snapcart_shipping_method_id",
-    "snapcart_checkout_shipping_id",
-    "snapcart_checkout_billing_id",
-    "snapcart_same_as_shipping",
-    "snapcart_order_note",
-    "snapcart_coupon_applied",
-    "snapcart_cart_subtotal",
-    "snapcart_cart_shipping",
-    "snapcart_cart_discount",
-    "snapcart_cart_total",
-    "snapcart_checkout_shipping_address",
-    "snapcart_checkout_billing_address"
-  ];
-  
-  keys.forEach(key => localStorage.removeItem(key));
-};
+  // Helper function to clear localStorage
+  const clearCheckoutLocalStorage = () => {
+    const keys = [
+      "snapcart_shipping_method_id",
+      "snapcart_checkout_shipping_id",
+      "snapcart_checkout_billing_id",
+      "snapcart_same_as_shipping",
+      "snapcart_order_note",
+      "snapcart_coupon_applied",
+      "snapcart_cart_subtotal",
+      "snapcart_cart_shipping",
+      "snapcart_cart_discount",
+      "snapcart_cart_total",
+      "snapcart_checkout_shipping_address",
+      "snapcart_checkout_billing_address"
+    ];
+    
+    keys.forEach(key => localStorage.removeItem(key));
+  };
 
   return (
     <div className="container py-5">
@@ -317,12 +389,11 @@ const clearCheckoutLocalStorage = () => {
                             />
                           </span>
                           <label htmlFor={`digital-${method.key_name}`} className="mb-0 fw-semibold" style={{ cursor: "pointer" }}>
-                            Digital Payment ({method.additional_datas?.gateway_title || "SSLCommerz"})
+                            {method.additional_datas?.gateway_title || "SSLCommerz"} (Visa, MasterCard, bKash, Nagad, Rocket)
                           </label>
                         </div>
                       );
                     }
-                    // Add more gateways here if needed in future
                     return null;
                   })}
                 </div>
@@ -426,10 +497,17 @@ const clearCheckoutLocalStorage = () => {
             </div>
             <button
               className="btn btn-primary w-100 mb-2"
-              disabled={!agreed || !paymentMethod}
+              disabled={!agreed || !paymentMethod || isProcessing}
               onClick={handleProceed}
             >
-              Proceed to Checkout
+              {isProcessing ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Processing...
+                </>
+              ) : (
+                "Proceed to Checkout"
+              )}
             </button>
             <a href="/" className="btn btn-link w-100"> &lt; Continue Shopping</a>
           </div>

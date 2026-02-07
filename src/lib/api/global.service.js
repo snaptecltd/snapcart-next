@@ -824,3 +824,106 @@ export async function getOffersType() {
   const res = await api.get(ENDPOINTS.OFFERS_TYPE);
   return res.data;
 }
+/* =========================
+   DIGITAL PAYMENT (SSLCOMMERZ)
+========================= */
+export async function initiateSSLCommerzPayment(data) {
+  let headers = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) data.guest_id = guestId;
+    }
+  }
+  const res = await api.post(ENDPOINTS.SSLCOMMERZ_INITIATE_PAYMENT, data, { headers });
+  return res.data;
+}
+
+export async function handleSSLCommerzSuccess(data) {
+  let headers = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) data.guest_id = guestId;
+    }
+  }
+  const res = await api.post(ENDPOINTS.SSLCOMMERZ_SUCCESS, data, { headers });
+  return res.data;
+}
+
+export async function handleSSLCommerzFailed(data) {
+  let headers = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) data.guest_id = guestId;
+    }
+  }
+  const res = await api.post(ENDPOINTS.SSLCOMMERZ_FAILED, data, { headers });
+  return res.data;
+}
+
+export async function handleSSLCommerzCanceled(data) {
+  let headers = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) data.guest_id = guestId;
+    }
+  }
+  const res = await api.post(ENDPOINTS.SSLCOMMERZ_CANCELED, data, { headers });
+  return res.data;
+}
+
+/* =========================
+   PLACE ORDER WITH DIGITAL PAYMENT
+========================= */
+export async function placeOrderWithDigitalPayment({
+  coupon_code,
+  order_note,
+  shipping_method_id,
+  address_id,
+  billing_address_id,
+  payment_method, // 'ssl_commerz'
+}) {
+  let headers = {};
+  let params = {
+    coupon_code,
+    order_note,
+    shipping_method_id,
+    address_id,
+    billing_address_id,
+    payment_method,
+  };
+  
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) params.guest_id = guestId;
+    }
+  }
+  
+  console.log("Digital Order API call params:", params);
+  
+  Object.keys(params).forEach(
+    (k) => (params[k] === undefined || params[k] === null || params[k] === "") && delete params[k]
+  );
+  
+  const res = await api.post(`${ENDPOINTS.ORDER_PLACE}/digital`, params, { headers });
+  return res.data;
+}
