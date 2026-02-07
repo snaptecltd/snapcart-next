@@ -113,7 +113,7 @@ export default function PaymentPage() {
 
       // Prepare SSLCommerz data
       const sslData = {
-        order_id: `ORDER-${Date.now()}`,
+        order_id: `${Date.now()}`,
         amount: total,
         currency: "BDT",
         customer_name: customerInfo.name || "Customer",
