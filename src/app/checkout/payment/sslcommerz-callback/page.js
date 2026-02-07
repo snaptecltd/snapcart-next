@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { verifyAndCompleteSSLCommerzOrder, placeOrderByOfflinePayment } from "@/lib/api/global.service";
 
-export default function PaymentCallbackPage() {
+export default function SSLCommerzCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState("processing");

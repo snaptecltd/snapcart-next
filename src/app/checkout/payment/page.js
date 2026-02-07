@@ -59,6 +59,7 @@ export default function PaymentPage() {
     loadOfflineMethods();
   }, []);
 
+  // checkout/payment/page.js - handlePlaceOrder function
   const handlePlaceOrder = async () => {
     setIsLoading(true);
 
@@ -68,6 +69,11 @@ export default function PaymentPage() {
       const billingId = localStorage.getItem("snapcart_checkout_billing_id");
       const shippingMethodId = localStorage.getItem("snapcart_shipping_method_id");
       const couponCode = localStorage.getItem("snapcart_coupon_applied") || "";
+      const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
+      
+      // Get shipping address for customer info
+      const shippingAddressStr = localStorage.getItem("snapcart_checkout_shipping_address");
+      const shippingAddress = shippingAddressStr ? JSON.parse(shippingAddressStr) : {};
 
       console.log("Order data:", {
         shippingId,
@@ -84,14 +90,44 @@ export default function PaymentPage() {
         return;
       }
 
-      if (paymentMethod === "offline_payment") {
+      // Common order data
+      const commonOrderData = {
+        coupon_code: couponCode,
+        order_note: orderNote,
+        shipping_method_id: shippingMethodId,
+        address_id: shippingId,
+        billing_address_id: sameAsShipping ? shippingId : billingId,
+      };
+
+      // Case 1: Cash on Delivery
+      if (paymentMethod === "cash_on_delivery") {
+        console.log("Placing COD order:", commonOrderData);
+        
+        const response = await placeOrder(commonOrderData);
+        
+        if (response && response.order_ids) {
+          toast.success(`Order placed successfully! Order ID: ${response.order_ids.join(", ")}`);
+          
+          // Clear checkout data
+          clearCheckoutLocalStorage();
+          
+          // Redirect to order confirmation
+          setTimeout(() => {
+            router.push(`/checkout/order-confirmation?order_ids=${response.order_ids.join(",")}`);
+          }, 2000);
+        } else {
+          throw new Error("Failed to place order");
+        }
+      }
+      
+      // Case 2: Offline Payment
+      else if (paymentMethod === "offline_payment") {
         if (!selectedOfflineMethod) {
           toast.error("Please select an offline payment method.");
           setIsLoading(false);
           return;
         }
 
-        // Get selected offline method details
         const method = offlineMethods.find(m => m.id.toString() === selectedOfflineMethod);
         if (!method) {
           toast.error("Invalid payment method selected.");
@@ -107,117 +143,97 @@ export default function PaymentPage() {
           });
         }
 
-        // Place offline payment order
-        const orderData = {
-          coupon_code: couponCode,
-          order_note: orderNote,
-          shipping_method_id: shippingMethodId,
-          address_id: shippingId,
-          billing_address_id: billingId,
+        const offlineOrderData = {
+          ...commonOrderData,
           method_id: selectedOfflineMethod,
           method_informations: btoa(JSON.stringify(methodInformations)),
           payment_note: offlinePaymentNote,
         };
 
-        const response = await placeOrderByOfflinePayment(orderData);
+        console.log("Placing offline order:", offlineOrderData);
+
+        const response = await placeOrderByOfflinePayment(offlineOrderData);
         
         if (response && response.messages) {
           toast.success(response.messages);
+          clearCheckoutLocalStorage();
           
-          // Clear checkout data
-          const keys = [
-            "snapcart_shipping_method_id",
-            "snapcart_checkout_shipping_id",
-            "snapcart_checkout_billing_id",
-            "snapcart_same_as_shipping",
-            "snapcart_order_note",
-            "snapcart_coupon_applied",
-            "snapcart_cart_subtotal",
-            "snapcart_cart_shipping",
-            "snapcart_cart_discount",
-            "snapcart_cart_total",
-            "snapcart_checkout_shipping_address",
-            "snapcart_checkout_billing_address"
-          ];
-          
-          keys.forEach(key => localStorage.removeItem(key));
-          
-          // Dispatch cart update event
-          window.dispatchEvent(new Event("snapcart-auth-change"));
-          
-          // Redirect to thank you page
           setTimeout(() => {
-            router.push("/order-confirmation");
+            router.push("/checkout/order-confirmation");
           }, 2000);
         }
-
-      } else if (paymentMethod === "ssl_commerz") {
-        // Prepare customer info
-        const shippingAddressStr = localStorage.getItem("snapcart_checkout_shipping_address");
-        const shippingAddress = shippingAddressStr ? JSON.parse(shippingAddressStr) : {};
+      }
+      
+      // Case 3: SSLCommerz (Digital Payment)
+      else if (paymentMethod === "ssl_commerz") {
+        console.log("Initiating SSLCommerz payment");
         
-        const orderData = {
-          coupon_code: couponCode,
-          order_note: orderNote,
-          shipping_method_id: shippingMethodId,
-          address_id: shippingId,
-          billing_address_id: billingId,
+        // Prepare payment data
+        const paymentData = {
+          ...commonOrderData,
+          amount: cartSummary.total,
+          currency: "BDT",
+          customer_name: shippingAddress.contact_person_name || "Customer",
+          customer_email: shippingAddress.email || "customer@example.com",
+          customer_phone: shippingAddress.phone || "01XXXXXXXXX",
+          callback_url: `${window.location.origin}/checkout/payment/sslcommerz-callback`,
         };
 
-        // First place order to get order ID
-        const orderResponse = await placeOrder(orderData);
+        console.log("Payment data:", paymentData);
+
+        // Store pending order data for callback verification
+        localStorage.setItem("pending_order_data", JSON.stringify({
+          ...commonOrderData,
+          payment_method: 'ssl_commerz',
+          customer_info: {
+            name: shippingAddress.contact_person_name,
+            email: shippingAddress.email,
+            phone: shippingAddress.phone
+          },
+          amount: cartSummary.total
+        }));
+
+        // Initiate SSLCommerz payment
+        const sslResponse = await initiateSSLCommerzPayment(paymentData);
         
-        if (orderResponse && orderResponse.order_ids && orderResponse.order_ids.length > 0) {
-          const orderId = orderResponse.order_ids[0];
-          
-          // Prepare SSLCommerz payment data
-          const paymentData = {
-            order_id: orderId,
-            amount: cartSummary.total,
-            currency: "BDT",
-            customer_name: shippingAddress.contact_person_name || "Customer",
-            customer_email: shippingAddress.email || "customer@example.com",
-            customer_phone: shippingAddress.phone || "01XXXXXXXXX",
-            callback_url: `${window.location.origin}/payment/callback`,
-            // Include order data for later verification
-            coupon_code: couponCode,
-            order_note: orderNote,
-            shipping_method_id: shippingMethodId,
-            address_id: shippingId,
-            billing_address_id: billingId,
-          };
-
-          // Store pending order data for callback
-          localStorage.setItem("pending_order_data", JSON.stringify({
-            ...paymentData,
-            customer_info: {
-              name: shippingAddress.contact_person_name,
-              email: shippingAddress.email,
-              phone: shippingAddress.phone
-            }
-          }));
-
-          // Initiate SSLCommerz payment
-          const sslResponse = await initiateSSLCommerzPayment(paymentData);
-          
-          if (sslResponse && sslResponse.payment_url) {
-            // Redirect to SSLCommerz payment page
-            window.location.href = sslResponse.payment_url;
-          } else {
-            throw new Error("Failed to initiate payment");
-          }
+        if (sslResponse && sslResponse.payment_url) {
+          console.log("Redirecting to SSLCommerz:", sslResponse.payment_url);
+          // Redirect to SSLCommerz payment page
+          window.location.href = sslResponse.payment_url;
         } else {
-          throw new Error("Failed to create order");
+          throw new Error("Failed to initiate payment");
         }
       }
 
     } catch (error) {
       console.error("Payment error:", error);
-      toast.error("Payment failed: " + (error.message || "Unknown error"));
+      toast.error(error.response?.data?.message || error.message || "Payment failed");
     } finally {
       setIsLoading(false);
     }
   };
+
+// Helper function to clear localStorage
+const clearCheckoutLocalStorage = () => {
+  const keys = [
+    "snapcart_shipping_method_id",
+    "snapcart_checkout_shipping_id",
+    "snapcart_checkout_billing_id",
+    "snapcart_same_as_shipping",
+    "snapcart_order_note",
+    "snapcart_coupon_applied",
+    "snapcart_cart_subtotal",
+    "snapcart_cart_shipping",
+    "snapcart_cart_discount",
+    "snapcart_cart_total",
+    "snapcart_checkout_shipping_address",
+    "snapcart_checkout_billing_address",
+    "pending_order_data"
+  ];
+  
+  keys.forEach(key => localStorage.removeItem(key));
+  window.dispatchEvent(new Event("snapcart-auth-change"));
+};
 
   const subtotal = cartSummary.subtotal;
   const itemDiscount = cartSummary.itemDiscount;
@@ -254,6 +270,29 @@ export default function PaymentPage() {
             <h5 className="fw-bold mb-3">Select Payment Method</h5>
             
             <div className="mb-4">
+              {/* Cash on Delivery */}
+              <div className="form-check mb-3">
+                <input
+                  className="form-check-input"
+                  type="radio"
+                  name="paymentMethod"
+                  id="cash_on_delivery"
+                  value="cash_on_delivery"
+                  checked={paymentMethod === "cash_on_delivery"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                />
+                <label className="form-check-label" htmlFor="cash_on_delivery">
+                  <div className="d-flex align-items-center">
+                    <i className="fas fa-money-bill-wave fa-lg me-3 text-success"></i>
+                    <div>
+                      <strong>Cash on Delivery</strong>
+                      <p className="mb-0 text-muted small">Pay when you receive the product</p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {/* SSLCommerz */}
               <div className="form-check mb-3">
                 <input
                   className="form-check-input"
@@ -275,6 +314,7 @@ export default function PaymentPage() {
                 </label>
               </div>
 
+              {/* Offline Payment */}
               <div className="form-check mb-3">
                 <input
                   className="form-check-input"
