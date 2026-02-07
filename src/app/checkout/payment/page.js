@@ -8,6 +8,7 @@ import {
   addCustomerAddress 
 } from "@/lib/api/global.service"; // addCustomerAddress import করুন
 import { toast } from "react-toastify";
+import { useGlobalConfig } from "@/context/GlobalConfigContext";
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function PaymentPage() {
   const [offlineFields, setOfflineFields] = useState({});
   const [agreed, setAgreed] = useState(false);
   const [isGuest, setIsGuest] = useState(true); // Add isGuest state
+  const { data: config } = useGlobalConfig();
   
   // Cart summary states
   const [subtotal, setSubtotal] = useState(0);
@@ -285,6 +287,47 @@ const clearCheckoutLocalStorage = () => {
                   Cash on Delivery
                 </label>
               </div>
+
+              {/* Digital Payment Section */}
+              {config?.digital_payment === true && Array.isArray(config?.payment_methods) && config.payment_methods.length > 0 && (
+                <div className="mb-2">
+                  <div className="fw-semibold mb-2">Digital Payment</div>
+                  {config.payment_methods.map((method) => {
+                    if (method.key_name === "ssl_commerz") {
+                      return (
+                        <div
+                          key={method.key_name}
+                          className={`d-flex align-items-center border rounded-3 p-3 mb-2 ${paymentMethod === method.key_name ? "border-primary bg-light" : "border-light"}`}
+                          style={{ cursor: "pointer" }}
+                          onClick={() => setPaymentMethod(method.key_name)}
+                        >
+                          <input
+                            type="radio"
+                            className="form-check-input me-3"
+                            checked={paymentMethod === method.key_name}
+                            onChange={() => setPaymentMethod(method.key_name)}
+                            id={`digital-${method.key_name}`}
+                          />
+                          <span className="me-2" style={{ fontSize: 22 }}>
+                            {/* SSLCommerz icon */}
+                            <img
+                              src="/images/ssl-commerce-logo.png"
+                              alt="SSLCommerz"
+                              style={{ height: 20, objectFit: "contain", background: "#fff", borderRadius: 4, border: "1px solid #eee" }}
+                            />
+                          </span>
+                          <label htmlFor={`digital-${method.key_name}`} className="mb-0 fw-semibold" style={{ cursor: "pointer" }}>
+                            Digital Payment ({method.additional_datas?.gateway_title || "SSLCommerz"})
+                          </label>
+                        </div>
+                      );
+                    }
+                    // Add more gateways here if needed in future
+                    return null;
+                  })}
+                </div>
+              )}
+
               {/* See More */}
               {offlineMethods.length > 0 && !showMore && (
                 <div className="text-end">
