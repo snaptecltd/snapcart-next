@@ -838,7 +838,18 @@ export async function initiateSSLCommerzPayment(data) {
       if (guestId) data.guest_id = guestId;
     }
   }
-  const res = await api.post(ENDPOINTS.SSLCOMMERZ_INITIATE_PAYMENT, data, { headers });
+  
+  // Create a unique numeric order ID
+  const numericOrderId = Math.floor(Math.random() * 1000000) + 100000;
+  
+  const payload = {
+    ...data,
+    order_id: numericOrderId, // Numeric order ID
+  };
+  
+  console.log("SSLCommerz payload:", payload);
+  
+  const res = await api.post(ENDPOINTS.SSLCOMMERZ_INITIATE_PAYMENT, payload, { headers });
   return res.data;
 }
 
