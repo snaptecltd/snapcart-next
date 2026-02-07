@@ -1,223 +1,254 @@
+// checkout/payment/page.js
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  getOfflinePaymentMethods, 
-  placeOrder, 
-  placeOrderByOfflinePayment,
-  addCustomerAddress 
-} from "@/lib/api/global.service"; // addCustomerAddress import করুন
+import Link from "next/link";
 import { toast } from "react-toastify";
+import { 
+  placeOrder,
+  placeOrderWithDigitalPayment,
+  placeOrderByOfflinePayment,
+  initiateSSLCommerzPayment,
+  getOfflinePaymentMethods 
+} from "@/lib/api/global.service";
 
 export default function PaymentPage() {
   const router = useRouter();
+  const [paymentMethod, setPaymentMethod] = useState("ssl_commerz");
   const [offlineMethods, setOfflineMethods] = useState([]);
-  const [showMore, setShowMore] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cod");
-  const [offlineFields, setOfflineFields] = useState({});
-  const [agreed, setAgreed] = useState(false);
-  const [isGuest, setIsGuest] = useState(true); // Add isGuest state
-  
-  // Cart summary states
-  const [subtotal, setSubtotal] = useState(0);
-  const [itemDiscount, setItemDiscount] = useState(0);
-  const [shipping, setShipping] = useState(0);
-  const [shippingName, setShippingName] = useState("Shipping");
-  const [discount, setDiscount] = useState(0);
-  const [shippingMethodId, setShippingMethodId] = useState(null);
+  const [selectedOfflineMethod, setSelectedOfflineMethod] = useState("");
+  const [offlinePaymentNote, setOfflinePaymentNote] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [cartSummary, setCartSummary] = useState({
+    subtotal: 0,
+    itemDiscount: 0,
+    shipping: 0,
+    discount: 0,
+    total: 0,
+  });
+  const [orderNote, setOrderNote] = useState("");
 
-  // Load cart summary from localStorage
+  // Load cart summary
   useEffect(() => {
-    setSubtotal(Number(localStorage.getItem("snapcart_cart_subtotal") || 0));
-    setItemDiscount(Number(localStorage.getItem("snapcart_cart_item_discount") || 0));
-    setShipping(Number(localStorage.getItem("snapcart_cart_shipping") || 0));
-    setShippingName(localStorage.getItem("snapcart_cart_shipping_name") || "Shipping");
-    setDiscount(Number(localStorage.getItem("snapcart_cart_discount") || 0));
-    setShippingMethodId(localStorage.getItem("snapcart_shipping_method_id") || "");
+    try {
+      const subtotal = Number(localStorage.getItem("snapcart_cart_subtotal") || 0);
+      const itemDiscount = Number(localStorage.getItem("snapcart_cart_item_discount") || 0);
+      const shipping = Number(localStorage.getItem("snapcart_cart_shipping") || 0);
+      const discount = Number(localStorage.getItem("snapcart_cart_discount") || 0);
+      const total = Math.max(0, subtotal - itemDiscount - discount + shipping);
+      
+      setCartSummary({ subtotal, itemDiscount, shipping, discount, total });
+    } catch (error) {
+      console.error("Error loading cart summary:", error);
+    }
   }, []);
 
   // Load offline payment methods
   useEffect(() => {
-    getOfflinePaymentMethods()
-      .then(res => setOfflineMethods(res?.offline_methods || []))
-      .catch(() => setOfflineMethods([]));
-  }, []);
-
-  // Check if user is guest or logged in
-  useEffect(() => {
-    const token = localStorage.getItem("snapcart_token");
-    setIsGuest(!token); // If token exists, user is not a guest
-  }, []);
-
-  const total = Math.max(0, subtotal - itemDiscount - discount + shipping);
-
-  // Handle offline payment field change
-  const handleOfflineFieldChange = (input, value) => {
-    setOfflineFields((prev) => ({ ...prev, [input]: value }));
-  };
-
-  // Function to save address with is_billing field
-  const saveAddressToAPI = async (addressData, isBilling = false) => {
-    try {
-      const addressToSave = {
-        ...addressData,
-        is_billing: isBilling ? 1 : 0
-      };
-      
-      const response = await addCustomerAddress(addressToSave);
-      return response?.id || null;
-    } catch (error) {
-      console.error("Address save error in payment page:", error);
-      return null;
-    }
-  };
-
-  // Proceed to checkout
-// Payment page-এ handleProceed function update করুন
-const handleProceed = async () => {
-  if (!agreed || !paymentMethod) return;
-  
-  try {
-    // Get all required data from localStorage
-    const shipping_method_id = localStorage.getItem("snapcart_shipping_method_id") || "";
-    const shipping_address_id = localStorage.getItem("snapcart_checkout_shipping_id") || "";
-    const billing_address_id = localStorage.getItem("snapcart_checkout_billing_id") || shipping_address_id;
-    const order_note = localStorage.getItem("snapcart_order_note") || "";
-    const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
-    
-    // Get coupon data
-    let coupon_code = "";
-    try {
-      const storedCoupon = localStorage.getItem("snapcart_coupon_applied");
-      if (storedCoupon) {
-        const couponData = JSON.parse(storedCoupon);
-        coupon_code = couponData.code || couponData.coupon_code || "";
+    const loadOfflineMethods = async () => {
+      try {
+        const methods = await getOfflinePaymentMethods();
+        if (methods && methods.offline_methods) {
+          setOfflineMethods(methods.offline_methods);
+          if (methods.offline_methods.length > 0) {
+            setSelectedOfflineMethod(methods.offline_methods[0].id.toString());
+          }
+        }
+      } catch (error) {
+        console.error("Error loading offline methods:", error);
       }
-    } catch (e) {
-      console.error("Error parsing coupon:", e);
-    }
-    
-    // Validate required fields
-    if (!shipping_method_id) {
-      toast.error("Shipping method is required!");
-      router.push("/cart");
-      return;
-    }
-    
-    if (!shipping_address_id) {
-      toast.error("Shipping address is required!");
-      router.push("/checkout");
-      return;
-    }
-    
-    console.log("Order placing with data:", {
-      shipping_method_id,
-      address_id: shipping_address_id,
-      billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
-      coupon_code,
-      order_note,
-      sameAsShipping
-    });
-    
-    let response;
-    
-    if (paymentMethod === "cod") {
-      // Cash on Delivery
-      response = await placeOrder({
-        coupon_code,
-        order_note,
-        shipping_method_id,
-        address_id: shipping_address_id,
-        billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
-      });
-    } else {
-      // Offline Payment
-      const method_id = paymentMethod;
-      const method_informations = btoa(JSON.stringify(offlineFields));
-      
-      response = await placeOrderByOfflinePayment({
-        coupon_code,
-        order_note,
-        payment_note: offlineFields.note || "",
-        shipping_method_id,
-        address_id: shipping_address_id,
-        billing_address_id: sameAsShipping ? shipping_address_id : billing_address_id,
-        method_id,
-        method_informations,
-      });
-    }
-    
-    // Success handling
-    if (response && (response.order_ids || response.messages)) {
-      // Clear localStorage
-      clearCheckoutLocalStorage();
-      
-      // Dispatch event for cart update
-      window.dispatchEvent(new Event("snapcart-auth-change"));
-      
-      // Show success message
-      const orderIds = response.order_ids ? response.order_ids.join(", ") : "N/A";
-      toast.success(`Order placed successfully! Order ID: ${orderIds}`);
-      
-      // Redirect to home or orders page
-      setTimeout(() => {
-        router.push("/");
-      }, 2000);
-      
-    } else {
-      toast.error("Failed to place order. Please try again.");
-    }
-    
-  } catch (error) {
-    console.error("Order placement error:", error);
-    
-    // Show specific error messages
-    if (error.response?.data?.errors) {
-      error.response.data.errors.forEach(err => {
-        toast.error(`${err.code}: ${err.message}`);
-      });
-    } else if (error.message) {
-      toast.error(`Error: ${error.message}`);
-    } else {
-      toast.error("Failed to place order. Please try again.");
-    }
-  }
-};
+    };
+    loadOfflineMethods();
+  }, []);
 
-// Success handler function
-const handleOrderSuccess = (res) => {
-  window.dispatchEvent(new Event("snapcart-auth-change"));
-  
-  // LocalStorage ক্লিয়ার করুন
-  localStorage.removeItem("snapcart_shipping_method_id");
-  localStorage.removeItem("snapcart_checkout_shipping_id");
-  localStorage.removeItem("snapcart_checkout_billing_id");
-  localStorage.removeItem("snapcart_same_as_shipping");
-  localStorage.removeItem("snapcart_order_note");
-  localStorage.removeItem("snapcart_coupon_applied");
-  localStorage.removeItem("snapcart_cart_subtotal");
-  localStorage.removeItem("snapcart_cart_shipping");
-  localStorage.removeItem("snapcart_cart_discount");
-  localStorage.removeItem("snapcart_cart_total");
-  
-  if (typeof window !== "undefined" && window.Swal) {
-    window.Swal.fire({
-      icon: "success",
-      title: "Order Placed!",
-      html: `<div>Your order ID: <b>${(res.order_ids || []).join(", ")}</b></div>`,
-      confirmButtonText: "Continue Shopping",
-    }).then(() => {
-      window.location.href = "/";
-    });
-  } else {
-    toast.success(`Order Placed! Order ID: ${(res.order_ids || []).join(", ")}`);
-    setTimeout(() => { window.location.href = "/"; }, 1200);
-  }
-};
+  const getGuestIdFromLocalStorage = () => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("guest_id") || "";
+    }
+    return "";
+  };
 
+  const getTokenFromLocalStorage = () => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("snapcart_token") || "";
+    }
+    return "";
+  };
+  
+  // checkout/payment/page.js - handlePlaceOrder function
+  const handlePlaceOrder = async () => {
+    setIsLoading(true);
+
+    try {
+      // Get saved data from localStorage
+      const shippingId = localStorage.getItem("snapcart_checkout_shipping_id");
+      const billingId = localStorage.getItem("snapcart_checkout_billing_id");
+      const shippingMethodId = localStorage.getItem("snapcart_shipping_method_id");
+      const couponCode = localStorage.getItem("snapcart_coupon_applied") || "";
+      const sameAsShipping = localStorage.getItem("snapcart_same_as_shipping") === "true";
+      
+      // Get shipping address for customer info
+      const shippingAddressStr = localStorage.getItem("snapcart_checkout_shipping_address");
+      const shippingAddress = shippingAddressStr ? JSON.parse(shippingAddressStr) : {};
+
+      console.log("Order data:", {
+        shippingId,
+        billingId,
+        shippingMethodId,
+        couponCode,
+        orderNote,
+        paymentMethod
+      });
+
+      if (!shippingId) {
+        toast.error("Shipping address not found. Please go back and add address.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Common order data
+      const commonOrderData = {
+        coupon_code: couponCode,
+        order_note: orderNote,
+        shipping_method_id: shippingMethodId,
+        address_id: shippingId,
+        billing_address_id: sameAsShipping ? shippingId : billingId,
+      };
+
+      // Case 1: Cash on Delivery
+      if (paymentMethod === "cash_on_delivery") {
+        console.log("Placing COD order:", commonOrderData);
+        
+        const response = await placeOrder(commonOrderData);
+        
+        if (response && response.order_ids) {
+          toast.success(`Order placed successfully! Order ID: ${response.order_ids.join(", ")}`);
+          
+          // Clear checkout data
+          clearCheckoutLocalStorage();
+          
+          // Redirect to order confirmation
+          setTimeout(() => {
+            router.push(`/checkout/order-confirmation?order_ids=${response.order_ids.join(",")}`);
+          }, 2000);
+        } else {
+          throw new Error("Failed to place order");
+        }
+      }
+      
+      // Case 2: Offline Payment
+      else if (paymentMethod === "offline_payment") {
+        if (!selectedOfflineMethod) {
+          toast.error("Please select an offline payment method.");
+          setIsLoading(false);
+          return;
+        }
+
+        const method = offlineMethods.find(m => m.id.toString() === selectedOfflineMethod);
+        if (!method) {
+          toast.error("Invalid payment method selected.");
+          setIsLoading(false);
+          return;
+        }
+
+        // Prepare method informations
+        const methodInformations = {};
+        if (method.method_informations) {
+          method.method_informations.forEach(info => {
+            methodInformations[info.customer_input] = "";
+          });
+        }
+
+        const offlineOrderData = {
+          ...commonOrderData,
+          method_id: selectedOfflineMethod,
+          method_informations: btoa(JSON.stringify(methodInformations)),
+          payment_note: offlinePaymentNote,
+        };
+
+        console.log("Placing offline order:", offlineOrderData);
+
+        const response = await placeOrderByOfflinePayment(offlineOrderData);
+        
+        if (response && response.messages) {
+          toast.success(response.messages);
+          clearCheckoutLocalStorage();
+          
+          setTimeout(() => {
+            router.push("/checkout/order-confirmation");
+          }, 2000);
+        }
+      }
+      
+      // Case 3: SSLCommerz (Digital Payment)
+      else if (paymentMethod === "ssl_commerz") {
+        console.log("Initiating SSLCommerz payment");
+        
+        // FIRST: Place order to get order_id
+        const orderResponse = await placeOrderWithDigitalPayment(commonOrderData);
+        
+        if (!orderResponse || !orderResponse.order_ids || orderResponse.order_ids.length === 0) {
+          toast.error("Failed to create order. Please try again.");
+          setIsLoading(false);
+          return;
+        }
+        
+        const orderId = orderResponse.order_ids[0];
+        
+        // Prepare payment data with order_id
+        const paymentData = {
+          order_id: orderId,
+          amount: cartSummary.total,
+          currency: "BDT",
+          customer_name: shippingAddress.contact_person_name || "Customer",
+          customer_email: shippingAddress.email || "customer@example.com",
+          customer_phone: shippingAddress.phone || "01XXXXXXXXX",
+          callback_url: `${window.location.origin}/checkout/payment/sslcommerz-callback`,
+          // Additional order data for reference
+          coupon_code: commonOrderData.coupon_code,
+          order_note: commonOrderData.order_note,
+          shipping_method_id: commonOrderData.shipping_method_id,
+          address_id: commonOrderData.address_id,
+          billing_address_id: commonOrderData.billing_address_id,
+          guest_id: getGuestIdFromLocalStorage(),
+          token: getTokenFromLocalStorage()
+        };
+
+        console.log("Payment data:", paymentData);
+
+        // Store pending order data for callback
+        localStorage.setItem("pending_order_data", JSON.stringify({
+          ...commonOrderData,
+          order_id: orderId,
+          payment_method: 'ssl_commerz',
+          customer_info: {
+            name: shippingAddress.contact_person_name,
+            email: shippingAddress.email,
+            phone: shippingAddress.phone
+          },
+          amount: cartSummary.total
+        }));
+
+        // Initiate SSLCommerz payment
+        const sslResponse = await initiateSSLCommerzPayment(paymentData);
+        
+        if (sslResponse && sslResponse.payment_url) {
+          console.log("Redirecting to SSLCommerz:", sslResponse.payment_url);
+          window.location.href = sslResponse.payment_url;
+        } else {
+          throw new Error("Failed to initiate payment");
+        }
+      }
+
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error(error.response?.data?.message || error.message || "Payment failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 // Helper function to clear localStorage
-// Clear localStorage function
 const clearCheckoutLocalStorage = () => {
   const keys = [
     "snapcart_shipping_method_id",
@@ -231,178 +262,262 @@ const clearCheckoutLocalStorage = () => {
     "snapcart_cart_discount",
     "snapcart_cart_total",
     "snapcart_checkout_shipping_address",
-    "snapcart_checkout_billing_address"
+    "snapcart_checkout_billing_address",
+    "pending_order_data"
   ];
   
   keys.forEach(key => localStorage.removeItem(key));
+  window.dispatchEvent(new Event("snapcart-auth-change"));
 };
+
+  const subtotal = cartSummary.subtotal;
+  const itemDiscount = cartSummary.itemDiscount;
+  const shippingCharge = cartSummary.shipping;
+  const discount = cartSummary.discount;
+  const total = cartSummary.total;
 
   return (
     <div className="container py-5">
-      {/* Stepper */}
-      <div className="mb-4">
-        <div className="d-flex align-items-center justify-content-center gap-4">
-          <div className="text-center">
-            <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>1</div>
-            <div style={{ fontSize: 13 }}>Cart</div>
+      <div className="row justify-content-center">
+        <div className="col-12 col-lg-8">
+          {/* Stepper */}
+          <div className="mb-4">
+            <div className="d-flex align-items-center justify-content-center gap-4">
+              <div className="text-center">
+                <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>1</div>
+                <div style={{ fontSize: 13 }}>Cart</div>
+              </div>
+              <div style={{ width: 40, height: 2, background: "#ddd" }} />
+              <div className="text-center">
+                <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>2</div>
+                <div style={{ fontSize: 13 }}>Shipping & Billing</div>
+              </div>
+              <div style={{ width: 40, height: 2, background: "#ddd" }} />
+              <div className="text-center">
+                <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>3</div>
+                <div style={{ fontSize: 13 }}>Payment</div>
+              </div>
+            </div>
           </div>
-          <div style={{ width: 80, height: 2, background: "#1976d2" }} />
-          <div className="text-center">
-            <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>2</div>
-            <div style={{ fontSize: 13 }}>Shipping And billing</div>
-          </div>
-          <div style={{ width: 80, height: 2, background: "#1976d2" }} />
-          <div className="text-center">
-            <div className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>3</div>
-            <div style={{ fontSize: 13 }}>Payment</div>
-          </div>
-        </div>
-      </div>
-      <div className="row g-4">
-        {/* Payment Method Card */}
-        <div className="col-12 col-lg-7">
+
+          {/* Payment Method Selection */}
           <div className="bg-white rounded-4 p-4 shadow-sm mb-4">
-            <h4 className="fw-bold mb-3">Payment method</h4>
-            <div className="mb-3">Select A Payment Method To Proceed</div>
-            <div className="d-flex flex-column gap-3">
+            <h5 className="fw-bold mb-3">Select Payment Method</h5>
+            
+            <div className="mb-4">
               {/* Cash on Delivery */}
-              <div
-                className={`d-flex align-items-center border rounded-3 p-3 ${paymentMethod === "cod" ? "border-primary bg-light" : "border-light"}`}
-                style={{ cursor: "pointer" }}
-                onClick={() => setPaymentMethod("cod")}
-              >
+              <div className="form-check mb-3">
                 <input
+                  className="form-check-input"
                   type="radio"
-                  className="form-check-input me-3"
-                  checked={paymentMethod === "cod"}
-                  onChange={() => setPaymentMethod("cod")}
-                  id="cod"
+                  name="paymentMethod"
+                  id="cash_on_delivery"
+                  value="cash_on_delivery"
+                  checked={paymentMethod === "cash_on_delivery"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
                 />
-                <span className="me-2" style={{ fontSize: 22 }}>
-                  <i className="fas fa-money-bill-wave text-success"></i>
-                </span>
-                <label htmlFor="cod" className="mb-0 fw-semibold" style={{ cursor: "pointer" }}>
-                  Cash on Delivery
+                <label className="form-check-label" htmlFor="cash_on_delivery">
+                  <div className="d-flex align-items-center">
+                    <i className="fas fa-money-bill-wave fa-lg me-3 text-success"></i>
+                    <div>
+                      <strong>Cash on Delivery</strong>
+                      <p className="mb-0 text-muted small">Pay when you receive the product</p>
+                    </div>
+                  </div>
                 </label>
               </div>
-              {/* See More */}
-              {offlineMethods.length > 0 && !showMore && (
-                <div className="text-end">
-                  <button className="btn btn-link p-0" onClick={() => setShowMore(true)}>
-                    See More
-                  </button>
-                </div>
-              )}
-              {/* Offline Payment Methods */}
-              {showMore && offlineMethods.map((method) => (
-                <div
-                  key={method.id}
-                  className={`d-flex flex-column border rounded-3 p-3 mb-2 ${paymentMethod === String(method.id) ? "border-primary bg-light" : "border-light"}`}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => setPaymentMethod(String(method.id))}
-                >
+
+              {/* SSLCommerz */}
+              <div className="form-check mb-3">
+                <input
+                  className="form-check-input"
+                  type="radio"
+                  name="paymentMethod"
+                  id="ssl_commerz"
+                  value="ssl_commerz"
+                  checked={paymentMethod === "ssl_commerz"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                />
+                <label className="form-check-label" htmlFor="ssl_commerz">
                   <div className="d-flex align-items-center">
-                    <input
-                      type="radio"
-                      className="form-check-input me-3"
-                      checked={paymentMethod === String(method.id)}
-                      onChange={() => setPaymentMethod(String(method.id))}
-                      id={`offline-${method.id}`}
-                    />
-                    <span className="me-2" style={{ fontSize: 22 }}>
-                      <i className="fas fa-university text-info"></i>
-                    </span>
-                    <label htmlFor={`offline-${method.id}`} className="mb-0 fw-semibold" style={{ cursor: "pointer" }}>
-                      {method.method_name}
-                    </label>
-                  </div>
-                  {/* Show method fields */}
-                  {paymentMethod === String(method.id) && (
-                    <div className="ps-4 pt-2">
-                      {Array.isArray(method.method_fields) && method.method_fields.map((f, idx) => (
-                        <div key={idx} className="mb-1">
-                          <span className="text-muted small">{f.input_name}: </span>
-                          <span className="fw-semibold">{f.input_data}</span>
-                        </div>
-                      ))}
-                      {Array.isArray(method.method_informations) && method.method_informations.map((info, idx) => (
-                        <div key={idx} className="mb-2">
-                          <input
-                            className="form-control"
-                            required={info.is_required === 1}
-                            placeholder={info.customer_placeholder}
-                            value={offlineFields[info.customer_input] || ""}
-                            onChange={e => handleOfflineFieldChange(info.customer_input, e.target.value)}
-                          />
-                        </div>
-                      ))}
+                    <i className="fas fa-credit-card fa-lg me-3 text-primary"></i>
+                    <div>
+                      <strong>Pay with Card/Bank (SSLCommerz)</strong>
+                      <p className="mb-0 text-muted small">Visa, MasterCard, bKash, Nagad, Rocket, Bank Transfer</p>
                     </div>
-                  )}
+                  </div>
+                </label>
+              </div>
+
+              {/* Offline Payment */}
+              <div className="form-check mb-3">
+                <input
+                  className="form-check-input"
+                  type="radio"
+                  name="paymentMethod"
+                  id="offline_payment"
+                  value="offline_payment"
+                  checked={paymentMethod === "offline_payment"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                />
+                <label className="form-check-label" htmlFor="offline_payment">
+                  <div className="d-flex align-items-center">
+                    <i className="fas fa-university fa-lg me-3 text-success"></i>
+                    <div>
+                      <strong>Offline Payment</strong>
+                      <p className="mb-0 text-muted small">Bank Deposit, Cash on Delivery, Mobile Banking</p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Offline Payment Details */}
+            {paymentMethod === "offline_payment" && offlineMethods.length > 0 && (
+              <div className="border rounded-3 p-4 mb-4">
+                <h6 className="fw-bold mb-3">Select Payment Method</h6>
+                <select 
+                  className="form-select mb-3"
+                  value={selectedOfflineMethod}
+                  onChange={(e) => setSelectedOfflineMethod(e.target.value)}
+                >
+                  {offlineMethods.map((method) => (
+                    <option key={method.id} value={method.id}>
+                      {method.method_name}
+                    </option>
+                  ))}
+                </select>
+
+                {selectedOfflineMethod && (
+                  <div className="mb-3">
+                    <h6 className="fw-bold">Payment Instructions:</h6>
+                    <div className="bg-light p-3 rounded-3">
+                      {offlineMethods
+                        .find(m => m.id.toString() === selectedOfflineMethod)
+                        ?.method_fields?.map((field, index) => (
+                          <div key={index} className="mb-2">
+                            <strong>{field.input_name}:</strong> {field.placeholder_data}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mb-3">
+                  <label className="form-label">Payment Note (Optional)</label>
+                  <textarea
+                    className="form-control"
+                    rows="3"
+                    value={offlinePaymentNote}
+                    onChange={(e) => setOfflinePaymentNote(e.target.value)}
+                    placeholder="Add any additional payment information..."
+                  />
                 </div>
-              ))}
+              </div>
+            )}
+
+            {/* Order Note */}
+            <div className="mb-4">
+              <label className="form-label">Order Note (Optional)</label>
+              <textarea
+                className="form-control"
+                rows="3"
+                value={orderNote}
+                onChange={(e) => setOrderNote(e.target.value)}
+                placeholder="Add special instructions for your order..."
+              />
             </div>
-            <div className="mt-3">
-              <a href="/checkout" className="text-primary text-decoration-none">
-                &lt; Go back
-              </a>
-            </div>
+
+            {/* SSLCommerz Security Info */}
+            {paymentMethod === "ssl_commerz" && (
+              <div className="alert alert-info">
+                <div className="d-flex align-items-center">
+                  <i className="fas fa-shield-alt fa-2x me-3"></i>
+                  <div>
+                    <h6 className="mb-1">Secure Payment</h6>
+                    <p className="mb-0 small">
+                      Your payment is processed through SSLCommerz, a PCI DSS compliant payment gateway. 
+                      Your card details are encrypted and secure.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
         {/* Order Summary */}
-        <div className="col-12 col-lg-5">
-          <div className="bg-white rounded-4 p-4 shadow-sm mb-4">
+        <div className="col-12 col-lg-4">
+          <div className="bg-light rounded-4 p-4 shadow-sm sticky-top" style={{ top: "20px" }}>
+            <h5 className="fw-bold mb-4">Order Summary</h5>
+            
             <div className="mb-3 d-flex justify-content-between">
               <span>Sub total</span>
-              <span>৳{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <span className="fw-bold">৳{subtotal.toLocaleString()}</span>
             </div>
             <div className="mb-3 d-flex justify-content-between">
               <span>Item Discount</span>
-              <span className="text-primary">- ৳{itemDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <span className="text-primary">- ৳{itemDiscount.toLocaleString()}</span>
             </div>
-            {shipping > 0 && (
+            {shippingCharge > 0 && (
               <div className="mb-3 d-flex justify-content-between">
-                <span>{shippingName}</span>
-                <span>+ ৳{shipping.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>Shipping</span>
+                <span>+ ৳{shippingCharge.toLocaleString()}</span>
               </div>
             )}
-            <div className="mb-3 d-flex justify-content-between fw-bold fs-5">
+            {discount > 0 && (
+              <div className="mb-3 d-flex justify-content-between">
+                <span>Discount</span>
+                <span className="text-success">- ৳{discount.toLocaleString()}</span>
+              </div>
+            )}
+            
+            <hr />
+            
+            <div className="mb-4 d-flex justify-content-between fw-bold fs-5">
               <span>Total</span>
-              <span>৳{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <span className="text-primary">৳{total.toLocaleString()}</span>
             </div>
-            <div className="form-check mb-3">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="agree"
-                checked={agreed}
-                onChange={e => setAgreed(e.target.checked)}
-              />
-              <label className="form-check-label" htmlFor="agree">
-                I agree to Your <a href="/terms" className="text-primary">Terms and condition</a>, <a href="/privacy" className="text-primary">Privacy policy</a>, <a href="/refund" className="text-primary">Refund policy</a>
-              </label>
-            </div>
+            
             <button
-              className="btn btn-primary w-100 mb-2"
-              disabled={!agreed || !paymentMethod}
-              onClick={handleProceed}
+              className="btn btn-primary w-100 mb-3 py-3 fw-bold"
+              onClick={handlePlaceOrder}
+              disabled={isLoading}
             >
-              Proceed to Checkout
+              {isLoading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Processing...
+                </>
+              ) : paymentMethod === "ssl_commerz" ? (
+                <>
+                  <i className="fas fa-lock me-2"></i>
+                  Pay Now
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-check-circle me-2"></i>
+                  Place Order
+                </>
+              )}
             </button>
-            <a href="/" className="btn btn-link w-100"> &lt; Continue Shopping</a>
+            
+            <div className="text-center">
+              <Link href="/checkout" className="btn btn-link text-decoration-none">
+                <i className="fas fa-arrow-left me-2"></i>
+                Back to Shipping
+              </Link>
+            </div>
+            
+            <div className="mt-4 pt-3 border-top">
+              <small className="text-muted">
+                <i className="fas fa-shield-alt me-2"></i>
+                Secure checkout. Your information is protected.
+              </small>
+            </div>
           </div>
         </div>
       </div>
-      <style>{`
-        .border-primary {
-          border-color: #1976d2 !important;
-        }
-        .bg-light {
-          background: #f8f9fa !important;
-        }
-        .rounded-4 {
-          border-radius: 1.25rem !important;
-        }
-      `}</style>
     </div>
   );
 }

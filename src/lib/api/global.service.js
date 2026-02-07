@@ -824,3 +824,99 @@ export async function getOffersType() {
   const res = await api.get(ENDPOINTS.OFFERS_TYPE);
   return res.data;
 }
+
+/* =========================
+   DIGITAL PAYMENT (SSLCOMMERZ) - UPDATED
+========================= */
+export async function initiateSSLCommerzPayment(data) {
+  let headers = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) {
+        data.guest_id = guestId;
+      }
+    }
+  }
+
+  // Add callback URL
+  const baseUrl = window.location.origin;
+  data.callback_url = `${baseUrl}/checkout/payment/sslcommerz-callback`;
+
+  console.log("SSLCommerz Payment Data:", data);
+  
+  try {
+    const res = await api.post(ENDPOINTS.SSLCOMMERZ_INITIATE_PAYMENT, data, { 
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      } 
+    });
+    
+    console.log("SSLCommerz Initiate Response:", res.data);
+    return res.data;
+  } catch (error) {
+    console.error("SSLCommerz Initiate Error:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+/* =========================
+   PLACE ORDER WITH DIGITAL PAYMENT
+========================= */
+export async function placeOrderWithDigitalPayment(orderData) {
+  let headers = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) orderData.guest_id = guestId;
+    }
+  }
+
+  console.log("Placing Order with Digital Payment:", orderData);
+  
+  try {
+    const res = await api.post(`${ENDPOINTS.ORDER_PLACE}/place-with-digital-payment`, orderData, { 
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      } 
+    });
+    
+    console.log("Place Order Response:", res.data);
+    return res.data;
+  } catch (error) {
+    console.error("Place Order Error:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+/* =========================
+   CHECK PAYMENT STATUS
+========================= */
+export async function checkSSLCommerzPaymentStatus(transactionId) {
+  let headers = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  const res = await api.post(`${ENDPOINTS.SSLCOMMERZ_CHECK_STATUS}`, { 
+    transaction_id: transactionId 
+  }, { 
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json'
+    } 
+  });
+  
+  return res.data;
+}

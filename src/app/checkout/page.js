@@ -292,6 +292,7 @@ useEffect(() => {
   };
 
   // Handle proceed to payment
+  // checkout/page.js - handleProceedToPayment function
   const handleProceedToPayment = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -443,12 +444,9 @@ useEffect(() => {
         localStorage.removeItem("snapcart_guest_password");
       }
       
-      // toast.success("Address saved successfully!");
-      
-      // 5. Navigate to payment page
-      setTimeout(() => {
-        router.push("/checkout/payment");
-      }, 1000);
+      // 5. Navigate to payment page - এখানে সমস্যা ছিল
+      console.log("Navigating to payment page...");
+      router.push("/checkout/payment");
       
     } catch (error) {
       console.error("Error in checkout:", error);
@@ -457,7 +455,6 @@ useEffect(() => {
       setIsLoading(false);
     }
   };
-
   // Calculate total
   const subtotal = cartSummary.subtotal;
   const itemDiscount = cartSummary.itemDiscount;
