@@ -41,7 +41,7 @@ useEffect(() => {
 
   // Fetch the products for the selected brand
   const selectedBrand = data.brands.find((brand) => brand.id === selectedBrandId);
-  const products = selectedBrand ? selectedBrand.products : [];
+  const products = selectedBrand ? selectedBrand.brand_products : [];
 
   // Scroll by cards function
   const scrollByCards = (sliderRef, dir = 1) => {
