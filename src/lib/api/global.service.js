@@ -865,6 +865,30 @@ export async function initiateSSLCommerzPayment(data) {
 }
 
 /* =========================
+   VERIFY AND COMPLETE SSLCOMMERZ ORDER
+========================= */
+export async function verifyAndCompleteSSLCommerzOrder(paymentData) {
+  let headers = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("snapcart_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestId = localStorage.getItem("guest_id");
+      if (guestId) paymentData.guest_id = guestId;
+    }
+  }
+  
+  const res = await api.post(`${ENDPOINTS.SSLCOMMERZ_SUCCESS}`, paymentData, { 
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json'
+    } 
+  });
+  return res.data;
+}
+
+/* =========================
    PLACE ORDER WITH DIGITAL PAYMENT
 ========================= */
 export async function placeOrderWithDigitalPayment(orderData) {
