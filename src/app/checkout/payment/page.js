@@ -27,6 +27,7 @@ export default function PaymentPage() {
     total: 0,
   });
   const [orderNote, setOrderNote] = useState("");
+  const [offlinePaymentInputs, setOfflinePaymentInputs] = useState({}); // State to store user inputs for method_informations
 
   // Load cart summary and order note
   useEffect(() => {
@@ -168,7 +169,7 @@ export default function PaymentPage() {
         const offlineOrderData = {
           ...commonOrderData,
           method_id: selectedOfflineMethod,
-          method_informations: btoa(JSON.stringify(methodInformations)),
+          method_informations: btoa(JSON.stringify(offlinePaymentInputs)), // Encode method_informations
           payment_note: offlinePaymentNote,
         };
 
@@ -281,6 +282,14 @@ const clearCheckoutLocalStorage = () => {
   const shippingCharge = cartSummary.shipping;
   const discount = cartSummary.discount;
   const total = cartSummary.total;
+
+  // Handle input change for offline payment method informations
+  const handleOfflinePaymentInputChange = (field, value) => {
+    setOfflinePaymentInputs((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   return (
     <div className="container py-5">
@@ -395,18 +404,42 @@ const clearCheckoutLocalStorage = () => {
                 </select>
 
                 {selectedOfflineMethod && (
-                  <div className="mb-3">
-                    <h6 className="fw-bold">Payment Instructions:</h6>
-                    <div className="bg-light p-3 rounded-3">
+                  <>
+                    <div className="mb-3">
+                      <h6 className="fw-bold">Payment Instructions:</h6>
+                      <div className="bg-light p-3 rounded-3">
+                        {offlineMethods
+                          .find(m => m.id.toString() === selectedOfflineMethod)
+                          ?.method_fields?.map((field, index) => (
+                            <div key={index} className="mb-2">
+                              <strong>{field.input_name}:</strong> {field.input_data}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+
+                    {/* Render method_informations dynamically */}
+                    <div className="mb-3">
+                      <h6 className="fw-bold">Additional Information:</h6>
                       {offlineMethods
                         .find(m => m.id.toString() === selectedOfflineMethod)
-                        ?.method_fields?.map((field, index) => (
-                          <div key={index} className="mb-2">
-                            <strong>{field.input_name}:</strong> {field.placeholder_data}
+                        ?.method_informations?.map((info, index) => (
+                          <div key={index} className="mb-3">
+                            <label className="form-label">
+                              {info.customer_placeholder} {info.is_required ? <span className="text-danger">*</span> : ""}
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={offlinePaymentInputs[info.customer_input] || ""}
+                              onChange={(e) => handleOfflinePaymentInputChange(info.customer_input, e.target.value)}
+                              placeholder={info.customer_placeholder}
+                              required={info.is_required === 1}
+                            />
                           </div>
                         ))}
                     </div>
-                  </div>
+                  </>
                 )}
 
                 <div className="mb-3">
