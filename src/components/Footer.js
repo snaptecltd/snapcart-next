@@ -160,17 +160,17 @@ export default function Footer() {
               {/* Bottom */}
         <hr className="border-secondary my-4" />
       </div>
-      <div className="container-fluid bg-dark py-1">
+      <div className="container-fluid bg-light py-2">
         <div className="text-center">
-          <small className="text-secondary">
+          <div className="text-secondary">
             <Link href="https://snaptec.ltd/portfolio/snapcart" className="text-light text-decoration-none" target="_blank" rel="noopener noreferrer">
-            <img src="/images/snapcart.png" alt="Snaptec Logo" style={{ marginBottom: "-2px", height: "16px" }} />
-            </Link> &nbsp;
-            a product of &nbsp;
+            <img src="/images/snapcart.png" alt="Snaptec Logo" style={{ marginBottom: "-2px", height: "20px" }} />
+            </Link>&nbsp;
+            developed by
             <Link href="https://snaptec.ltd" className="text-light text-decoration-none" target="_blank" rel="noopener noreferrer">
-              <img src="/images/snaptec-logo.png" alt="Snaptec Logo" style={{ marginBottom: "-2px", height: "60px" }} />
+              <img src="/images/snaptec-logo.png" alt="Snaptec Logo" style={{ marginBottom: "-2px", height: "30px" }} />
             </Link>
-          </small>
+          </div>
         </div>
       </div>
       <div className="container-fluid bg-black py-3">
