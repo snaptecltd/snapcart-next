@@ -28,7 +28,7 @@ export default function PaymentPage() {
   });
   const [orderNote, setOrderNote] = useState("");
 
-  // Load cart summary
+  // Load cart summary and order note
   useEffect(() => {
     try {
       const subtotal = Number(localStorage.getItem("snapcart_cart_subtotal") || 0);
@@ -38,8 +38,14 @@ export default function PaymentPage() {
       const total = Math.max(0, subtotal - itemDiscount - discount + shipping);
       
       setCartSummary({ subtotal, itemDiscount, shipping, discount, total });
+
+      // Auto-fill order note if available in localStorage
+      const savedOrderNote = localStorage.getItem("snapcart_order_note");
+      if (savedOrderNote) {
+        setOrderNote(savedOrderNote);
+      }
     } catch (error) {
-      console.error("Error loading cart summary:", error);
+      console.error("Error loading cart summary or order note:", error);
     }
   }, []);
 
