@@ -203,7 +203,7 @@ export default function PaymentPage() {
           customer_name: shippingAddress.contact_person_name || "Customer",
           customer_email: shippingAddress.email || "customer@example.com",
           customer_phone: shippingAddress.phone || "01XXXXXXXXX",
-          callback_url: `${window.location.origin}/checkout/payment/sslcommerz-callback`,
+          callback_url: `${window.location.origin}/checkout/sslcommerz-callback`,
           // Additional order data for reference
           coupon_code: commonOrderData.coupon_code,
           order_note: commonOrderData.order_note,
