@@ -16,6 +16,7 @@ export default function CheckoutPage() {
   const [shipping, setShipping] = useState({
     contact_person_name: "",
     phone: "",
+    email: "", // Added email
     address_type: "Home",
     country: "Bangladesh",
     city: "",
@@ -165,6 +166,7 @@ useEffect(() => {
     const newShipping = {
       contact_person_name: address.contact_person_name || "",
       phone: address.phone || "",
+      email: address.email || "", // Added email
       address_type: address.address_type || "Home",
       country: address.country || "Bangladesh",
       city: address.city || "",
@@ -227,7 +229,7 @@ useEffect(() => {
 
   // Address validation function
   const validateAddress = (addr) => {
-    const required = ["contact_person_name", "phone", "country", "city", "zip", "address"];
+    const required = ["contact_person_name", "phone", "email", "country", "city", "zip", "address"]; // Added email
     const errs = {};
     required.forEach((k) => {
       if (!addr[k] || String(addr[k]).trim() === "") errs[k] = "Required";
@@ -238,19 +240,17 @@ useEffect(() => {
   // Handle save address function
   const handleSaveAddress = async (addressData, isBilling = false) => {
     try {
-      // is_billing field যোগ করুন
       const addressToSave = {
         ...addressData,
         is_billing: isBilling ? 1 : 0
       };
-      
+
       console.log("Saving address with data:", addressToSave);
-      
+
       const response = await addCustomerAddress(addressToSave);
       console.log("Address save API response:", response, response.id);
-      
+
       if (response && response.id) {
-        // toast.success("Address saved successfully!");
         return response.id; // Return address ID
       } else if (response && response.errors) {
         response.errors.forEach(err => {
@@ -260,7 +260,7 @@ useEffect(() => {
       }
     } catch (error) {
       console.error("Full address save error:", error);
-      
+
       if (error.response?.data?.errors) {
         error.response.data.errors.forEach(err => {
           toast.error(`${err.code}: ${err.message}`);
@@ -609,6 +609,20 @@ useEffect(() => {
               </div>
               
               <div className="col-md-6">
+                <label className="form-label">Email *</label>
+                <input 
+                  type="email" 
+                  className={`form-control${errors.shipping.email ? " is-invalid" : ""}`} 
+                  name="email" 
+                  value={shipping.email} 
+                  onChange={handleShippingChange} 
+                  placeholder="Enter email address"
+                  required 
+                />
+                {errors.shipping.email && <div className="invalid-feedback">{errors.shipping.email}</div>}
+              </div>
+              
+              <div className="col-md-6">
                 <label className="form-label">Address type</label>
                 <select className="form-select" name="address_type" value={shipping.address_type} onChange={handleShippingChange}>
                   <option value="Home">Home</option>
@@ -617,7 +631,7 @@ useEffect(() => {
                 </select>
               </div>
               
-              <div className="col-md-6">
+              <div className="col-md-4">
                 <label className="form-label">Country *</label>
                 <input 
                   type="text" 
@@ -631,7 +645,7 @@ useEffect(() => {
                 {errors.shipping.country && <div className="invalid-feedback">{errors.shipping.country}</div>}
               </div>
               
-              <div className="col-md-6">
+              <div className="col-md-4">
                 <label className="form-label">City *</label>
                 <input 
                   type="text" 
@@ -645,7 +659,7 @@ useEffect(() => {
                 {errors.shipping.city && <div className="invalid-feedback">{errors.shipping.city}</div>}
               </div>
               
-              <div className="col-md-6">
+              <div className="col-md-4">
                 <label className="form-label">Zip code *</label>
                 <input 
                   type="text" 
@@ -782,6 +796,20 @@ useEffect(() => {
                 </div>
                 
                 <div className="col-md-6">
+                  <label className="form-label">Email *</label>
+                  <input 
+                    type="email" 
+                    className={`form-control${errors.billing.email ? " is-invalid" : ""}`} 
+                    name="email" 
+                    value={billing.email} 
+                    onChange={handleBillingChange} 
+                    placeholder="Enter email address"
+                    required 
+                  />
+                  {errors.billing.email && <div className="invalid-feedback">{errors.billing.email}</div>}
+                </div>
+                
+                <div className="col-md-6">
                   <label className="form-label">Address type</label>
                   <select className="form-select" name="address_type" value={billing.address_type} onChange={handleBillingChange}>
                     <option value="Home">Home</option>
@@ -790,7 +818,7 @@ useEffect(() => {
                   </select>
                 </div>
                 
-                <div className="col-md-6">
+                <div className="col-md-4">
                   <label className="form-label">Country *</label>
                   <input 
                     type="text" 
@@ -804,7 +832,7 @@ useEffect(() => {
                   {errors.billing.country && <div className="invalid-feedback">{errors.billing.country}</div>}
                 </div>
                 
-                <div className="col-md-6">
+                <div className="col-md-4">
                   <label className="form-label">City *</label>
                   <input 
                     type="text" 
@@ -818,7 +846,7 @@ useEffect(() => {
                   {errors.billing.city && <div className="invalid-feedback">{errors.billing.city}</div>}
                 </div>
                 
-                <div className="col-md-6">
+                <div className="col-md-4">
                   <label className="form-label">Zip code *</label>
                   <input 
                     type="text" 
