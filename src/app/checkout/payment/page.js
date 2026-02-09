@@ -441,17 +441,6 @@ const clearCheckoutLocalStorage = () => {
                     </div>
                   </>
                 )}
-
-                <div className="mb-3">
-                  <label className="form-label">Payment Note (Optional)</label>
-                  <textarea
-                    className="form-control"
-                    rows="3"
-                    value={offlinePaymentNote}
-                    onChange={(e) => setOfflinePaymentNote(e.target.value)}
-                    placeholder="Add any additional payment information..."
-                  />
-                </div>
               </div>
             )}
 
