@@ -844,7 +844,7 @@ export async function initiateSSLCommerzPayment(data) {
 
   // Add callback URL
   const baseUrl = window.location.origin;
-  data.callback_url = `${baseUrl}/checkout/payment/sslcommerz-callback`;
+  data.callback_url = `${baseUrl}/checkout/sslcommerz-callback`;
 
   console.log("SSLCommerz Payment Data:", data);
   

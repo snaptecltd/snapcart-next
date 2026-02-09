@@ -159,7 +159,22 @@ export default function Footer() {
 
               {/* Bottom */}
         <hr className="border-secondary my-4" />
-        <div className="text-center pb-4">
+      </div>
+      <div className="container-fluid bg-dark py-1">
+        <div className="text-center">
+          <small className="text-secondary">
+            <Link href="https://snaptec.ltd/portfolio/snapcart" className="text-light text-decoration-none" target="_blank" rel="noopener noreferrer">
+            <img src="/images/snapcart.png" alt="Snaptec Logo" style={{ marginBottom: "-2px", height: "16px" }} />
+            </Link> &nbsp;
+            a product of &nbsp;
+            <Link href="https://snaptec.ltd" className="text-light text-decoration-none" target="_blank" rel="noopener noreferrer">
+              <img src="/images/snaptec-logo.png" alt="Snaptec Logo" style={{ marginBottom: "-2px", height: "60px" }} />
+            </Link>
+          </small>
+        </div>
+      </div>
+      <div className="container-fluid bg-black py-3">
+        <div className="text-center">
           <small className="text-secondary">
             {config?.company_copyright_text || "© 2026 Snapcart. All rights reserved."}
           </small>
