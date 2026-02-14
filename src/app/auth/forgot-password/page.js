@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
       toast.success("If the email exists, an OTP has been sent to it.");
       router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`);
     } catch (err) {
-      setError("Failed to send OTP. Please try again.");
+      setError("This email is not registered. Please check and try again.");
     }
     setLoading(false);
   };
