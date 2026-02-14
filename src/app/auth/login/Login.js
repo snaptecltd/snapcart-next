@@ -169,7 +169,7 @@ return (
                                         Remember me
                                     </label>
                                 </div>
-                                <Link href="#" className="text-primary small">
+                                <Link href="/auth/forgot-password" className="text-primary small">
                                     Forgot password?
                                 </Link>
                             </div>
