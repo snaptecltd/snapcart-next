@@ -35,6 +35,8 @@ export const ENDPOINTS = {
   AUTH_LOGIN: `${PREFIX}/auth/login`,
   AUTH_LOGOUT: `${PREFIX}/auth/logout`,
   AUTH_PASSWORD_RESET: `${PREFIX}/auth/password-reset`,
+  AUTH_FORGOT_PASSWORD_EMAIL: `${PREFIX}/auth/forgot-password/email`,
+  AUTH_FORGOT_PASSWORD_RESET: `${PREFIX}/auth/forgot-password/reset`,
 
   // cart endpoints 
   CART: `${PREFIX}/cart`,

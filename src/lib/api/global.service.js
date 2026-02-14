@@ -944,3 +944,19 @@ export async function checkSSLCommerzPaymentStatus(transactionId) {
   
   return res.data;
 }
+
+export async function sendForgotPasswordEmail(email) {
+  const res = await api.post(`${ENDPOINTS.AUTH_FORGOT_PASSWORD_EMAIL}?email=${encodeURIComponent(email)}`);
+  return res.data;
+}
+
+export async function resetForgotPassword({ email, otp, password, password_confirmation }) {
+  const params = new URLSearchParams({
+    email,
+    otp,
+    password,
+    password_confirmation,
+  }).toString();
+  const res = await api.post(`${ENDPOINTS.AUTH_FORGOT_PASSWORD_RESET}?${params}`);
+  return res.data;
+}
