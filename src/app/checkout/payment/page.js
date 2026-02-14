@@ -27,8 +27,9 @@ export default function PaymentPage() {
     total: 0,
   });
   const [orderNote, setOrderNote] = useState("");
+  const [offlinePaymentInputs, setOfflinePaymentInputs] = useState({}); // State to store user inputs for method_informations
 
-  // Load cart summary
+  // Load cart summary and order note
   useEffect(() => {
     try {
       const subtotal = Number(localStorage.getItem("snapcart_cart_subtotal") || 0);
@@ -38,8 +39,14 @@ export default function PaymentPage() {
       const total = Math.max(0, subtotal - itemDiscount - discount + shipping);
       
       setCartSummary({ subtotal, itemDiscount, shipping, discount, total });
+
+      // Auto-fill order note if available in localStorage
+      const savedOrderNote = localStorage.getItem("snapcart_order_note");
+      if (savedOrderNote) {
+        setOrderNote(savedOrderNote);
+      }
     } catch (error) {
-      console.error("Error loading cart summary:", error);
+      console.error("Error loading cart summary or order note:", error);
     }
   }, []);
 
@@ -162,7 +169,7 @@ export default function PaymentPage() {
         const offlineOrderData = {
           ...commonOrderData,
           method_id: selectedOfflineMethod,
-          method_informations: btoa(JSON.stringify(methodInformations)),
+          method_informations: btoa(JSON.stringify(offlinePaymentInputs)), // Encode method_informations
           payment_note: offlinePaymentNote,
         };
 
@@ -184,62 +191,51 @@ export default function PaymentPage() {
       else if (paymentMethod === "ssl_commerz") {
         console.log("Initiating SSLCommerz payment");
         
-        // FIRST: Place order to get order_id
-        const orderResponse = await placeOrderWithDigitalPayment(commonOrderData);
-        
-        if (!orderResponse || !orderResponse.order_ids || orderResponse.order_ids.length === 0) {
-          toast.error("Failed to create order. Please try again.");
-          setIsLoading(false);
-          return;
-        }
-        
-        const orderId = orderResponse.order_ids[0];
-        
-        // Prepare payment data with order_id
+        // Store all order data for later use
+        const pendingOrderData = {
+          ...commonOrderData,
+          customer_info: {
+            name: shippingAddress.contact_person_name || "Customer",
+            email: shippingAddress.email || "customer@example.com",
+            phone: shippingAddress.phone || "01XXXXXXXXX"
+          },
+          amount: cartSummary.total,
+          currency: "BDT"
+        };
+
+        localStorage.setItem("pending_order_data", JSON.stringify(pendingOrderData));
+
+        // Prepare payment data
         const paymentData = {
-          order_id: orderId,
+          order_id: "TXN_" + Date.now(),
           amount: cartSummary.total,
           currency: "BDT",
           customer_name: shippingAddress.contact_person_name || "Customer",
           customer_email: shippingAddress.email || "customer@example.com",
           customer_phone: shippingAddress.phone || "01XXXXXXXXX",
-          callback_url: `${window.location.origin}/checkout/sslcommerz-callback`,
-          // Additional order data for reference
-          coupon_code: commonOrderData.coupon_code,
-          order_note: commonOrderData.order_note,
-          shipping_method_id: commonOrderData.shipping_method_id,
-          address_id: commonOrderData.address_id,
-          billing_address_id: commonOrderData.billing_address_id,
+          // Include all order data
+          ...commonOrderData,
           guest_id: getGuestIdFromLocalStorage(),
           token: getTokenFromLocalStorage()
         };
 
         console.log("Payment data:", paymentData);
 
-        // Store pending order data for callback
-        localStorage.setItem("pending_order_data", JSON.stringify({
-          ...commonOrderData,
-          order_id: orderId,
-          payment_method: 'ssl_commerz',
-          customer_info: {
-            name: shippingAddress.contact_person_name,
-            email: shippingAddress.email,
-            phone: shippingAddress.phone
-          },
-          amount: cartSummary.total
-        }));
-
-        // Initiate SSLCommerz payment
-        const sslResponse = await initiateSSLCommerzPayment(paymentData);
-        
-        if (sslResponse && sslResponse.payment_url) {
-          console.log("Redirecting to SSLCommerz:", sslResponse.payment_url);
-          window.location.href = sslResponse.payment_url;
-        } else {
-          throw new Error("Failed to initiate payment");
+        try {
+          const sslResponse = await initiateSSLCommerzPayment(paymentData);
+          
+          if (sslResponse && sslResponse.payment_url) {
+            console.log("Redirecting to SSLCommerz:", sslResponse.payment_url);
+            window.location.href = sslResponse.payment_url;
+          } else {
+            throw new Error("Failed to initiate payment");
+          }
+        } catch (error) {
+          console.error("SSLCommerz initiation error:", error);
+          toast.error(error.response?.data?.message || "Payment initiation failed");
+          setIsLoading(false);
         }
       }
-
     } catch (error) {
       console.error("Payment error:", error);
       toast.error(error.response?.data?.message || error.message || "Payment failed");
@@ -275,6 +271,14 @@ const clearCheckoutLocalStorage = () => {
   const shippingCharge = cartSummary.shipping;
   const discount = cartSummary.discount;
   const total = cartSummary.total;
+
+  // Handle input change for offline payment method informations
+  const handleOfflinePaymentInputChange = (field, value) => {
+    setOfflinePaymentInputs((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   return (
     <div className="container py-5">
@@ -389,30 +393,43 @@ const clearCheckoutLocalStorage = () => {
                 </select>
 
                 {selectedOfflineMethod && (
-                  <div className="mb-3">
-                    <h6 className="fw-bold">Payment Instructions:</h6>
-                    <div className="bg-light p-3 rounded-3">
+                  <>
+                    <div className="mb-3">
+                      <h6 className="fw-bold">Payment Instructions:</h6>
+                      <div className="bg-light p-3 rounded-3">
+                        {offlineMethods
+                          .find(m => m.id.toString() === selectedOfflineMethod)
+                          ?.method_fields?.map((field, index) => (
+                            <div key={index} className="mb-2">
+                              <strong>{field.input_name}:</strong> {field.input_data}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+
+                    {/* Render method_informations dynamically */}
+                    <div className="mb-3">
+                      <h6 className="fw-bold">Additional Information:</h6>
                       {offlineMethods
                         .find(m => m.id.toString() === selectedOfflineMethod)
-                        ?.method_fields?.map((field, index) => (
-                          <div key={index} className="mb-2">
-                            <strong>{field.input_name}:</strong> {field.placeholder_data}
+                        ?.method_informations?.map((info, index) => (
+                          <div key={index} className="mb-3">
+                            <label className="form-label">
+                              {info.customer_placeholder} {info.is_required ? <span className="text-danger">*</span> : ""}
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={offlinePaymentInputs[info.customer_input] || ""}
+                              onChange={(e) => handleOfflinePaymentInputChange(info.customer_input, e.target.value)}
+                              placeholder={info.customer_placeholder}
+                              required={info.is_required === 1}
+                            />
                           </div>
                         ))}
                     </div>
-                  </div>
+                  </>
                 )}
-
-                <div className="mb-3">
-                  <label className="form-label">Payment Note (Optional)</label>
-                  <textarea
-                    className="form-control"
-                    rows="3"
-                    value={offlinePaymentNote}
-                    onChange={(e) => setOfflinePaymentNote(e.target.value)}
-                    placeholder="Add any additional payment information..."
-                  />
-                </div>
               </div>
             )}
 

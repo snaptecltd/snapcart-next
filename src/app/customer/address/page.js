@@ -24,6 +24,7 @@ export default function AddressBookPage() {
   const [form, setForm] = useState({
     contact_person_name: "",
     phone: "",
+    email: "",
     city: "",
     zip: "",
     country: "Bangladesh",
@@ -84,8 +85,6 @@ export default function AddressBookPage() {
     required.forEach((key) => {
       if (!form[key]) newErrors[key] = "Required";
     });
-    if (!form.latitude) newErrors.latitude = "Required";
-    if (!form.longitude) newErrors.longitude = "Required";
     if (Object.keys(newErrors).length) {
       setErrors(newErrors);
       return;
@@ -101,6 +100,7 @@ export default function AddressBookPage() {
       setForm({
         contact_person_name: "",
         phone: "",
+        email: "",
         city: "",
         zip: "",
         country: "Bangladesh",
@@ -191,8 +191,9 @@ export default function AddressBookPage() {
                       <div>
                         <span className="fw-semibold">Phone</span> : {a.phone}
                       </div>
+
                       <div>
-                        <span className="fw-semibold">City</span> : {a.city}
+                        <span className="fw-semibold">Email</span> : {a.email}
                       </div>
                       <div>
                         <span className="fw-semibold">Zip code</span> : {a.zip}
@@ -259,6 +260,18 @@ export default function AddressBookPage() {
                       {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
                     </div>
                     <div className="col-md-6">
+                      <label className="form-label fw-semibold">Email *</label>
+                      <input
+                        type="email"
+                        name="email"
+                        className={`form-control${errors.email ? " is-invalid" : ""}`}
+                        value={form.email}
+                        onChange={handleChange}
+                      />
+                      {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                    </div>
+                    
+                    <div className="col-md-6">
                       <label className="form-label fw-semibold">City *</label>
                       <input
                         type="text"
@@ -303,7 +316,7 @@ export default function AddressBookPage() {
                       {errors.address && <div className="invalid-feedback">{errors.address}</div>}
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label fw-semibold">Latitude *</label>
+                      <label className="form-label fw-semibold">Latitude</label>
                       <input
                         type="text"
                         name="latitude"
@@ -314,7 +327,7 @@ export default function AddressBookPage() {
                       {errors.latitude && <div className="invalid-feedback">{errors.latitude}</div>}
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label fw-semibold">Longitude *</label>
+                      <label className="form-label fw-semibold">Longitude</label>
                       <input
                         type="text"
                         name="longitude"
