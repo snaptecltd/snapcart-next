@@ -191,62 +191,51 @@ export default function PaymentPage() {
       else if (paymentMethod === "ssl_commerz") {
         console.log("Initiating SSLCommerz payment");
         
-        // FIRST: Place order to get order_id
-        const orderResponse = await placeOrderWithDigitalPayment(commonOrderData);
-        
-        if (!orderResponse || !orderResponse.order_ids || orderResponse.order_ids.length === 0) {
-          toast.error("Failed to create order. Please try again.");
-          setIsLoading(false);
-          return;
-        }
-        
-        const orderId = orderResponse.order_ids[0];
-        
-        // Prepare payment data with order_id
+        // Store all order data for later use
+        const pendingOrderData = {
+          ...commonOrderData,
+          customer_info: {
+            name: shippingAddress.contact_person_name || "Customer",
+            email: shippingAddress.email || "customer@example.com",
+            phone: shippingAddress.phone || "01XXXXXXXXX"
+          },
+          amount: cartSummary.total,
+          currency: "BDT"
+        };
+
+        localStorage.setItem("pending_order_data", JSON.stringify(pendingOrderData));
+
+        // Prepare payment data
         const paymentData = {
-          order_id: orderId,
+          order_id: "TXN_" + Date.now(),
           amount: cartSummary.total,
           currency: "BDT",
           customer_name: shippingAddress.contact_person_name || "Customer",
           customer_email: shippingAddress.email || "customer@example.com",
           customer_phone: shippingAddress.phone || "01XXXXXXXXX",
-          callback_url: `${window.location.origin}/checkout/sslcommerz-callback`,
-          // Additional order data for reference
-          coupon_code: commonOrderData.coupon_code,
-          order_note: commonOrderData.order_note,
-          shipping_method_id: commonOrderData.shipping_method_id,
-          address_id: commonOrderData.address_id,
-          billing_address_id: commonOrderData.billing_address_id,
+          // Include all order data
+          ...commonOrderData,
           guest_id: getGuestIdFromLocalStorage(),
           token: getTokenFromLocalStorage()
         };
 
         console.log("Payment data:", paymentData);
 
-        // Store pending order data for callback
-        localStorage.setItem("pending_order_data", JSON.stringify({
-          ...commonOrderData,
-          order_id: orderId,
-          payment_method: 'ssl_commerz',
-          customer_info: {
-            name: shippingAddress.contact_person_name,
-            email: shippingAddress.email,
-            phone: shippingAddress.phone
-          },
-          amount: cartSummary.total
-        }));
-
-        // Initiate SSLCommerz payment
-        const sslResponse = await initiateSSLCommerzPayment(paymentData);
-        
-        if (sslResponse && sslResponse.payment_url) {
-          console.log("Redirecting to SSLCommerz:", sslResponse.payment_url);
-          window.location.href = sslResponse.payment_url;
-        } else {
-          throw new Error("Failed to initiate payment");
+        try {
+          const sslResponse = await initiateSSLCommerzPayment(paymentData);
+          
+          if (sslResponse && sslResponse.payment_url) {
+            console.log("Redirecting to SSLCommerz:", sslResponse.payment_url);
+            window.location.href = sslResponse.payment_url;
+          } else {
+            throw new Error("Failed to initiate payment");
+          }
+        } catch (error) {
+          console.error("SSLCommerz initiation error:", error);
+          toast.error(error.response?.data?.message || "Payment initiation failed");
+          setIsLoading(false);
         }
       }
-
     } catch (error) {
       console.error("Payment error:", error);
       toast.error(error.response?.data?.message || error.message || "Payment failed");
