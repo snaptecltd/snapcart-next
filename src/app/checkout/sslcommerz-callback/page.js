@@ -1,11 +1,11 @@
 // app/checkout/sslcommerz-callback/page.js
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { verifyAndCompleteSSLCommerzOrder } from "@/lib/api/global.service";
 
-export default function SSLCommerzCallbackPage() {
+function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState("processing");
@@ -15,44 +15,34 @@ export default function SSLCommerzCallbackPage() {
   useEffect(() => {
     const processPaymentCallback = async () => {
       try {
-        // Log all search params
+        // Get all URL parameters
         const params = {};
         searchParams.forEach((value, key) => {
           params[key] = value;
         });
-        console.log("All callback parameters:", params);
+        
+        console.log("URL Parameters received:", params);
 
-        const statusParam = searchParams.get("status");
-        const transactionId = searchParams.get("tran_id");
-        const bankTranId = searchParams.get("bank_tran_id");
-        const paymentId = searchParams.get("payment_id");
-        const orderId = searchParams.get("order_id");
-        const amount = searchParams.get("amount");
+        // Check if we have transaction data
+        const transactionId = params.tran_id;
+        const statusParam = params.status;
+        const bankTranId = params.bank_tran_id;
+        const amount = params.amount;
 
-        console.log("Payment callback received:", {
-          statusParam,
-          transactionId,
-          bankTranId,
-          paymentId,
-          orderId,
-          amount
-        });
-
-        // Check if we have a transaction ID
+        // If no transaction ID, check if we're in the middle of processing
         if (!transactionId) {
-          console.error("No transaction ID in callback");
-          setStatus("failed");
-          setError("No transaction ID received");
-          setTimeout(() => router.push("/cart"), 3000);
+          // Maybe we're still waiting for redirect
+          console.log("No transaction ID yet, waiting...");
           return;
         }
 
-        if (statusParam === "success") {
+        console.log("Processing payment:", { transactionId, statusParam, bankTranId, amount });
+
+        if (statusParam === "VALID" || statusParam === "success") {
           setStatus("verifying");
           
-          // Get pending order data from localStorage
+          // Get pending order data
           const pendingOrderDataStr = localStorage.getItem("pending_order_data");
-          console.log("Pending order data from localStorage:", pendingOrderDataStr);
           
           if (!pendingOrderDataStr) {
             console.error("No pending order data found");
@@ -63,17 +53,14 @@ export default function SSLCommerzCallbackPage() {
           }
 
           const pendingOrderData = JSON.parse(pendingOrderDataStr);
-          console.log("Parsed pending order data:", pendingOrderData);
-
-          // Prepare payment verification data
-          const paymentData = {
+          
+          // Prepare verification data
+          const verificationData = {
             status: "VALID",
             tran_id: transactionId,
             bank_tran_id: bankTranId,
-            payment_id: paymentId,
             amount: amount || pendingOrderData.amount,
-            currency: pendingOrderData.currency || "BDT",
-            // Include all order data
+            currency: params.currency || "BDT",
             coupon_code: pendingOrderData.coupon_code || "",
             order_note: pendingOrderData.order_note || "",
             shipping_method_id: pendingOrderData.shipping_method_id,
@@ -85,67 +72,77 @@ export default function SSLCommerzCallbackPage() {
             guest_id: pendingOrderData.guest_id,
           };
 
-          console.log("Sending verification data to backend:", paymentData);
+          console.log("Sending verification data:", verificationData);
 
-          // Verify payment and create order
-          const response = await verifyAndCompleteSSLCommerzOrder(paymentData);
-          console.log("Backend response:", response);
+          // Call your backend to verify and create order
+          const response = await verifyAndCompleteSSLCommerzOrder(verificationData);
           
           if (response && response.order_ids) {
             setStatus("success");
             setOrderDetails(response);
             
-            // Clear localStorage
+            // Clear all checkout data
             clearCheckoutData();
             
-            toast.success(`Payment successful! Order ID: ${response.order_ids.join(", ")}`);
+            toast.success(`Payment successful!`);
             
-            // Redirect to home after 5 seconds
+            // Redirect after 5 seconds
             setTimeout(() => {
               router.push("/");
             }, 5000);
-            
           } else {
-            console.error("Invalid response from backend:", response);
             throw new Error(response?.message || "Failed to create order");
           }
-          
-        } else if (statusParam === "failed") {
-          console.log("Payment failed");
+        } 
+        else if (statusParam === "FAILED" || statusParam === "failed") {
           setStatus("failed");
           setError("Payment failed");
           localStorage.removeItem("pending_order_data");
           setTimeout(() => router.push("/cart"), 3000);
-          
-        } else if (statusParam === "canceled") {
-          console.log("Payment canceled");
+        } 
+        else if (statusParam === "CANCELLED" || statusParam === "canceled") {
           setStatus("canceled");
           setError("Payment canceled");
           localStorage.removeItem("pending_order_data");
           setTimeout(() => router.push("/cart"), 3000);
-        } else {
-          console.log("Unknown status:", statusParam);
-          setStatus("failed");
-          setError("Unknown payment status");
-          setTimeout(() => router.push("/cart"), 3000);
         }
-        
+        else {
+          console.log("Unknown status:", statusParam);
+          // Try to process anyway if we have transaction ID
+          if (transactionId) {
+            setStatus("verifying");
+            // Try to verify with just the transaction ID
+            const pendingOrderDataStr = localStorage.getItem("pending_order_data");
+            if (pendingOrderDataStr) {
+              const pendingOrderData = JSON.parse(pendingOrderDataStr);
+              const verificationData = {
+                status: "VALID",
+                tran_id: transactionId,
+                bank_tran_id: bankTranId,
+                amount: amount || pendingOrderData.amount,
+                currency: params.currency || "BDT",
+                ...pendingOrderData
+              };
+              
+              const response = await verifyAndCompleteSSLCommerzOrder(verificationData);
+              if (response && response.order_ids) {
+                setStatus("success");
+                setOrderDetails(response);
+                clearCheckoutData();
+                setTimeout(() => router.push("/"), 5000);
+              }
+            }
+          }
+        }
       } catch (error) {
         console.error("Payment verification error:", error);
-        console.error("Error details:", {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status
-        });
         setStatus("failed");
-        setError(error.message);
-        toast.error(error.response?.data?.message || error.message || "Payment verification failed");
-        setTimeout(() => {
-          router.push("/cart");
-        }, 3000);
+        setError(error.message || "Payment verification failed");
+        setTimeout(() => router.push("/cart"), 3000);
       }
     };
 
+    // Only process if we have search params
     if (searchParams.toString()) {
       processPaymentCallback();
     }
@@ -153,6 +150,7 @@ export default function SSLCommerzCallbackPage() {
 
   const clearCheckoutData = () => {
     const keys = [
+      "pending_order_data",
       "snapcart_shipping_method_id",
       "snapcart_checkout_shipping_id",
       "snapcart_checkout_billing_id",
@@ -160,16 +158,15 @@ export default function SSLCommerzCallbackPage() {
       "snapcart_order_note",
       "snapcart_coupon_applied",
       "snapcart_cart_subtotal",
+      "snapcart_cart_item_discount",
       "snapcart_cart_shipping",
       "snapcart_cart_discount",
       "snapcart_cart_total",
       "snapcart_checkout_shipping_address",
-      "snapcart_checkout_billing_address",
-      "pending_order_data"
+      "snapcart_checkout_billing_address"
     ];
     
     keys.forEach(key => localStorage.removeItem(key));
-    window.dispatchEvent(new Event("snapcart-auth-change"));
   };
 
   return (
@@ -180,21 +177,17 @@ export default function SSLCommerzCallbackPage() {
             <div className="card-body py-5">
               {status === "processing" && (
                 <>
-                  <div className="spinner-border text-primary mb-3" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
+                  <div className="spinner-border text-primary mb-3" />
                   <h3>Processing Payment...</h3>
-                  <p className="text-muted">Please wait while we verify your payment.</p>
+                  <p className="text-muted">Please wait...</p>
                 </>
               )}
               
               {status === "verifying" && (
                 <>
-                  <div className="spinner-border text-primary mb-3" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
+                  <div className="spinner-border text-primary mb-3" />
                   <h3>Verifying Payment...</h3>
-                  <p className="text-muted">Please wait while we create your order.</p>
+                  <p className="text-muted">Please wait while we confirm your payment...</p>
                 </>
               )}
               
@@ -204,11 +197,12 @@ export default function SSLCommerzCallbackPage() {
                     <i className="fas fa-check-circle"></i>
                   </div>
                   <h3>Payment Successful!</h3>
-                  <p className="text-muted">Your order has been placed successfully.</p>
                   {orderDetails?.order_ids && (
-                    <p className="fw-bold">Order ID: {orderDetails.order_ids.join(", ")}</p>
+                    <div className="mt-3">
+                      <p className="fw-bold">Order ID: {orderDetails.order_ids.join(", ")}</p>
+                    </div>
                   )}
-                  <p>Redirecting to home page...</p>
+                  <p className="mt-3 text-muted">Redirecting to home page...</p>
                 </>
               )}
               
@@ -218,7 +212,7 @@ export default function SSLCommerzCallbackPage() {
                     <i className="fas fa-times-circle"></i>
                   </div>
                   <h3>Payment Failed</h3>
-                  <p className="text-muted">{error || "Your payment was not successful."}</p>
+                  <p className="text-muted">{error || "Please try again"}</p>
                   <p>Redirecting to cart...</p>
                 </>
               )}
@@ -229,15 +223,25 @@ export default function SSLCommerzCallbackPage() {
                     <i className="fas fa-exclamation-circle"></i>
                   </div>
                   <h3>Payment Canceled</h3>
-                  <p className="text-muted">You canceled the payment process.</p>
+                  <p className="text-muted">{error || "You canceled the payment"}</p>
                   <p>Redirecting to cart...</p>
                 </>
               )}
               
               <div className="mt-4">
-                <a href="/" className="btn btn-primary me-2">Go to Home</a>
-                {orderDetails?.order_ids && (
-                  <a href="/orders" className="btn btn-outline-primary">View Orders</a>
+                <button 
+                  onClick={() => router.push("/")} 
+                  className="btn btn-primary me-2"
+                >
+                  Go to Home
+                </button>
+                {status === "failed" && (
+                  <button 
+                    onClick={() => router.push("/checkout/payment")} 
+                    className="btn btn-outline-primary"
+                  >
+                    Try Again
+                  </button>
                 )}
               </div>
             </div>
@@ -245,5 +249,17 @@ export default function SSLCommerzCallbackPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SSLCommerzCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="container py-5 text-center">
+        <div className="spinner-border text-primary" />
+      </div>
+    }>
+      <CallbackContent />
+    </Suspense>
   );
 }
