@@ -440,7 +440,11 @@ export default function ProductDetails() {
   // If variation selected, override price
   if (selectedVariation && product.variation?.length) {
     const v = product.variation.find((v) => v.type === selectedVariation);
-    if (v) price = v.price;
+    if (v) {
+      price = v.price;
+      discount = 0;
+      oldPrice = null;
+    }
   }
 
   // Handle zoom
