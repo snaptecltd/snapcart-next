@@ -2,6 +2,18 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
+  // CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+  
+  // Handle OPTIONS request (preflight)
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, { status: 204, headers });
+  }
+
   try {
     let data = {};
 
@@ -9,19 +21,22 @@ export async function POST(request) {
     const url = new URL(request.url);
 
     console.log("SSLCommerz Content-Type:", contentType);
+    console.log("SSLCommerz Request URL:", request.url);
 
-    // First: Always capture query params (very important)
+    // First: Always capture query params
     url.searchParams.forEach((value, key) => {
       data[key] = value;
     });
 
     // Then try to read body safely
     const rawBody = await request.text();
+    console.log("Raw body length:", rawBody.length);
 
     if (rawBody && rawBody.trim() !== "") {
       try {
         if (contentType.includes("application/json")) {
-          data = { ...data, ...JSON.parse(rawBody) };
+          const jsonData = JSON.parse(rawBody);
+          data = { ...data, ...jsonData };
         } else {
           const params = new URLSearchParams(rawBody);
           params.forEach((value, key) => {
@@ -29,7 +44,7 @@ export async function POST(request) {
           });
         }
       } catch (e) {
-        console.log("Body parse skipped (invalid or empty JSON)");
+        console.log("Body parse skipped:", e.message);
       }
     }
 
@@ -46,17 +61,20 @@ export async function POST(request) {
       }
     });
 
-    return NextResponse.redirect(redirectUrl.toString());
+    console.log("Redirecting to:", redirectUrl.toString());
+
+    return NextResponse.redirect(redirectUrl.toString(), { headers });
+    
   } catch (error) {
     console.error("SSLCommerz Callback Fatal Error:", error);
 
     return NextResponse.redirect(
-      new URL("/checkout/sslcommerz-callback?status=error", request.url)
+      new URL("/checkout/sslcommerz-callback?status=error", request.url),
+      { headers }
     );
   }
 }
 
-// GET request handle (optional)
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status') || 'success';
@@ -65,4 +83,16 @@ export async function GET(request) {
   return NextResponse.redirect(
     new URL(`/checkout/sslcommerz-callback?status=${status}&tran_id=${tran_id}`, request.url)
   );
+}
+
+// Handle OPTIONS method for CORS preflight
+export async function OPTIONS(request) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }
