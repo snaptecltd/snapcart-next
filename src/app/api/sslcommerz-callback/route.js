@@ -3,41 +3,55 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    // POST data পarser করুন
-    const formData = await request.formData();
-    const data = {};
-    
-    for (const [key, value] of formData.entries()) {
+    let data = {};
+
+    const contentType = request.headers.get("content-type") || "";
+    const url = new URL(request.url);
+
+    console.log("SSLCommerz Content-Type:", contentType);
+
+    // First: Always capture query params (very important)
+    url.searchParams.forEach((value, key) => {
       data[key] = value;
+    });
+
+    // Then try to read body safely
+    const rawBody = await request.text();
+
+    if (rawBody && rawBody.trim() !== "") {
+      try {
+        if (contentType.includes("application/json")) {
+          data = { ...data, ...JSON.parse(rawBody) };
+        } else {
+          const params = new URLSearchParams(rawBody);
+          params.forEach((value, key) => {
+            data[key] = value;
+          });
+        }
+      } catch (e) {
+        console.log("Body parse skipped (invalid or empty JSON)");
+      }
     }
-    
-    console.log('SSLCommerz POST Data:', data);
-    
-    // Redirect URL তৈরি করুন সব data সহ
-    const redirectUrl = new URL('/checkout/sslcommerz-callback', request.url);
-    
-    // সব data query parameter হিসেবে যোগ করুন
-    Object.keys(data).forEach(key => {
+
+    console.log("Final Parsed SSLCommerz Data:", data);
+
+    const redirectUrl = new URL(
+      "/checkout/sslcommerz-callback",
+      request.url
+    );
+
+    Object.keys(data).forEach((key) => {
       if (data[key]) {
         redirectUrl.searchParams.set(key, data[key]);
       }
     });
-    
-    // বিশেষ করে important fields
-    if (data.tran_id) redirectUrl.searchParams.set('tran_id', data.tran_id);
-    if (data.status) redirectUrl.searchParams.set('status', data.status);
-    if (data.bank_tran_id) redirectUrl.searchParams.set('bank_tran_id', data.bank_tran_id);
-    if (data.amount) redirectUrl.searchParams.set('amount', data.amount);
-    
-    console.log('Redirecting to:', redirectUrl.toString());
-    
-    // Redirect to the client page
+
     return NextResponse.redirect(redirectUrl.toString());
-    
   } catch (error) {
-    console.error('SSLCommerz Callback Error:', error);
+    console.error("SSLCommerz Callback Fatal Error:", error);
+
     return NextResponse.redirect(
-      new URL('/checkout/sslcommerz-callback?status=error', request.url)
+      new URL("/checkout/sslcommerz-callback?status=error", request.url)
     );
   }
 }
