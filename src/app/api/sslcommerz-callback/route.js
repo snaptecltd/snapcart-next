@@ -1,19 +1,13 @@
 // app/api/sslcommerz-callback/route.js
-import { NextResponse } from 'next/server';
+
+import { NextResponse } from "next/server";
+
+/**
+ * SSLCommerz Callback Handler
+ * Handles POST from SSLCommerz and safely redirects to frontend page
+ */
 
 export async function POST(request) {
-  // CORS headers
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
-  
-  // Handle OPTIONS request (preflight)
-  if (request.method === 'OPTIONS') {
-    return new NextResponse(null, { status: 204, headers });
-  }
-
   try {
     let data = {};
 
@@ -23,14 +17,13 @@ export async function POST(request) {
     console.log("SSLCommerz Content-Type:", contentType);
     console.log("SSLCommerz Request URL:", request.url);
 
-    // First: Always capture query params
+    // ✅ 1. Always capture query params first
     url.searchParams.forEach((value, key) => {
       data[key] = value;
     });
 
-    // Then try to read body safely
+    // ✅ 2. Safely read body
     const rawBody = await request.text();
-    console.log("Raw body length:", rawBody.length);
 
     if (rawBody && rawBody.trim() !== "") {
       try {
@@ -43,13 +36,14 @@ export async function POST(request) {
             data[key] = value;
           });
         }
-      } catch (e) {
-        console.log("Body parse skipped:", e.message);
+      } catch (err) {
+        console.log("Body parsing skipped:", err.message);
       }
     }
 
     console.log("Final Parsed SSLCommerz Data:", data);
 
+    // ✅ 3. Build frontend redirect URL
     const redirectUrl = new URL(
       "/checkout/sslcommerz-callback",
       request.url
@@ -63,36 +57,37 @@ export async function POST(request) {
 
     console.log("Redirecting to:", redirectUrl.toString());
 
-    return NextResponse.redirect(redirectUrl.toString(), { headers });
-    
+    // ✅ 4. IMPORTANT: Use 303 to convert POST → GET
+    return NextResponse.redirect(redirectUrl.toString(), {
+      status: 303,
+    });
+
   } catch (error) {
     console.error("SSLCommerz Callback Fatal Error:", error);
 
     return NextResponse.redirect(
       new URL("/checkout/sslcommerz-callback?status=error", request.url),
-      { headers }
+      { status: 303 }
     );
   }
 }
 
+/**
+ * Handle GET requests directly (if gateway ever sends GET)
+ */
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get('status') || 'success';
-  const tran_id = searchParams.get('tran_id') || '';
-  
-  return NextResponse.redirect(
-    new URL(`/checkout/sslcommerz-callback?status=${status}&tran_id=${tran_id}`, request.url)
-  );
-}
 
-// Handle OPTIONS method for CORS preflight
-export async function OPTIONS(request) {
-  return new NextResponse(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
+  const redirectUrl = new URL(
+    "/checkout/sslcommerz-callback",
+    request.url
+  );
+
+  searchParams.forEach((value, key) => {
+    redirectUrl.searchParams.set(key, value);
+  });
+
+  return NextResponse.redirect(redirectUrl.toString(), {
+    status: 303,
   });
 }
